@@ -8,6 +8,8 @@ Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
 
 [Read my in-depth article on how I use Ralph](https://x.com/ryancarson/status/2008548371712135632)
 
+> **Using Cursor IDE?** See [README-CURSOR.md](README-CURSOR.md) for Cursor-specific instructions.
+
 ## Prerequisites
 
 - [Amp CLI](https://ampcode.com) installed and authenticated

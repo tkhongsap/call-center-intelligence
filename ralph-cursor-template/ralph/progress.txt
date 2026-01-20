@@ -1,0 +1,7 @@
+# Ralph Progress Log
+Started: [Will be set on first run]
+
+## Codebase Patterns
+<!-- Patterns discovered during development will be added here -->
+
+---
