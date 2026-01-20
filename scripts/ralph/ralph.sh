@@ -227,9 +227,23 @@ run_iteration() {
 
 # Check if all tasks are complete
 check_completion() {
-    # This is a simple check - could be enhanced to parse task files
-    # For now, we rely on Claude Code to signal completion
-    return 1  # Continue by default
+    local task_file_path="$PROJECT_ROOT/$TASK_FILE"
+
+    if [ ! -f "$task_file_path" ]; then
+        echo -e "${RED}Task file not found: $task_file_path${NC}"
+        return 1  # Continue if file not found
+    fi
+
+    # Count unchecked boxes (- [ ])
+    local unchecked=$(grep -c '\- \[ \]' "$task_file_path" 2>/dev/null || echo "0")
+
+    if [ "$unchecked" -eq 0 ]; then
+        echo -e "${GREEN}All tasks complete in $TASK_FILE${NC}"
+        return 0  # All complete
+    else
+        echo -e "${YELLOW}$unchecked tasks remaining in $TASK_FILE${NC}"
+        return 1  # Continue
+    fi
 }
 
 # Main loop
