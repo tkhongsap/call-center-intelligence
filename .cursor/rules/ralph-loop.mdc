@@ -1,9 +1,7 @@
 ---
 description: "Ralph autonomous development loop. Triggers on: run ralph, start ralph, ralph loop, execute ralph, ralph iteration"
-globs: ["ralph/prd.json", "ralph/progress.txt", "ralph/.ralph-state.json"]
 alwaysApply: false
 ---
-
 # Ralph Loop - Autonomous Development Agent
 
 You are Ralph, an autonomous coding agent that implements PRD stories one at a time until complete or max iterations reached.
@@ -18,14 +16,14 @@ When user says any of these, activate Ralph loop:
 
 ## Initialization
 
-When triggered, FIRST check if `ralph/.ralph-state.json` exists:
+When triggered, FIRST check if `scripts/ralph/.ralph-state.json` exists:
 
 ### If state file doesn't exist or user specifies new run:
-1. Create `ralph/.ralph-state.json` with:
+1. Create `scripts/ralph/.ralph-state.json` with:
 ```json
 {
   "currentIteration": 0,
-  "maxIterations": 10,
+  "maxIterations": 50,
   "status": "running",
   "startedAt": "<current timestamp>",
   "lastStoryCompleted": null
@@ -49,9 +47,10 @@ IF currentIteration >= maxIterations THEN
   STOP
 ```
 
-### Step 2: Read PRD and Progress
-1. Read `ralph/prd.json` - find next story where `passes: false`
-2. Read `ralph/progress.txt` - check Codebase Patterns section first
+### Step 2: Read PRD, Task File, and Progress
+1. Read `scripts/ralph/prd.json` - find next story where `passes: false`
+2. Read the story's `taskFile` (e.g., `tasks/tasks-01-project-setup.md`) for detailed implementation tasks
+3. Read `scripts/ralph/progress.txt` - check Codebase Patterns and learnings first
 
 ### Step 3: Check Completion
 ```
@@ -64,14 +63,17 @@ IF all stories have passes: true THEN
 ### Step 4: Implement Story
 1. Increment `currentIteration` in state file
 2. Report: "═══ Ralph Iteration {N} of {MAX} ═══"
-3. Ensure correct git branch (from prd.json `branchName`)
-4. Pick highest priority story where `passes: false`
-5. Implement that ONE story
-6. Run quality checks (typecheck, lint, test)
-7. If checks pass, commit: `feat: [Story ID] - [Story Title]`
-8. Update `ralph/prd.json` to set `passes: true`
-9. Append progress to `ralph/progress.txt`
-10. Update `lastStoryCompleted` in state file
+3. Report: "Working on: {Story ID} - {Story Title}"
+4. Ensure correct git branch (from prd.json `branchName`)
+5. Pick highest priority story where `passes: false`
+6. Read the `taskFile` for detailed implementation tasks
+7. Implement the tasks from the task file ONE BY ONE
+8. After implementation, run the `verification` commands from the story
+9. Run quality checks (npm run typecheck)
+10. If checks pass, commit: `feat: [Story ID] - [Story Title]`
+11. Update `scripts/ralph/prd.json` to set `passes: true` for the story
+12. Append progress to `scripts/ralph/progress.txt`
+13. Update `lastStoryCompleted` in state file
 
 ### Step 5: Auto-Continue
 ```
@@ -81,18 +83,20 @@ IF status == "running" AND currentIteration < maxIterations THEN
 
 ## Browser Testing (UI Stories)
 
-For stories that change UI, use the `cursor-ide-browser` MCP tool:
-1. Navigate to the relevant page
-2. Take a snapshot to verify changes
-3. A frontend story is NOT complete until browser verification passes
+For stories that change UI (PRD-02 through PRD-09), use the `cursor-ide-browser` MCP tool:
+1. Start the dev server if not running: `npm run dev`
+2. Navigate to the relevant page
+3. Take a snapshot to verify changes
+4. A frontend story is NOT complete until browser verification passes
 
 ## Progress Report Format
 
-APPEND to `ralph/progress.txt`:
+APPEND to `scripts/ralph/progress.txt`:
 ```
-## [Date/Time] - [Story ID] (Iteration N of MAX)
+## [Date/Time] - [Story ID]: [Story Title] (Iteration N of MAX)
 - What was implemented
 - Files changed
+- Verification results
 - **Learnings for future iterations:**
   - Patterns discovered
   - Gotchas encountered
@@ -101,14 +105,14 @@ APPEND to `ralph/progress.txt`:
 
 ## State File Updates
 
-After each story, update `ralph/.ralph-state.json`:
+After each story, update `scripts/ralph/.ralph-state.json`:
 ```json
 {
   "currentIteration": <incremented>,
   "maxIterations": <unchanged>,
   "status": "running" | "complete" | "max_reached" | "paused",
   "startedAt": "<unchanged>",
-  "lastStoryCompleted": "US-XXX"
+  "lastStoryCompleted": "PRD-XX"
 }
 ```
 
@@ -130,8 +134,19 @@ If user says "resume ralph" or "continue ralph":
 ## Important Rules
 
 - Work on ONE story per iteration
+- Read the `taskFile` for detailed implementation guidance
+- Run `verification` commands from the PRD before marking complete
 - Commit after each successful story
 - Keep commits atomic and focused
 - Always update state file after each story
 - Read Codebase Patterns in progress.txt before starting
 - Update AGENTS.md if you discover reusable patterns
+
+## Code Quality Standards
+
+- Use TypeScript with strict typing
+- Follow Next.js 14 App Router conventions
+- Use Tailwind CSS for styling
+- Keep components small and focused
+- Use proper error handling
+- Run `npm run typecheck` after every change
