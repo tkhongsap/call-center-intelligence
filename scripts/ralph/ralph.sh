@@ -235,7 +235,9 @@ check_completion() {
     fi
 
     # Count unchecked boxes (- [ ])
-    local unchecked=$(grep -c '\- \[ \]' "$task_file_path" 2>/dev/null || echo "0")
+    # grep -c returns count to stdout, but exit code 1 if no matches
+    local unchecked
+    unchecked=$(grep -c '\- \[ \]' "$task_file_path" 2>/dev/null) || unchecked=0
 
     if [ "$unchecked" -eq 0 ]; then
         echo -e "${GREEN}All tasks complete in $TASK_FILE${NC}"
