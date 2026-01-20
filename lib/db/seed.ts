@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
 import path from 'path';
 import fs from 'fs';
+import { calculateTrendScore } from '../trending';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -116,6 +117,38 @@ const CASE_SUMMARIES: Record<string, string[]> = {
     'Phishing email claiming to be from bank',
   ],
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Predicted Risk Scenario Summaries
+// These summaries contain specific terms that will create prediction patterns
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Scenario 1: "wire transfer" - 3+ consecutive day increase
+const WIRE_TRANSFER_SUMMARIES = [
+  'Customer reports failed wire transfer to international account',
+  'Wire transfer funds not received after 5 business days',
+  'Unable to initiate wire transfer through online banking',
+  'Wire transfer rejected with no explanation provided',
+  'Customer disputes wire transfer fee charges',
+];
+
+// Scenario 2: "system outage" - Approaching 85% of threshold (100)
+const SYSTEM_OUTAGE_SUMMARIES = [
+  'System outage preventing account access',
+  'Unable to complete transactions due to system outage',
+  'Customer impacted by system outage during payment',
+  'System outage caused double billing issue',
+  'Scheduled payment failed during system outage',
+];
+
+// Scenario 3: "overdraft fee" - Accelerating growth (rapid recent increase)
+const OVERDRAFT_FEE_SUMMARIES = [
+  'Customer disputes multiple overdraft fee charges',
+  'Requesting overdraft fee waiver due to bank error',
+  'Excessive overdraft fee complaints after balance change',
+  'Overdraft fee charged despite positive balance',
+  'Customer unhappy with repeated overdraft fee assessments',
+];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helper Functions
@@ -238,6 +271,216 @@ function seedCases(db: ReturnType<typeof drizzle>, count: number) {
   return cases;
 }
 
+/**
+ * Seeds additional cases to create specific prediction scenarios:
+ * 1. Wire Transfer: 3+ consecutive day increase (day0: 2, day1: 4, day2: 7, day3: 12)
+ * 2. System Outage: Approaching 85% of 100 threshold (creates ~88 cases in last 7 days)
+ * 3. Overdraft Fee: Accelerating growth (earlier: 3->4, recent: 6->12)
+ */
+function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: number): schema.NewCase[] {
+  const cases: schema.NewCase[] = [];
+  let caseIndex = startingId;
+
+  // Helper to create a case with specific date offset
+  const createPredictionCase = (
+    daysAgo: number,
+    summary: string,
+    businessUnit: string,
+    category: string
+  ): schema.NewCase => {
+    const createdAt = getDateInRange(daysAgo);
+    return {
+      id: `case-${caseIndex++}`,
+      caseNumber: generateCaseNumber(caseIndex),
+      channel: rng.pick(CHANNELS),
+      status: rng.pick(['open', 'in_progress', 'resolved', 'closed'] as const),
+      category,
+      subcategory: null,
+      sentiment: rng.pick(['negative', 'negative', 'neutral'] as const),
+      severity: rng.pick(['medium', 'high'] as const),
+      riskFlag: rng.bool(0.2),
+      needsReviewFlag: rng.bool(0.1),
+      businessUnit,
+      summary,
+      customerName: rng.pick(CUSTOMER_NAMES),
+      agentId: `agent-${rng.int(1, 50)}`,
+      assignedTo: rng.bool(0.7) ? `user-supervisor-${rng.int(1, 10)}` : null,
+      createdAt,
+      updatedAt: createdAt,
+      resolvedAt: null,
+    };
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // Scenario 1: Wire Transfer - Consecutive Increase (3+ days)
+  // Day 3 ago: 2 cases, Day 2 ago: 4 cases, Day 1 ago: 7 cases, Day 0: 12 cases
+  // This creates a clear consecutive rising pattern
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Day 3 ago - 2 cases
+  for (let i = 0; i < 2; i++) {
+    cases.push(createPredictionCase(
+      3,
+      rng.pick(WIRE_TRANSFER_SUMMARIES),
+      'Personal Loans',
+      'Payment Issues'
+    ));
+  }
+
+  // Day 2 ago - 4 cases
+  for (let i = 0; i < 4; i++) {
+    cases.push(createPredictionCase(
+      2,
+      rng.pick(WIRE_TRANSFER_SUMMARIES),
+      'Personal Loans',
+      'Payment Issues'
+    ));
+  }
+
+  // Day 1 ago - 7 cases
+  for (let i = 0; i < 7; i++) {
+    cases.push(createPredictionCase(
+      1,
+      rng.pick(WIRE_TRANSFER_SUMMARIES),
+      'Personal Loans',
+      'Payment Issues'
+    ));
+  }
+
+  // Today - 12 cases
+  for (let i = 0; i < 12; i++) {
+    cases.push(createPredictionCase(
+      0,
+      rng.pick(WIRE_TRANSFER_SUMMARIES),
+      'Personal Loans',
+      'Payment Issues'
+    ));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // Scenario 2: System Outage - Approaching Threshold (85-95% of 100)
+  // Creates ~88 cases over the last 7 days to approach 100 threshold
+  // Baseline (days 7-14): ~20 cases total
+  // Current (days 0-7): ~88 cases total
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Baseline period (7-14 days ago) - lower volume
+  for (let day = 14; day >= 7; day--) {
+    const casesPerDay = rng.int(2, 4); // ~3 per day = ~24 total
+    for (let i = 0; i < casesPerDay; i++) {
+      cases.push(createPredictionCase(
+        day,
+        rng.pick(SYSTEM_OUTAGE_SUMMARIES),
+        'Mobile Banking',
+        'Technical Support'
+      ));
+    }
+  }
+
+  // Current period (0-7 days ago) - high volume approaching threshold
+  for (let day = 6; day >= 0; day--) {
+    const casesPerDay = rng.int(10, 15); // ~12-13 per day = ~88 total
+    for (let i = 0; i < casesPerDay; i++) {
+      cases.push(createPredictionCase(
+        day,
+        rng.pick(SYSTEM_OUTAGE_SUMMARIES),
+        'Mobile Banking',
+        'Technical Support'
+      ));
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // Scenario 3: Overdraft Fee - Accelerating Growth
+  // Earlier period growth: 3->4 (33% growth)
+  // Recent period growth: 6->12 (100% growth) - much faster
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Day 6 ago - 3 cases (baseline start)
+  for (let i = 0; i < 3; i++) {
+    cases.push(createPredictionCase(
+      6,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Day 5 ago - 4 cases (33% growth from day 6)
+  for (let i = 0; i < 4; i++) {
+    cases.push(createPredictionCase(
+      5,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Day 4 ago - 4 cases (stable)
+  for (let i = 0; i < 4; i++) {
+    cases.push(createPredictionCase(
+      4,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Day 3 ago - 5 cases (slight uptick)
+  for (let i = 0; i < 5; i++) {
+    cases.push(createPredictionCase(
+      3,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Day 2 ago - 6 cases (acceleration begins)
+  for (let i = 0; i < 6; i++) {
+    cases.push(createPredictionCase(
+      2,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Day 1 ago - 9 cases (50% growth)
+  for (let i = 0; i < 9; i++) {
+    cases.push(createPredictionCase(
+      1,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Today - 15 cases (67% growth - clear acceleration)
+  for (let i = 0; i < 15; i++) {
+    cases.push(createPredictionCase(
+      0,
+      rng.pick(OVERDRAFT_FEE_SUMMARIES),
+      'Checking Accounts',
+      'Billing Dispute'
+    ));
+  }
+
+  // Batch insert
+  const batchSize = 100;
+  for (let i = 0; i < cases.length; i += batchSize) {
+    const batch = cases.slice(i, i + batchSize);
+    db.insert(schema.cases).values(batch).run();
+  }
+
+  console.log(`✓ Seeded ${cases.length} predicted risk scenario cases`);
+  console.log('  - Wire Transfer: Consecutive 3+ day increase pattern');
+  console.log('  - System Outage: Approaching 85%+ of alert threshold');
+  console.log('  - Overdraft Fee: Accelerating growth pattern');
+
+  return cases;
+}
+
 function seedAlerts(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
   const alerts: schema.NewAlert[] = [];
 
@@ -351,21 +594,67 @@ function seedAlerts(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
     },
   ];
 
-  alerts.push(...spikeAlerts, ...thresholdAlerts, ...urgencyAlerts);
+  // Create misclassification alerts
+  const misclassificationAlerts = [
+    {
+      id: 'alert-misclass-1',
+      type: 'misclassification' as const,
+      severity: 'high' as const,
+      title: 'Review needed: 8 potentially misclassified cases in Auto Finance',
+      description: 'Low-severity cases contain risk indicators (legal, complaint, lawsuit) that may warrant reclassification. Found in the last 24 hours. Keywords detected: legal, lawsuit, complaint. Review recommended to ensure proper severity assignment.',
+      businessUnit: 'Auto Finance',
+      category: 'Billing Dispute',
+      channel: null,
+      baselineValue: null,
+      currentValue: 8,
+      percentageChange: null,
+      status: 'active' as const,
+      createdAt: getDateInRange(1),
+      updatedAt: getDateInRange(1),
+    },
+    {
+      id: 'alert-misclass-2',
+      type: 'misclassification' as const,
+      severity: 'medium' as const,
+      title: 'Review needed: 3 potentially misclassified cases in Insurance',
+      description: 'Low-severity cases contain risk indicators (injury, accident) that may warrant reclassification. Found in the last 24 hours. Keywords detected: injury, accident. Review recommended to ensure proper severity assignment.',
+      businessUnit: 'Insurance',
+      category: 'Complaint',
+      channel: null,
+      baselineValue: null,
+      currentValue: 3,
+      percentageChange: null,
+      status: 'acknowledged' as const,
+      acknowledgedBy: 'user-manager-3',
+      acknowledgedAt: getDateInRange(0),
+      createdAt: getDateInRange(2),
+      updatedAt: getDateInRange(0),
+    },
+  ];
+
+  alerts.push(...spikeAlerts, ...thresholdAlerts, ...urgencyAlerts, ...misclassificationAlerts);
   db.insert(schema.alerts).values(alerts).run();
   console.log(`✓ Seeded ${alerts.length} alerts`);
   return alerts;
 }
 
 function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
+  // Helper to compute baseline count from current count and percentage change
+  const computeBaseline = (current: number, percentChange: number): number => {
+    if (percentChange === 0) return current;
+    return Math.round(current / (1 + percentChange / 100));
+  };
+
   const topics: schema.NewTrendingTopic[] = [
     {
       id: 'trend-1',
       topic: 'Mobile App Login Failures',
       description: 'Increasing reports of users unable to access accounts via mobile app',
       caseCount: 156,
+      baselineCount: computeBaseline(156, 45),
       trend: 'rising',
       percentageChange: 45,
+      trendScore: calculateTrendScore(156, computeBaseline(156, 45)),
       businessUnit: 'Mobile Banking',
       category: 'Account Access',
       sampleCaseIds: JSON.stringify(['case-1', 'case-5', 'case-12']),
@@ -377,8 +666,10 @@ function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCa
       topic: 'Credit Card Fraud - International',
       description: 'Spike in fraud reports from international transactions',
       caseCount: 89,
+      baselineCount: computeBaseline(89, 78),
       trend: 'rising',
       percentageChange: 78,
+      trendScore: calculateTrendScore(89, computeBaseline(89, 78)),
       businessUnit: 'Credit Cards',
       category: 'Fraud Report',
       sampleCaseIds: JSON.stringify(['case-23', 'case-45', 'case-67']),
@@ -390,8 +681,10 @@ function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCa
       topic: 'Payment Processing Delays',
       description: 'Multiple complaints about delayed payment processing',
       caseCount: 67,
+      baselineCount: computeBaseline(67, 32),
       trend: 'rising',
       percentageChange: 32,
+      trendScore: calculateTrendScore(67, computeBaseline(67, 32)),
       businessUnit: 'Online Banking',
       category: 'Payment Issues',
       sampleCaseIds: JSON.stringify(['case-89', 'case-112', 'case-134']),
@@ -403,8 +696,10 @@ function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCa
       topic: 'Rate Increase Complaints',
       description: 'Customer complaints following interest rate changes',
       caseCount: 45,
+      baselineCount: computeBaseline(45, 5),
       trend: 'stable',
       percentageChange: 5,
+      trendScore: calculateTrendScore(45, computeBaseline(45, 5)),
       businessUnit: 'Mortgages',
       category: 'Complaint',
       sampleCaseIds: JSON.stringify(['case-156', 'case-178']),
@@ -416,8 +711,10 @@ function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCa
       topic: 'Card Activation Issues',
       description: 'New card activation process causing confusion',
       caseCount: 34,
+      baselineCount: computeBaseline(34, -15),
       trend: 'declining',
       percentageChange: -15,
+      trendScore: calculateTrendScore(34, computeBaseline(34, -15)),
       businessUnit: 'Credit Cards',
       category: 'Technical Support',
       sampleCaseIds: JSON.stringify(['case-200', 'case-210']),
@@ -638,8 +935,10 @@ async function main() {
       topic TEXT NOT NULL,
       description TEXT,
       case_count INTEGER NOT NULL DEFAULT 0,
+      baseline_count INTEGER NOT NULL DEFAULT 0,
       trend TEXT NOT NULL,
       percentage_change REAL,
+      trend_score REAL NOT NULL DEFAULT 0,
       business_unit TEXT,
       category TEXT,
       sample_case_ids TEXT,
@@ -693,16 +992,18 @@ async function main() {
   // Seed data
   const users = seedUsers(db);
   const cases = seedCases(db, 2000);
+  const predictedCases = seedPredictedRiskCases(db, cases.length + 1);
   const alerts = seedAlerts(db, cases);
   const topics = seedTrendingTopics(db, cases);
   seedFeedItems(db, alerts, topics);
   seedShares(db, alerts, users);
 
   // Print summary
+  const totalCases = cases.length + predictedCases.length;
   console.log('─'.repeat(50));
   console.log('\n✅ Database seeded successfully!\n');
   console.log(`   Database: ${dbPath}`);
-  console.log(`   Total records: ${16 + 2000 + 6 + 5 + 11 + 3}`);
+  console.log(`   Total records: ${16 + totalCases + 8 + 5 + 11 + 3}`);
   console.log('\n   Run "npm run db:studio" to explore the data\n');
 
   sqlite.close();

@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { ChatDrawer } from '@/components/chat/ChatDrawer';
+import { FilterProvider } from '@/contexts/FilterContext';
+import { DemoModeProvider } from '@/contexts/DemoModeContext';
+import { RealtimeProvider } from '@/contexts/RealtimeContext';
 import './globals.css';
 
 const geistSans = Geist({
@@ -28,12 +32,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex min-h-screen bg-slate-50">
-          <Sidebar />
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
-        </div>
+        <FilterProvider>
+          <DemoModeProvider>
+            <RealtimeProvider>
+              <div className="flex min-h-screen bg-slate-50">
+                <Sidebar />
+                <main className="flex-1 flex flex-col">
+                  {children}
+                </main>
+                <ChatDrawer />
+              </div>
+            </RealtimeProvider>
+          </DemoModeProvider>
+        </FilterProvider>
       </body>
     </html>
   );

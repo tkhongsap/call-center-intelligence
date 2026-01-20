@@ -21,99 +21,99 @@ Add real-time feel with polling, timestamps, and demo mode with mock event gener
 ## Tasks
 
 ### 9.1 Implement Polling Infrastructure
-- [ ] Create `lib/polling.ts` utility
-- [ ] Implement configurable polling interval (10-20s)
-- [ ] Create custom hook `usePolling()`
-- [ ] Handle polling start/stop on page visibility
-- [ ] Clean up polling on unmount
+- [x] Create `lib/polling.ts` utility
+- [x] Implement configurable polling interval (10-20s)
+- [x] Create custom hook `usePolling()`
+- [x] Handle polling start/stop on page visibility
+- [x] Clean up polling on unmount
 
 ### 9.2 Add Feed Polling
-- [ ] Poll `/api/feed` for new items
-- [ ] Compare with current feed state
-- [ ] Detect new items
-- [ ] Show "X new items" notification
-- [ ] Animate new items into feed
+- [x] Poll `/api/feed` for new items
+- [x] Compare with current feed state
+- [x] Detect new items
+- [x] Show "X new items" notification
+- [x] Animate new items into feed
 
 ### 9.3 Add Alert Count Polling
-- [ ] Poll `/api/alerts/count` for badge updates
-- [ ] Update alert badge in header
-- [ ] Show badge animation on change
+- [x] Poll `/api/alerts/count` for badge updates
+- [x] Update alert badge in header
+- [x] Show badge animation on change
 
 ### 9.4 Implement Timestamp Display
-- [ ] Create RelativeTime component
-- [ ] Display "Updated X seconds ago"
-- [ ] Auto-update timestamp every second
-- [ ] Format: "Just now", "30s ago", "2m ago", "5m ago"
-- [ ] Add to feed header
+- [x] Create RelativeTime component
+- [x] Display "Updated X seconds ago"
+- [x] Auto-update timestamp every second
+- [x] Format: "Just now", "30s ago", "2m ago", "5m ago"
+- [x] Add to feed header
 
 ### 9.5 Build Mock Event Generator
-- [ ] Create `lib/mockEvents.ts`
-- [ ] Generate realistic mock events:
+- [x] Create `lib/mockEvents.ts`
+- [x] Generate realistic mock events:
   - New case arrival
   - Alert triggered
   - Trending topic update
-- [ ] Run on configurable interval
-- [ ] Store generated events in database
+- [x] Run on configurable interval
+- [x] Store generated events in database
 
 ### 9.6 Create Demo Mode Controls
-- [ ] Add admin toggle in settings/header
-- [ ] Create DemoModeToggle component
-- [ ] Persist demo mode state
-- [ ] Show indicator when demo mode active
-- [ ] Control mock event generator
+- [x] Add admin toggle in settings/header
+- [x] Create DemoModeToggle component
+- [x] Persist demo mode state
+- [x] Show indicator when demo mode active
+- [x] Control mock event generator
 
 ### 9.7 Implement Demo Mode Behavior
-- [ ] When enabled:
+- [x] When enabled:
   - Generate 1 event every 30-60 seconds
   - Ensure variety (alerts, cases, trends)
   - Create meaningful events (not random noise)
-- [ ] When disabled:
+- [x] When disabled:
   - Stop mock event generation
   - Normal polling only
 
 ### 9.8 Add Visual Feedback for Updates
-- [ ] Create NewItemIndicator component
-- [ ] Show toast/notification for new items
-- [ ] Highlight newly added feed cards
-- [ ] Add subtle animation
-- [ ] Auto-dismiss after 5 seconds
+- [x] Create NewItemIndicator component
+- [x] Show toast/notification for new items
+- [x] Highlight newly added feed cards
+- [x] Add subtle animation
+- [x] Auto-dismiss after 5 seconds
 
 ### 9.9 Implement SSE Support (Optional)
-- [ ] Create `/api/events` SSE endpoint
-- [ ] Implement EventSource client hook
-- [ ] Push events: new feed items, alerts
-- [ ] Fallback to polling if SSE fails
-- [ ] Add SSE toggle in settings
+- [x] Create `/api/events` SSE endpoint
+- [x] Implement EventSource client hook
+- [x] Push events: new feed items, alerts
+- [x] Fallback to polling if SSE fails
+- [x] Add SSE toggle in settings
 
 ### 9.10 Add Loading States
-- [ ] Show skeleton loaders during initial load
-- [ ] Show subtle spinner during poll refresh
-- [ ] Handle error states gracefully
-- [ ] Retry failed polls automatically
+- [x] Show skeleton loaders during initial load
+- [x] Show subtle spinner during poll refresh
+- [x] Handle error states gracefully
+- [x] Retry failed polls automatically
 
 ### 9.11 Optimize Performance
-- [ ] Debounce rapid updates
-- [ ] Batch multiple updates
-- [ ] Use React transitions for updates
-- [ ] Minimize re-renders
-- [ ] Profile and optimize if needed
+- [x] Debounce rapid updates
+- [x] Batch multiple updates
+- [x] Use React transitions for updates
+- [x] Minimize re-renders
+- [x] Profile and optimize if needed
 
 ### 9.12 Final Integration Testing
-- [ ] Verify all modules work together
-- [ ] Test 10-minute demo flow
-- [ ] Confirm deterministic behavior
-- [ ] Test role switching
-- [ ] Verify all navigation works
+- [x] Verify all modules work together
+- [x] Test 10-minute demo flow
+- [x] Confirm deterministic behavior
+- [x] Test role switching
+- [x] Verify all navigation works
 
 ## Acceptance Criteria
-- [ ] Feed polls every 15 seconds (configurable)
-- [ ] "Updated X seconds ago" shows correctly
-- [ ] New items appear during demo session
-- [ ] Demo mode toggle works
-- [ ] Mock events are realistic
-- [ ] Visual feedback for new items
-- [ ] No polling when tab is hidden
-- [ ] SSE works as alternative (optional)
+- [x] Feed polls every 15 seconds (configurable)
+- [x] "Updated X seconds ago" shows correctly
+- [x] New items appear during demo session
+- [x] Demo mode toggle works
+- [x] Mock events are realistic
+- [x] Visual feedback for new items
+- [x] No polling when tab is hidden
+- [x] SSE works as alternative (optional)
 
 ## Estimated Complexity
 Medium

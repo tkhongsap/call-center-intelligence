@@ -26,113 +26,113 @@ Build the home page with the "Today Feed" showing alerts, trending topics, and h
 ## Tasks
 
 ### 4.1 Create Home Page Layout
-- [ ] Create `/home` route (or update root `/`)
-- [ ] Implement two-column layout:
+- [x] Create `/home` route (or update root `/`)
+- [x] Implement two-column layout:
   - Main area: Today Feed (70%)
   - Right sidebar: Pulse (30%)
-- [ ] Add responsive breakpoints
+- [x] Add responsive breakpoints
 
 ### 4.2 Build Feed Container
-- [ ] Create FeedContainer component
-- [ ] Implement feed item fetching
-- [ ] Add infinite scroll or pagination
-- [ ] Sort by priority and recency
-- [ ] Handle empty state
+- [x] Create FeedContainer component
+- [x] Implement feed item fetching
+- [x] Add infinite scroll or pagination
+- [x] Sort by priority and recency
+- [x] Handle empty state
 
 ### 4.3 Create Feed Card Components
 
 #### Alert Card
-- [ ] Reuse/extend AlertCard from Task 03
-- [ ] Add feed-specific styling
-- [ ] Icon: Bell/Warning based on type
-- [ ] Color-code header by severity
+- [x] Reuse/extend AlertCard from Task 03
+- [x] Add feed-specific styling
+- [x] Icon: Bell/Warning based on type
+- [x] Color-code header by severity
 
 #### Trending Card
-- [ ] Create TrendingCard component
-- [ ] Header: Fire icon + "Trending"
-- [ ] Title: Topic name + trend direction arrow
-- [ ] Body: Top 3 phrases, case count
-- [ ] Sample case preview (1-2 lines)
-- [ ] Footer: [View cases] [Share] buttons
+- [x] Create TrendingCard component
+- [x] Header: Fire icon + "Trending"
+- [x] Title: Topic name + trend direction arrow
+- [x] Body: Top 3 phrases, case count
+- [x] Sample case preview (1-2 lines)
+- [x] Footer: [View cases] [Share] buttons
 
 #### Highlight Card
-- [ ] Create HighlightCard component
-- [ ] Header: Pin icon + "Today's Highlight"
-- [ ] Body: Summary content
+- [x] Create HighlightCard component
+- [x] Header: Pin icon + "Today's Highlight"
+- [x] Body: Summary content
   - "Top 3 complaint themes today"
   - "Hot BU: [BU Name] - [reason]"
   - "Resolution rate improved by X%"
-- [ ] Footer: [Learn more] button
+- [x] Footer: [Learn more] button
 
 #### Upload Card
-- [ ] Create UploadCard component
-- [ ] Header: Upload icon + timestamp
-- [ ] Body: "Upload batch added X new cases"
-- [ ] Footer: [View cases] button
+- [x] Create UploadCard component
+- [x] Header: Upload icon + timestamp
+- [x] Body: "Upload batch added X new cases"
+- [x] Footer: [View cases] button
 
 ### 4.4 Build Feed Item Actions
-- [ ] Create FeedCardActions component
-- [ ] [View cases] - navigates to filtered case list
-- [ ] [Share] - opens share modal
-- [ ] [Escalate] - opens escalation confirmation
-- [ ] Handle action completion feedback
+- [x] Create FeedCardActions component
+- [x] [View cases] - navigates to filtered case list
+- [x] [Share] - opens share modal
+- [x] [Escalate] - opens escalation confirmation
+- [x] Handle action completion feedback
 
 ### 4.5 Implement Click Navigation
-- [ ] Alert card -> `/alerts/[id]`
-- [ ] Trending card -> `/cases?topic=[topic]`
-- [ ] Highlight card -> relevant drilldown
-- [ ] Upload card -> `/cases?uploadBatch=[id]`
+- [x] Alert card -> `/alerts/[id]`
+- [x] Trending card -> `/cases?topic=[topic]`
+- [x] Highlight card -> relevant drilldown
+- [x] Upload card -> `/cases?uploadBatch=[id]`
 
 ### 4.6 Build Pulse Sidebar
 
 #### KPI Tiles
-- [ ] Create KPITile component
-- [ ] Display tiles:
+- [x] Create KPITile component
+- [x] Display tiles:
   - Total Cases Today
   - Open Cases
   - Critical/Urgent Count
   - Resolution Rate
-- [ ] Color-code by status (green/yellow/red)
+- [x] Color-code by status (green/yellow/red)
 
 #### Sparklines
-- [ ] Create Sparkline component (simple line chart)
-- [ ] Show 7-day trend for key metrics
-- [ ] Indicate up/down direction
+- [x] Create Sparkline component (simple line chart)
+- [x] Show 7-day trend for key metrics
+- [x] Indicate up/down direction
 
 #### Word Cloud
-- [ ] Create WordCloud component
-- [ ] Display top 15 terms from recent cases
-- [ ] Size words by frequency
-- [ ] Make words clickable (filter feed)
+- [x] Create WordCloud component
+- [x] Display top 15 terms from recent cases
+- [x] Size words by frequency
+- [x] Make words clickable (filter feed)
 
 #### Quick Filters
-- [ ] Create QuickFilters component
-- [ ] Add BU filter dropdown
-- [ ] Add Channel filter
-- [ ] Add Date range (Today, 7d, 30d)
-- [ ] Sync filters to feed and URL
+- [x] Create QuickFilters component
+- [x] Add BU filter dropdown
+- [x] Add Channel filter
+- [x] Add Date range (Today, 7d, 30d)
+- [x] Sync filters to feed and URL
 
 ### 4.7 Implement Feed Filtering
-- [ ] Filter feed items by BU
-- [ ] Filter feed items by date range
-- [ ] Filter feed items by type (alerts/trending/highlights)
-- [ ] Update feed without page reload
-- [ ] Sync filters to URL query params
+- [x] Filter feed items by BU
+- [x] Filter feed items by date range
+- [x] Filter feed items by type (alerts/trending/highlights)
+- [x] Update feed without page reload
+- [x] Sync filters to URL query params
 
 ### 4.8 Create API Routes
-- [ ] `GET /api/feed` - Get feed items with filters
-- [ ] `GET /api/pulse` - Get KPI data for sidebar
-- [ ] `GET /api/pulse/wordcloud` - Get word cloud data
+- [x] `GET /api/feed` - Get feed items with filters
+- [x] `GET /api/pulse` - Get KPI data for sidebar
+- [x] `GET /api/pulse/wordcloud` - Get word cloud data
 
 ## Acceptance Criteria
-- [ ] Home page shows Today Feed with mixed card types
-- [ ] At least 2 alert cards appear in feed
-- [ ] At least 2 trending cards appear in feed
-- [ ] Highlight cards show meaningful summaries
-- [ ] Pulse sidebar displays all KPIs
-- [ ] Quick filters update feed instantly
-- [ ] Clicking cards navigates to correct drilldown
-- [ ] Feed is deterministic with seed data
+- [x] Home page shows Today Feed with mixed card types
+- [x] At least 2 alert cards appear in feed
+- [x] At least 2 trending cards appear in feed
+- [x] Highlight cards show meaningful summaries
+- [x] Pulse sidebar displays all KPIs
+- [x] Quick filters update feed instantly
+- [x] Clicking cards navigates to correct drilldown
+- [x] Feed is deterministic with seed data
 
 ## Estimated Complexity
 High

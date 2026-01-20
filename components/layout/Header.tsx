@@ -1,12 +1,52 @@
 'use client';
 
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Bell, MessageSquare, User, ChevronDown } from 'lucide-react';
+import { SearchBar } from '@/components/search/SearchBar';
+import { DemoModeToggle } from '@/components/realtime/DemoModeToggle';
+import { SSEToggle } from '@/components/realtime/SSEToggle';
+import { usePolling, POLLING_INTERVALS } from '@/hooks/usePolling';
+import Link from 'next/link';
+
+interface AlertCount {
+  total: number;
+  critical: number;
+  high: number;
+}
 
 interface HeaderProps {
   title?: string;
 }
 
 export function Header({ title }: HeaderProps) {
+  const [alertCount, setAlertCount] = useState<AlertCount>({ total: 0, critical: 0, high: 0 });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevCountRef = useRef<number>(0);
+
+  const fetchAlertCount = useCallback(async () => {
+    const response = await fetch('/api/alerts/count');
+    if (response.ok) {
+      const data = await response.json();
+      setAlertCount(data);
+    }
+  }, []);
+
+  // Poll for alert counts
+  usePolling(fetchAlertCount, {
+    interval: POLLING_INTERVALS.alerts,
+    immediate: true,
+  });
+
+  // Trigger animation when count changes
+  useEffect(() => {
+    if (alertCount.total !== prevCountRef.current && prevCountRef.current !== 0) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), 600);
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = alertCount.total;
+  }, [alertCount.total]);
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
       {/* Page Title */}
@@ -16,20 +56,31 @@ export function Header({ title }: HeaderProps) {
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search cases, alerts..."
-            className="w-64 h-9 pl-4 pr-4 rounded-lg bg-slate-100 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        {/* SSE Toggle */}
+        <SSEToggle compact />
 
-        {/* Notifications */}
-        <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        {/* Demo Mode Toggle */}
+        <DemoModeToggle compact />
+
+        {/* Search */}
+        <SearchBar className="w-72" />
+
+        {/* Notifications/Alerts */}
+        <Link
+          href="/alerts"
+          className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <Bell className={`w-5 h-5 ${isAnimating ? 'animate-wiggle' : ''}`} />
+          {alertCount.total > 0 && (
+            <span
+              className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white rounded-full flex items-center justify-center transition-transform ${
+                alertCount.critical > 0 ? 'bg-red-500' : alertCount.high > 0 ? 'bg-orange-500' : 'bg-slate-500'
+              } ${isAnimating ? 'scale-125' : 'scale-100'}`}
+            >
+              {alertCount.total > 99 ? '99+' : alertCount.total}
+            </span>
+          )}
+        </Link>
 
         {/* Messages */}
         <button className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">

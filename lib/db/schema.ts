@@ -36,6 +36,7 @@ export const cases = sqliteTable('cases', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   resolvedAt: text('resolved_at'),
+  uploadId: text('upload_id'), // Reference to upload batch if case was imported
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -68,8 +69,10 @@ export const trendingTopics = sqliteTable('trending_topics', {
   topic: text('topic').notNull(),
   description: text('description'),
   caseCount: integer('case_count').notNull().default(0),
+  baselineCount: integer('baseline_count').notNull().default(0),
   trend: text('trend', { enum: ['rising', 'stable', 'declining'] }).notNull(),
   percentageChange: real('percentage_change'),
+  trendScore: real('trend_score').notNull().default(0),
   businessUnit: text('business_unit'),
   category: text('category'),
   sampleCaseIds: text('sample_case_ids'), // JSON array of case IDs
@@ -109,6 +112,19 @@ export const shares = sqliteTable('shares', {
   createdAt: text('created_at').notNull(),
   readAt: text('read_at'),
   actionedAt: text('actioned_at'),
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Search Analytics Table - Track search queries for popularity metrics
+// ═══════════════════════════════════════════════════════════════════════════════
+export const searchAnalytics = sqliteTable('search_analytics', {
+  id: text('id').primaryKey(),
+  query: text('query').notNull(),
+  normalizedQuery: text('normalized_query').notNull(), // Lowercase, trimmed for grouping
+  resultCount: integer('result_count').notNull().default(0),
+  executionTimeMs: integer('execution_time_ms'),
+  userId: text('user_id'), // Optional: track who searched
+  createdAt: text('created_at').notNull(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -152,3 +168,32 @@ export type NewFeedItem = typeof feedItems.$inferInsert;
 
 export type Share = typeof shares.$inferSelect;
 export type NewShare = typeof shares.$inferInsert;
+
+export type SearchAnalytic = typeof searchAnalytics.$inferSelect;
+export type NewSearchAnalytic = typeof searchAnalytics.$inferInsert;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Uploads Table - Track batch uploads
+// ═══════════════════════════════════════════════════════════════════════════════
+export const uploads = sqliteTable('uploads', {
+  id: text('id').primaryKey(),
+  fileName: text('file_name').notNull(),
+  fileSize: integer('file_size').notNull(),
+  status: text('status', { enum: ['processing', 'completed', 'failed', 'partial'] }).notNull().default('processing'),
+  totalRows: integer('total_rows').notNull().default(0),
+  successCount: integer('success_count').notNull().default(0),
+  errorCount: integer('error_count').notNull().default(0),
+  errors: text('errors'), // JSON array of error objects
+  uploadedBy: text('uploaded_by'),
+  createdAt: text('created_at').notNull(),
+  completedAt: text('completed_at'),
+  // Recomputation status fields
+  recomputeStatus: text('recompute_status', { enum: ['pending', 'processing', 'completed', 'failed'] }),
+  recomputeStartedAt: text('recompute_started_at'),
+  recomputeCompletedAt: text('recompute_completed_at'),
+  alertsGenerated: integer('alerts_generated').default(0),
+  trendingUpdated: integer('trending_updated', { mode: 'boolean' }).default(false),
+});
+
+export type Upload = typeof uploads.$inferSelect;
+export type NewUpload = typeof uploads.$inferInsert;
