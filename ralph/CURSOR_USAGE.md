@@ -14,7 +14,7 @@ Ralph is an autonomous AI development loop that implements PRD stories one at a 
 
 Either manually create `ralph/prd.json` or ask the AI:
 ```
-Convert tasks/prd-call-center-intelligence.md to ralph/prd.json format
+Convert tasks/prd-my-feature.md to ralph/prd.json format
 ```
 
 ### 2. Run Ralph
