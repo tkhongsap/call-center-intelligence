@@ -1,0 +1,25 @@
+{
+  "name": "Cases Module",
+  "priority": 2,
+  "taskFile": "tasks/tasks-02-cases-module.md",
+  "githubIssue": "2",
+  "dependencies": ["01-project-setup"],
+  "description": "Case list and detail views with filtering, badges, and share/escalate",
+  "functionalRequirements": ["FR41", "FR42", "FR43", "FR44", "FR45"],
+  "acceptance": [
+    "Cases list loads with all columns visible",
+    "Filters work and update URL",
+    "Urgent and Needs Review badges display correctly",
+    "Case detail page shows all information",
+    "AI summary renders with three sections",
+    "Share modal allows recipient selection and note",
+    "Escalate marks case as escalated"
+  ],
+  "verification": {
+    "commands": [
+      "npm run typecheck",
+      "curl -s http://localhost:3000/api/cases | jq '.cases | length'",
+      "curl -s http://localhost:3000/api/cases/1 | jq '.summary'"
+    ]
+  }
+}
