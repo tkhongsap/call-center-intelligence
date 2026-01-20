@@ -8,3 +8,23 @@
 # Learnings and decisions will be logged here as Ralph Loop runs
 # ═══════════════════════════════════════════════════════════════
 
+
+=== BATCH RUN STARTED ===
+Timestamp: 2026-01-20 11:52:59
+PRDs to process: 9
+Max iterations per PRD: 50
+
+
+=== BATCH RUN STARTED ===
+Timestamp: 2026-01-20 11:53:22
+PRDs to process: 9
+Max iterations per PRD: 50
+
+2026-01-20 11:53:22 - Starting Ralph Loop for 01-project-setup
+
+[COMPLETE] Task 01: Project Setup - All tasks verified complete
+[DECISION] Used Drizzle ORM with better-sqlite3 for database
+[DECISION] Types exported from lib/db/schema.ts instead of separate types/ dir
+[DECISION] Added npm run seed alias per task requirements
+[LEARNING] Dev server starts successfully on Next.js 16.1.4 with Turbopack
+[LEARNING] Database seeded with 2041 total records (2000 cases, 6 alerts, 5 topics)
