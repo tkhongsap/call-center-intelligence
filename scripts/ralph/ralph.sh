@@ -165,37 +165,25 @@ build_prompt() {
     local iteration=$1
 
     cat <<EOF
-# Ralph Loop - Iteration $iteration of $MAX_ITERATIONS
+# Ralph Loop - Iteration $iteration
 
-You are in a Ralph Loop - an autonomous development cycle.
+You are in an autonomous development loop implementing PRD: $PRD_NAME
 
-## Current PRD
-$(cat "$PRD_FILE")
-
-## Task File
-Read and follow the tasks in: $TASK_FILE
-
-## Prompt Instructions
-$(cat "$PROMPT_FILE")
-
-## Progress Log
-Recent learnings and blockers:
-$(tail -20 "$PROGRESS_FILE" 2>/dev/null || echo "No previous progress")
-
-## Your Mission
-1. Read the task file to understand what needs to be done
-2. Implement the next incomplete task
-3. Run tests/typecheck after changes
-4. Log any learnings or blockers to progress
+## Your Task
+1. Read the task file: $TASK_FILE
+2. Find the first unchecked task (- [ ])
+3. Implement that ONE task completely
+4. Run: npm run typecheck
+5. If all tasks are done, say "[FEATURE COMPLETE]"
 
 ## Rules
 - Focus on ONE task at a time
-- Write working code, not placeholders
-- Test your changes before marking complete
-- If blocked, log the blocker and move on
-- Be concise in responses
+- Write working production code, not stubs
+- Test changes before marking complete
+- Use existing patterns in the codebase
+- Be concise
 
-Start by reading the task file and implementing the next incomplete task.
+Start now: Read $TASK_FILE and implement the first unchecked task.
 EOF
 }
 
