@@ -4,6 +4,18 @@ Ralph is an autonomous AI development loop that implements PRD stories one at a 
 
 > **Note:** This is the Cursor IDE adaptation. For the original Amp CLI version, see [README.md](README.md).
 
+## Quick Setup from Template
+
+To add Ralph to a new project, copy the template folder:
+
+```bash
+# From your project root
+cp -r path/to/ralph-cursor-template/.cursor .
+cp -r path/to/ralph-cursor-template/ralph .
+```
+
+See [ralph-cursor-template/README.md](../ralph-cursor-template/README.md) for complete setup instructions.
+
 ## Prerequisites
 
 1. A `ralph/prd.json` file with user stories (see `prd.json.example`)
