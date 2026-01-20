@@ -75,13 +75,13 @@ for i in "${!PRDS[@]}"; do
   if "$SCRIPT_DIR/ralph.sh" "$prd"; then
     echo ""
     echo -e "${GREEN}✓ Completed: $prd${NC}"
-    ((COMPLETED++))
+    COMPLETED=$((COMPLETED + 1))
     # Log success to progress file
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✓ COMPLETED: $prd" >> "$PROGRESS_FILE"
   else
     echo ""
     echo -e "${RED}✗ Failed: $prd${NC}"
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
     FAILED_PRDS+=("$prd")
     # Log failure to progress file
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✗ FAILED: $prd" >> "$PROGRESS_FILE"
