@@ -92,8 +92,7 @@ Ralph stops when:
 | `ralph/prd.json` | User stories with `passes` status |
 | `ralph/progress.txt` | Learnings and progress log |
 | `ralph/.ralph-state.json` | Iteration tracking |
-| `ralph/prompt-cursor.md` | Instructions for the AI |
-| `.cursor/rules/ralph-loop.mdc` | Cursor rule for automation |
+| `.cursor/rules/ralph-loop.mdc` | Cursor rule for automation (instructions for the AI) |
 
 ## Best Practices
 
