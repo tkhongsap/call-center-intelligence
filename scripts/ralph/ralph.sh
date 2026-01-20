@@ -209,8 +209,8 @@ run_iteration() {
     PROMPT=$(build_prompt "$iteration")
 
     # Run Claude Code with the prompt
-    # Using --print for non-interactive mode
-    echo "$PROMPT" | claude --dangerously-skip-permissions
+    # Using -p (--print) for non-interactive mode
+    echo "$PROMPT" | claude -p --dangerously-skip-permissions
 
     local exit_code=$?
 
