@@ -210,9 +210,12 @@ run_iteration() {
 
     # Run Claude Code with the prompt
     # Using -p (--print) for non-interactive mode
-    echo "$PROMPT" | claude -p --dangerously-skip-permissions
-
+    # Use temp file to avoid piping issues in background shells
+    local prompt_file=$(mktemp)
+    echo "$PROMPT" > "$prompt_file"
+    claude -p --dangerously-skip-permissions < "$prompt_file"
     local exit_code=$?
+    rm -f "$prompt_file"
 
     if [ $exit_code -eq 0 ]; then
         echo -e "${GREEN}✓ Iteration $iteration completed${NC}"
