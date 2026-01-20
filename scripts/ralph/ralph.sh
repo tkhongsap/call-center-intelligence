@@ -21,6 +21,111 @@ PROMPT_FILE="$SCRIPT_DIR/prompt.md"
 MAX_ITERATIONS=${MAX_ITERATIONS:-50}
 PAUSE_BETWEEN=${PAUSE_BETWEEN:-5}
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# GitHub Issue Integration Functions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Post comment to GitHub issue
+gh_comment() {
+    local message="$1"
+    if [ -n "$GITHUB_ISSUE" ] && [ "$GITHUB_ISSUE" != "null" ]; then
+        gh issue comment "$GITHUB_ISSUE" --body "$message" 2>/dev/null || true
+    fi
+}
+
+# Update issue labels
+gh_label() {
+    local label="$1"
+    if [ -n "$GITHUB_ISSUE" ] && [ "$GITHUB_ISSUE" != "null" ]; then
+        gh issue edit "$GITHUB_ISSUE" --add-label "$label" 2>/dev/null || true
+    fi
+}
+
+# Remove issue label
+gh_remove_label() {
+    local label="$1"
+    if [ -n "$GITHUB_ISSUE" ] && [ "$GITHUB_ISSUE" != "null" ]; then
+        gh issue edit "$GITHUB_ISSUE" --remove-label "$label" 2>/dev/null || true
+    fi
+}
+
+# Close issue with comment
+gh_close() {
+    local message="$1"
+    if [ -n "$GITHUB_ISSUE" ] && [ "$GITHUB_ISSUE" != "null" ]; then
+        gh_comment "$message"
+        gh issue close "$GITHUB_ISSUE" 2>/dev/null || true
+    fi
+}
+
+# Notify loop start
+gh_notify_start() {
+    gh_label "in-progress"
+    gh_comment "🚀 **Ralph Loop Started**
+
+- **PRD:** $PRD_NAME
+- **Max Iterations:** $MAX_ITERATIONS
+- **Started:** $(date '+%Y-%m-%d %H:%M:%S')
+
+_Autonomous development loop is now running..._"
+}
+
+# Notify progress update (every N iterations)
+gh_notify_progress() {
+    local iteration=$1
+    local completed_count=$(jq '[.stories[] | select(.passes == true)] | length' "$PRD_FILE" 2>/dev/null || echo "?")
+    local total_count=$(jq '.stories | length' "$PRD_FILE" 2>/dev/null || echo "?")
+
+    gh_comment "📊 **Progress Update - Iteration $iteration/$MAX_ITERATIONS**
+
+- **Stories Completed:** $completed_count / $total_count
+- **Timestamp:** $(date '+%Y-%m-%d %H:%M:%S')
+
+_Loop continuing..._"
+}
+
+# Notify blocker encountered
+gh_notify_blocker() {
+    local blocker="$1"
+    gh_label "needs-attention"
+    gh_comment "🚧 **Blocker Encountered**
+
+\`\`\`
+$blocker
+\`\`\`
+
+_Loop will attempt to continue..._"
+}
+
+# Notify loop completion
+gh_notify_complete() {
+    gh_remove_label "in-progress"
+    gh_close "✅ **Ralph Loop Completed**
+
+- **Total Iterations:** $1
+- **Completed:** $(date '+%Y-%m-%d %H:%M:%S')
+
+All tasks have been implemented successfully!"
+}
+
+# Notify loop failure
+gh_notify_failure() {
+    local iteration=$1
+    local error="$2"
+    gh_label "needs-attention"
+    gh_remove_label "in-progress"
+    gh_comment "❌ **Ralph Loop Failed**
+
+- **Failed at Iteration:** $iteration/$MAX_ITERATIONS
+- **Timestamp:** $(date '+%Y-%m-%d %H:%M:%S')
+
+\`\`\`
+$error
+\`\`\`
+
+_Manual intervention may be required._"
+}
+
 # Validate arguments
 if [ -z "$1" ]; then
     echo -e "${RED}Error: PRD file required${NC}"
@@ -131,12 +236,33 @@ check_completion() {
 echo -e "${BLUE}Starting Ralph Loop...${NC}"
 echo ""
 
+# Notify GitHub of loop start
+gh_notify_start
+
+LAST_ITERATION=0
+LOOP_SUCCESS=false
+
 for i in $(seq 1 $MAX_ITERATIONS); do
+    LAST_ITERATION=$i
     run_iteration $i
+    iteration_result=$?
+
+    # Post progress update every 5 iterations
+    if [ $((i % 5)) -eq 0 ]; then
+        gh_notify_progress $i
+    fi
+
+    # Handle iteration failure
+    if [ $iteration_result -ne 0 ]; then
+        gh_notify_failure $i "Iteration failed with exit code $iteration_result"
+        break
+    fi
 
     # Check if we should continue
     if check_completion; then
         echo -e "${GREEN}✓ All tasks complete!${NC}"
+        LOOP_SUCCESS=true
+        gh_notify_complete $i
         break
     fi
 
@@ -146,6 +272,11 @@ for i in $(seq 1 $MAX_ITERATIONS); do
         sleep $PAUSE_BETWEEN
     fi
 done
+
+# If we exhausted all iterations without completing
+if [ "$LOOP_SUCCESS" = false ] && [ $LAST_ITERATION -eq $MAX_ITERATIONS ]; then
+    gh_notify_failure $MAX_ITERATIONS "Max iterations reached without completion"
+fi
 
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
