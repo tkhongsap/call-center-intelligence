@@ -2,6 +2,8 @@
 
 Ralph is an autonomous AI development loop that implements PRD stories one at a time until complete. This guide explains how to use Ralph in Cursor IDE.
 
+> **Note:** This is the Cursor IDE adaptation. For the original Amp CLI version, see [README.md](README.md).
+
 ## Prerequisites
 
 1. A `ralph/prd.json` file with user stories (see `prd.json.example`)
