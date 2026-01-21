@@ -11,7 +11,7 @@
 set -e
 
 # Configuration
-MAX_ITERATIONS=${1:-15}
+MAX_ITERATIONS=${1:-20}
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PRD_FILE="$SCRIPT_DIR/prd.json"
@@ -96,9 +96,10 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     # Run Claude with the prompt
     echo -e "${BLUE}Starting Claude agent...${NC}"
 
-    # Use claude with continue flag to maintain conversation context
+    # --dangerously-skip-permissions allows file edits without prompting
+    # Each iteration is a fresh Claude session (no --continue since sessions don't persist)
     # The prompt is provided via stdin
-    if cat "$PROMPT_FILE" | claude --continue 2>&1 | tee "$OUTPUT_FILE"; then
+    if cat "$PROMPT_FILE" | claude --dangerously-skip-permissions 2>&1 | tee "$OUTPUT_FILE"; then
         echo -e "${GREEN}Claude iteration completed${NC}"
     else
         echo -e "${YELLOW}Claude exited with non-zero status${NC}"
