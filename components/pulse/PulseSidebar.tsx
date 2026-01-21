@@ -1,11 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { KPITile } from './KPITile';
-import { Sparkline, SparklineData } from './Sparkline';
-import { WordCloud, WordCloudWord } from './WordCloud';
+import { useRouter } from 'next/navigation';
+import { SparklineData } from './Sparkline';
+import { SparklineMini } from './Sparkline';
+import { WordCloudWord } from './WordCloud';
 import { QuickFilters, FilterValues } from './QuickFilters';
-import { FileText, FolderOpen, AlertTriangle, Activity, Cloud } from 'lucide-react';
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Users,
+  FileText,
+  FolderOpen,
+  AlertTriangle,
+  Activity,
+  ChevronRight,
+} from 'lucide-react';
 
 interface KPIData {
   value: number | string;
@@ -47,11 +59,22 @@ interface PulseSidebarProps {
   onFilterChange?: (filters: FilterValues) => void;
 }
 
+// Mock data for Teams to Watch - in production this would come from an API
+const teamsToWatch = [
+  { name: 'Credit Cards', caseCount: 156, trend: 'up' as const },
+  { name: 'Mobile Banking', caseCount: 89, trend: 'up' as const },
+  { name: 'Online Banking', caseCount: 67, trend: 'down' as const },
+];
+
 export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
+  const router = useRouter();
   const [data, setData] = useState<PulseData | null>(null);
   const [sparklineData, setSparklineData] = useState<SparklineApiData | null>(null);
   const [wordCloudData, setWordCloudData] = useState<WordCloudApiData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMoreTrending, setShowMoreTrending] = useState(false);
+  const [showMoreTeams, setShowMoreTeams] = useState(false);
 
   useEffect(() => {
     async function fetchPulseData() {
@@ -86,17 +109,47 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
     fetchPulseData();
   }, []);
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleTopicClick = (topic: string) => {
+    router.push(`/cases?category=${encodeURIComponent(topic)}`);
+  };
+
+  const handleTeamClick = (team: string) => {
+    router.push(`/cases?bu=${encodeURIComponent(team)}`);
+  };
+
+  // Get trending topics from word cloud data
+  const trendingTopics = wordCloudData?.words
+    ?.slice(0, showMoreTrending ? 8 : 4)
+    .map((word, index) => ({
+      category: index < 2 ? 'Trending in Call Center' : 'Customer Issues',
+      topic: word.text,
+      count: word.count,
+    })) || [];
+
+  const displayedTeams = showMoreTeams ? teamsToWatch : teamsToWatch.slice(0, 2);
+
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 lg:sticky lg:top-6">
-        <div className="px-4 md:px-6 py-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Pulse</h2>
-          <p className="text-sm text-slate-500">Key metrics at a glance</p>
+      <div className="space-y-4 lg:sticky lg:top-20">
+        {/* Search skeleton */}
+        <div className="bg-[#F5F8FA] rounded-2xl p-4">
+          <div className="h-10 bg-white rounded-full animate-pulse" />
         </div>
-        <div className="p-4 md:p-6">
-          <div className="grid grid-cols-2 gap-3 animate-pulse">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-slate-100 rounded-xl" />
+        {/* What's happening skeleton */}
+        <div className="bg-[#F5F8FA] rounded-2xl">
+          <div className="px-4 py-3">
+            <div className="h-5 w-40 bg-slate-200 rounded animate-pulse" />
+          </div>
+          <div className="px-4 pb-4 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 bg-white rounded-xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -106,100 +159,231 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
 
   const kpis = data?.kpis;
 
+  // Helper to get trend icon
+  const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
+    if (trend === 'up') return <TrendingUp className="w-3 h-3 text-green-500" />;
+    if (trend === 'down') return <TrendingDown className="w-3 h-3 text-red-500" />;
+    return <Minus className="w-3 h-3 text-slate-400" />;
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 lg:sticky lg:top-6">
-      <div className="px-4 md:px-6 py-4 border-b border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900">Pulse</h2>
-        <p className="text-sm text-slate-500">Key metrics at a glance</p>
-      </div>
-      <div className="p-4 md:p-6 space-y-4">
-        {/* KPI Tiles Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <KPITile
-            title="Cases Today"
-            value={kpis?.totalCasesToday.value ?? 0}
-            change={kpis?.totalCasesToday.change}
-            changeLabel={kpis?.totalCasesToday.changeLabel}
-            icon={FileText}
-            status={kpis?.totalCasesToday.status ?? 'neutral'}
-          />
-          <KPITile
-            title="Open Cases"
-            value={kpis?.openCases.value ?? 0}
-            change={kpis?.openCases.change}
-            changeLabel={kpis?.openCases.changeLabel}
-            icon={FolderOpen}
-            status={kpis?.openCases.status ?? 'neutral'}
-          />
-          <KPITile
-            title="Critical/Urgent"
-            value={kpis?.criticalUrgent.value ?? 0}
-            change={kpis?.criticalUrgent.change}
-            changeLabel={kpis?.criticalUrgent.changeLabel}
-            icon={AlertTriangle}
-            status={kpis?.criticalUrgent.status ?? 'neutral'}
-          />
-          <KPITile
-            title="Resolution Rate"
-            value={kpis?.resolutionRate.value ?? '0%'}
-            change={kpis?.resolutionRate.change}
-            changeLabel={kpis?.resolutionRate.changeLabel}
-            icon={Activity}
-            status={kpis?.resolutionRate.status ?? 'neutral'}
+    <div className="space-y-4 lg:sticky lg:top-20">
+      {/* Search Box */}
+      <form onSubmit={handleSearch}>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#657786]" />
+          <input
+            type="text"
+            placeholder="Search cases"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-12 pr-4 bg-[#E1E8ED] rounded-full text-[#14171A] placeholder-[#657786] text-[15px] twitter-input-focus transition-colors hover:bg-[#d6dce1]"
           />
         </div>
+      </form>
 
-        {/* 7-Day Sparklines */}
-        {sparklineData?.sparklines && (
-          <div className="space-y-3 pt-2 border-t border-slate-200 mt-4">
-            <h3 className="text-sm font-medium text-slate-700">7-Day Trends</h3>
-            <div className="grid grid-cols-1 gap-2">
-              <Sparkline
-                title="Daily Cases"
-                data={sparklineData.sparklines.totalCases.data}
-                currentValue={sparklineData.sparklines.totalCases.currentValue}
-                color="blue"
-              />
-              <Sparkline
-                title="Open Cases"
-                data={sparklineData.sparklines.openCases.data}
-                currentValue={sparklineData.sparklines.openCases.currentValue}
-                color="amber"
-              />
-              <Sparkline
-                title="Critical Cases"
-                data={sparklineData.sparklines.criticalCases.data}
-                currentValue={sparklineData.sparklines.criticalCases.currentValue}
-                color="red"
-              />
-              <Sparkline
-                title="Resolved"
-                data={sparklineData.sparklines.resolvedCases.data}
-                currentValue={sparklineData.sparklines.resolvedCases.currentValue}
-                color="green"
-              />
-            </div>
-          </div>
-        )}
+      {/* What's Happening Section */}
+      <div className="bg-[#F5F8FA] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E1E8ED]">
+          <h2 className="text-xl font-extrabold text-[#14171A]">What&apos;s happening</h2>
+        </div>
 
-        {/* Word Cloud */}
-        {wordCloudData?.words && wordCloudData.words.length > 0 && (
-          <div className="space-y-3 pt-2 border-t border-slate-200 mt-4">
-            <div className="flex items-center gap-2">
-              <Cloud className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-medium text-slate-700">Top Categories</h3>
-            </div>
-            <WordCloud words={wordCloudData.words} maxWords={15} />
-          </div>
-        )}
+        {/* Trending Topics */}
+        <div>
+          {trendingTopics.map((item, index) => (
+            <button
+              key={item.topic}
+              onClick={() => handleTopicClick(item.topic)}
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.03] transition-colors"
+            >
+              <p className="text-[13px] text-[#657786]">{item.category}</p>
+              <p className="font-bold text-[15px] text-[#14171A]">{item.topic}</p>
+              <p className="text-[13px] text-[#657786]">{item.count.toLocaleString()} cases</p>
+              {index === 0 && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-[#1DA1F2]/10 text-[#1DA1F2] text-xs font-medium rounded-full">
+                  Trending
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
 
-        {/* Quick Filters */}
-        {filters && onFilterChange && (
-          <div className="pt-2 border-t border-slate-200 mt-4">
-            <QuickFilters filters={filters} onFilterChange={onFilterChange} />
-          </div>
+        {/* Show more link */}
+        {wordCloudData?.words && wordCloudData.words.length > 4 && (
+          <button
+            onClick={() => setShowMoreTrending(!showMoreTrending)}
+            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors"
+          >
+            {showMoreTrending ? 'Show less' : 'Show more'}
+          </button>
         )}
       </div>
+
+      {/* Teams to Watch Section */}
+      <div className="bg-[#F5F8FA] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E1E8ED]">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#657786]" />
+            <h2 className="text-xl font-extrabold text-[#14171A]">Teams to watch</h2>
+          </div>
+        </div>
+
+        <div>
+          {displayedTeams.map((team) => (
+            <button
+              key={team.name}
+              onClick={() => handleTeamClick(team.name)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group"
+            >
+              <div>
+                <p className="font-bold text-[15px] text-[#14171A]">{team.name}</p>
+                <div className="flex items-center gap-1 text-[13px] text-[#657786]">
+                  <TrendIcon trend={team.trend} />
+                  <span>{team.caseCount} cases today</span>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[#AAB8C2] group-hover:text-[#657786] transition-colors" />
+            </button>
+          ))}
+        </div>
+
+        {teamsToWatch.length > 2 && (
+          <button
+            onClick={() => setShowMoreTeams(!showMoreTeams)}
+            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors"
+          >
+            {showMoreTeams ? 'Show less' : 'Show more'}
+          </button>
+        )}
+      </div>
+
+      {/* Compact KPIs Section */}
+      <div className="bg-[#F5F8FA] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E1E8ED]">
+          <h2 className="text-xl font-extrabold text-[#14171A]">Today&apos;s metrics</h2>
+        </div>
+
+        <div className="divide-y divide-[#E1E8ED]">
+          {/* Cases Today */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-[13px] text-[#657786]">Cases Today</p>
+                <p className="font-bold text-xl text-[#14171A]">{kpis?.totalCasesToday.value ?? 0}</p>
+              </div>
+            </div>
+            {sparklineData?.sparklines?.totalCases && (
+              <div className="flex items-center gap-2">
+                <SparklineMini
+                  data={sparklineData.sparklines.totalCases.data.map(d => d.value)}
+                  color="blue"
+                  width={50}
+                  height={24}
+                />
+                {kpis?.totalCasesToday.change !== undefined && (
+                  <span className={`text-xs font-medium ${kpis.totalCasesToday.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                    {kpis.totalCasesToday.change > 0 ? '+' : ''}{kpis.totalCasesToday.change}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Open Cases */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <FolderOpen className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[13px] text-[#657786]">Open Cases</p>
+                <p className="font-bold text-xl text-[#14171A]">{kpis?.openCases.value ?? 0}</p>
+              </div>
+            </div>
+            {sparklineData?.sparklines?.openCases && (
+              <div className="flex items-center gap-2">
+                <SparklineMini
+                  data={sparklineData.sparklines.openCases.data.map(d => d.value)}
+                  color="amber"
+                  width={50}
+                  height={24}
+                />
+                {kpis?.openCases.change !== undefined && (
+                  <span className={`text-xs font-medium ${kpis.openCases.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                    {kpis.openCases.change > 0 ? '+' : ''}{kpis.openCases.change}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Critical/Urgent */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-[13px] text-[#657786]">Critical/Urgent</p>
+                <p className="font-bold text-xl text-[#14171A]">{kpis?.criticalUrgent.value ?? 0}</p>
+              </div>
+            </div>
+            {sparklineData?.sparklines?.criticalCases && (
+              <div className="flex items-center gap-2">
+                <SparklineMini
+                  data={sparklineData.sparklines.criticalCases.data.map(d => d.value)}
+                  color="red"
+                  width={50}
+                  height={24}
+                />
+                {kpis?.criticalUrgent.change !== undefined && (
+                  <span className={`text-xs font-medium ${kpis.criticalUrgent.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                    {kpis.criticalUrgent.change > 0 ? '+' : ''}{kpis.criticalUrgent.change}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Resolution Rate */}
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <Activity className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-[13px] text-[#657786]">Resolution Rate</p>
+                <p className="font-bold text-xl text-[#14171A]">{kpis?.resolutionRate.value ?? '0%'}</p>
+              </div>
+            </div>
+            {sparklineData?.sparklines?.resolvedCases && (
+              <div className="flex items-center gap-2">
+                <SparklineMini
+                  data={sparklineData.sparklines.resolvedCases.data.map(d => d.value)}
+                  color="green"
+                  width={50}
+                  height={24}
+                />
+                {kpis?.resolutionRate.change !== undefined && (
+                  <span className={`text-xs font-medium ${kpis.resolutionRate.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {kpis.resolutionRate.change > 0 ? '+' : ''}{kpis.resolutionRate.change}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Filters (optional - only shown if props provided) */}
+      {filters && onFilterChange && (
+        <div className="bg-[#F5F8FA] rounded-2xl p-4">
+          <QuickFilters filters={filters} onFilterChange={onFilterChange} />
+        </div>
+      )}
     </div>
   );
 }
