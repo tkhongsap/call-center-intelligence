@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Flame, TrendingUp, TrendingDown, Minus, Eye, Share2, MessageSquare } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
+import { useRouter } from 'next/navigation';
+import { Flame, TrendingUp, TrendingDown, Minus, MessageSquare } from 'lucide-react';
+import { TwitterCard } from './TwitterCard';
+import { EngagementAction, EngagementActionType } from './EngagementBar';
 import { ShareModal } from '@/components/ui/ShareModal';
-import { cn, formatRelativeTime } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { FeedItem } from '@/lib/db/schema';
 
 interface TrendingMetadata {
@@ -39,41 +40,24 @@ function TrendDirectionIcon({ trend }: { trend: string }) {
       return <TrendingDown className={cn(iconClasses, 'text-green-500')} />;
     case 'stable':
     default:
-      return <Minus className={cn(iconClasses, 'text-slate-400')} />;
+      return <Minus className={cn(iconClasses, 'text-[#657786]')} />;
   }
 }
 
-function getTrendStyles(trend: string) {
+function getTrendTextColor(trend: string) {
   switch (trend) {
     case 'rising':
-      return {
-        border: 'border-l-4 border-l-orange-500',
-        headerBg: 'bg-orange-50',
-        iconBg: 'bg-orange-100 text-orange-700',
-        trendText: 'text-red-600',
-        trendBg: 'bg-red-50',
-      };
+      return 'text-red-600';
     case 'declining':
-      return {
-        border: 'border-l-4 border-l-green-500',
-        headerBg: 'bg-green-50',
-        iconBg: 'bg-green-100 text-green-700',
-        trendText: 'text-green-600',
-        trendBg: 'bg-green-50',
-      };
+      return 'text-green-600';
     case 'stable':
     default:
-      return {
-        border: 'border-l-4 border-l-slate-400',
-        headerBg: 'bg-slate-50',
-        iconBg: 'bg-slate-100 text-slate-700',
-        trendText: 'text-slate-600',
-        trendBg: 'bg-slate-50',
-      };
+      return 'text-[#657786]';
   }
 }
 
 export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
+  const router = useRouter();
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const metadata: TrendingMetadata = item.metadata ? JSON.parse(item.metadata) : {};
@@ -82,12 +66,6 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
   const topPhrases = metadata.topPhrases || [];
   const caseCount = metadata.caseCount || 0;
   const percentageChange = metadata.percentageChange;
-
-  const styles = getTrendStyles(trend);
-
-  const handleOpenShare = () => {
-    setShareModalOpen(true);
-  };
 
   const handleShare = async (recipientId: string, message: string) => {
     if (onShare) {
@@ -98,110 +76,94 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
   // Build the topic query param for navigation
   const topicQuery = encodeURIComponent(metadata.topic || item.title);
 
+  const handleAction = (actionType: EngagementActionType) => {
+    switch (actionType) {
+      case 'viewCases':
+        router.push(`/cases?topic=${topicQuery}`);
+        break;
+      case 'share':
+        setShareModalOpen(true);
+        break;
+      case 'watch':
+        // TODO: Implement watch functionality
+        console.log('Watch topic:', topicId);
+        break;
+      case 'bookmark':
+        // TODO: Implement bookmark functionality
+        console.log('Bookmark topic:', topicId);
+        break;
+    }
+  };
+
+  const actions: EngagementAction[] = [
+    { type: 'viewCases', label: 'View' },
+    { type: 'watch' },
+    { type: 'bookmark' },
+    { type: 'share' },
+  ];
+
+  // Build subtitle: "{caseCount} cases · Trending"
+  const authorSubtitle = `${caseCount} cases · Trending`;
+
   return (
     <>
-      <div className={cn(
-        'bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow',
-        styles.border,
-        className
-      )}>
-        {/* Header - Fire icon + "Trending" */}
-        <div className={cn('px-4 py-3 border-b border-slate-200', styles.headerBg)}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Fire icon */}
-              <div className={cn('p-2 rounded-lg', styles.iconBg)}>
-                <Flame className="w-5 h-5" />
-              </div>
-              <div>
-                {/* Title with trend direction arrow */}
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-slate-900">{item.title}</h3>
-                  <TrendDirectionIcon trend={trend} />
-                  {percentageChange !== undefined && (
-                    <span className={cn('text-sm font-medium', styles.trendText)}>
-                      {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(0)}%
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Badge variant="warning">Trending</Badge>
-                  {metadata.businessUnit && (
-                    <Badge variant="default">{metadata.businessUnit}</Badge>
-                  )}
-                  {metadata.category && (
-                    <Badge variant="default">{metadata.category}</Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-slate-500">{formatRelativeTime(item.createdAt)}</div>
-              <div className="flex items-center gap-1 text-xs text-slate-400 mt-1 justify-end">
-                <MessageSquare className="w-3 h-3" />
-                {caseCount} cases
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="p-4">
-          <p className="text-sm text-slate-600">{item.content}</p>
-
-          {/* Top 3 phrases */}
-          {topPhrases.length > 0 && (
-            <div className="mt-3">
-              <div className="text-xs font-medium text-slate-500 mb-2">Top phrases</div>
-              <div className="flex flex-wrap gap-2">
-                {topPhrases.slice(0, 3).map((phrase, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700"
-                  >
-                    {phrase}
-                  </span>
-                ))}
-              </div>
-            </div>
+      <TwitterCard
+        authorName={item.title}
+        authorSubtitle={authorSubtitle}
+        timestamp={item.createdAt}
+        avatarIcon={Flame}
+        avatarBgColor="bg-orange-100"
+        avatarIconClassName="text-orange-600"
+        actions={actions}
+        onAction={handleAction}
+        className={className}
+      >
+        {/* Trend indicator with percentage change */}
+        <div className="flex items-center gap-2 mb-2">
+          <TrendDirectionIcon trend={trend} />
+          {percentageChange !== undefined && (
+            <span className={cn('text-sm font-medium', getTrendTextColor(trend))}>
+              {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(0)}% from baseline
+            </span>
           )}
-
-          {/* Sample case preview */}
-          {metadata.sampleCase && (
-            <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium text-slate-500">Sample case</span>
-                {metadata.sampleCase.caseNumber && (
-                  <span className="text-xs text-slate-400">#{metadata.sampleCase.caseNumber}</span>
-                )}
-              </div>
-              <p className="text-sm text-slate-600 line-clamp-2">
-                {metadata.sampleCase.summary}
-              </p>
-            </div>
+          {metadata.businessUnit && (
+            <span className="text-sm text-[#657786]">· {metadata.businessUnit}</span>
           )}
         </div>
 
-        {/* Footer - Action buttons */}
-        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <Link
-            href={`/cases?topic=${topicQuery}`}
-            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          >
-            <Eye className="w-4 h-4" />
-            View cases
-          </Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleOpenShare}
-              className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg flex items-center gap-1.5 transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-              Share
-            </button>
+        {/* Description */}
+        <p className="text-[#14171A]">{item.content}</p>
+
+        {/* Hashtag-style pills for top phrases */}
+        {topPhrases.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {topPhrases.slice(0, 5).map((phrase, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-colors cursor-pointer"
+              >
+                #{phrase.replace(/\s+/g, '')}
+              </span>
+            ))}
           </div>
-        </div>
-      </div>
+        )}
+
+        {/* Sample case as "quoted tweet" nested card */}
+        {metadata.sampleCase && (
+          <div className="mt-3 p-3 rounded-xl border border-[#E1E8ED] hover:bg-[#F5F8FA] transition-colors cursor-pointer">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-[#657786]" />
+              <span className="text-sm font-bold text-[#14171A]">Sample Case</span>
+              {metadata.sampleCase.caseNumber && (
+                <span className="text-sm text-[#657786]">#{metadata.sampleCase.caseNumber}</span>
+              )}
+            </div>
+            <p className="text-sm text-[#14171A] mt-1 line-clamp-2">
+              {metadata.sampleCase.summary}
+            </p>
+          </div>
+        )}
+      </TwitterCard>
 
       <ShareModal
         isOpen={shareModalOpen}
