@@ -59,12 +59,18 @@ export function HomeContent() {
       {/* Mobile-only bottom sheet for sidebar on small screens */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E1E8ED] p-4 z-30">
         <button
-          className="w-full py-3 px-4 bg-[#F5F8FA] hover:bg-[#E1E8ED] rounded-full text-[#14171A] font-medium transition-colors"
+          className="w-full py-3 px-4 bg-[#F5F8FA] hover:bg-[#E1E8ED] rounded-full text-[#14171A] font-medium transition-colors twitter-focus-ring"
           onClick={() => {
-            // Toggle mobile sidebar - could use a modal or drawer
             const sidebar = document.getElementById('mobile-sidebar');
+            const drawer = sidebar?.querySelector('[data-drawer]') as HTMLElement;
             if (sidebar) {
-              sidebar.classList.toggle('hidden');
+              sidebar.classList.remove('hidden');
+              // Trigger slide-in animation on next frame
+              requestAnimationFrame(() => {
+                if (drawer) {
+                  drawer.classList.remove('translate-x-full');
+                }
+              });
             }
           }}
         >
@@ -75,22 +81,35 @@ export function HomeContent() {
       {/* Mobile sidebar overlay */}
       <div
         id="mobile-sidebar"
-        className="lg:hidden hidden fixed inset-0 z-40 bg-black/50"
+        className="lg:hidden hidden fixed inset-0 z-40 bg-black/50 transition-opacity duration-300"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
-            e.currentTarget.classList.add('hidden');
+            const sidebar = e.currentTarget as HTMLElement;
+            const drawer = sidebar.querySelector('[data-drawer]') as HTMLElement;
+            if (drawer) {
+              drawer.classList.add('translate-x-full');
+            }
+            setTimeout(() => sidebar.classList.add('hidden'), 300);
           }
         }}
       >
-        <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[350px] bg-white overflow-y-auto">
+        <div
+          data-drawer
+          className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[350px] bg-white overflow-y-auto transform translate-x-full transition-transform duration-300 ease-out"
+        >
           <div className="p-4">
             <button
-              className="mb-4 p-2 hover:bg-[#F5F8FA] rounded-full transition-colors"
+              className="mb-4 p-2 hover:bg-[#F5F8FA] rounded-full transition-colors twitter-focus-ring"
+              aria-label="Close sidebar"
               onClick={() => {
                 const sidebar = document.getElementById('mobile-sidebar');
-                if (sidebar) {
-                  sidebar.classList.add('hidden');
+                const drawer = sidebar?.querySelector('[data-drawer]') as HTMLElement;
+                if (drawer) {
+                  drawer.classList.add('translate-x-full');
                 }
+                setTimeout(() => {
+                  if (sidebar) sidebar.classList.add('hidden');
+                }, 300);
               }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

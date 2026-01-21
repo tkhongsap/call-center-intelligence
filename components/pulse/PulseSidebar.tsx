@@ -194,7 +194,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             <button
               key={item.topic}
               onClick={() => handleTopicClick(item.topic)}
-              className="w-full px-4 py-3 text-left hover:bg-black/[0.03] transition-colors"
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.03] transition-colors twitter-focus-ring"
             >
               <p className="text-[13px] text-[#657786]">{item.category}</p>
               <p className="font-bold text-[15px] text-[#14171A]">{item.topic}</p>
@@ -212,7 +212,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
         {wordCloudData?.words && wordCloudData.words.length > 4 && (
           <button
             onClick={() => setShowMoreTrending(!showMoreTrending)}
-            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors"
+            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors twitter-focus-ring"
           >
             {showMoreTrending ? 'Show less' : 'Show more'}
           </button>
@@ -233,7 +233,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             <button
               key={team.name}
               onClick={() => handleTeamClick(team.name)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group twitter-focus-ring"
             >
               <div>
                 <p className="font-bold text-[15px] text-[#14171A]">{team.name}</p>
@@ -250,7 +250,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
         {teamsToWatch.length > 2 && (
           <button
             onClick={() => setShowMoreTeams(!showMoreTeams)}
-            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors"
+            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors twitter-focus-ring"
           >
             {showMoreTeams ? 'Show less' : 'Show more'}
           </button>

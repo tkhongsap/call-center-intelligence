@@ -119,9 +119,9 @@ export function EngagementBar({
   const handleClick = (action: EngagementAction) => {
     if (action.disabled) return;
 
-    // Trigger animation for bookmark
-    if (action.type === 'bookmark') {
-      setAnimatingAction('bookmark');
+    // Trigger animation for bookmark and acknowledge (heart-like actions)
+    if (action.type === 'bookmark' || action.type === 'acknowledge') {
+      setAnimatingAction(action.type);
       setTimeout(() => setAnimatingAction(null), 400);
     }
 
@@ -165,13 +165,14 @@ export function EngagementBar({
             onClick={() => handleClick(action)}
             disabled={action.disabled}
             className={cn(
-              'flex items-center rounded-full transition-colors duration-200',
+              'flex items-center rounded-full transition-colors duration-200 twitter-focus-ring',
               'text-[#657786]',
               styles.button,
               config.hoverClass,
               action.active && config.activeClass,
               action.disabled && 'opacity-50 cursor-not-allowed',
-              isAnimating && action.type === 'bookmark' && 'animate-bookmark-fill'
+              isAnimating && action.type === 'bookmark' && 'animate-bookmark-fill',
+              isAnimating && action.type === 'acknowledge' && 'animate-heart-pulse'
             )}
             aria-label={label}
           >

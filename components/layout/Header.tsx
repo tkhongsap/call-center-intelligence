@@ -58,7 +58,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
         {showBackButton && (
           <button
             onClick={() => router.back()}
-            className="p-2 -ml-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors twitter-focus-ring"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-[#14171A]" />
@@ -83,13 +83,13 @@ export function Header({ title, showBackButton }: HeaderProps) {
         {/* Settings */}
         <Link
           href="/settings"
-          className="p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors"
+          className="p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring"
         >
           <Settings className="w-5 h-5" />
         </Link>
 
         {/* Messages */}
-        <button className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors">
+        <button className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring">
           <MessageSquare className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#1DA1F2] rounded-full" />
         </button>
@@ -97,7 +97,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
         {/* Notifications/Alerts - Twitter Style Bell */}
         <Link
           href="/alerts"
-          className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors"
+          className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring"
         >
           <Bell className={`w-5 h-5 ${isAnimating ? 'animate-wiggle' : ''}`} />
           {alertCount.total > 0 && (

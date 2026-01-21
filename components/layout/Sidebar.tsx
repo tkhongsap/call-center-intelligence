@@ -55,7 +55,7 @@ export function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors ${
+                  className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors twitter-focus-ring ${
                     isActive
                       ? 'font-bold text-[#14171A]'
                       : 'font-medium text-[#14171A] hover:bg-[#E1E8ED]/50'
@@ -80,7 +80,7 @@ export function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors ${
+                  className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors twitter-focus-ring ${
                     isActive
                       ? 'font-bold text-[#14171A]'
                       : 'font-medium text-[#14171A] hover:bg-[#E1E8ED]/50'
@@ -96,7 +96,7 @@ export function Sidebar() {
 
         {/* New Alert Button - Twitter Compose Style */}
         <div className="mt-4 px-2">
-          <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#1DA1F2] hover:bg-[#1a91da] text-white font-bold rounded-full transition-colors shadow-md">
+          <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#1DA1F2] hover:bg-[#1a91da] text-white font-bold rounded-full transition-colors shadow-md twitter-focus-ring-light">
             <Bell className="w-5 h-5" />
             <span>New Alert</span>
           </button>
@@ -105,7 +105,7 @@ export function Sidebar() {
 
       {/* User/Role Section */}
       <div className="px-2 py-3 mt-auto">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors twitter-focus-ring">
           <Avatar
             variant="user"
             initials="JW"
