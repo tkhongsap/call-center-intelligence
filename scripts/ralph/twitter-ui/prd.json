@@ -18,7 +18,7 @@
         "Hover transition utilities",
         "Twitter-style focus ring utilities"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-002",
@@ -34,7 +34,7 @@
         "TypeScript types exported",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
@@ -51,7 +51,7 @@
         "Click handlers via callback props",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-004",
@@ -69,7 +69,7 @@
         "Border bottom separator",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-005",
@@ -87,7 +87,7 @@
         "Navigation still functional",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-006",
@@ -103,7 +103,7 @@
         "Clean border bottom",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-007",
@@ -122,7 +122,7 @@
         "Maintains existing functionality",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-008",
@@ -141,7 +141,7 @@
         "Footer = EngagementBar with View Cases, Watch, Bookmark, Share",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-009",
@@ -158,7 +158,7 @@
         "Footer = EngagementBar with Learn More, Bookmark, Share",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-010",
@@ -175,7 +175,7 @@
         "Footer = EngagementBar with View Batch, Bookmark",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-011",
@@ -193,7 +193,7 @@
         "'Show more' links for expandable sections",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-012",
