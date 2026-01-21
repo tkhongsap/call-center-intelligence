@@ -229,7 +229,7 @@
         "npm run build succeeds",
         "Visual verification in browser complete"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

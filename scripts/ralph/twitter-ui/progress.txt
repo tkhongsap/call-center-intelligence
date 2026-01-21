@@ -236,3 +236,24 @@ Learnings:
 Status: COMPLETE
 ---
 
+=== US-013: Add animations and hover states ===
+Date: Wed Jan 22 2026
+Files changed: components/feed/EngagementBar.tsx, components/feed/HomeContent.tsx, components/layout/Header.tsx, components/layout/Sidebar.tsx, components/pulse/PulseSidebar.tsx
+Changes:
+- Added heart pulse animation (animate-heart-pulse) for acknowledge action button
+- Added smooth slide transition on mobile sidebar drawer (translate-x-full with duration-300)
+- Added Twitter-style focus rings (twitter-focus-ring) to all interactive elements
+- Applied focus states to sidebar nav links, header icons, engagement buttons
+- Applied focus states to "View Insights" button, mobile drawer close button
+- Applied focus states to PulseSidebar trending topics, teams, and show more buttons
+- Mobile drawer now slides in/out smoothly with proper animation sequencing
+- Used requestAnimationFrame for smooth animation trigger on drawer open
+Learnings:
+- requestAnimationFrame ensures CSS transition classes are applied after DOM update
+- translate-x-full combined with transition-transform creates smooth slide effect
+- Sequencing overlay hide after drawer slide-out (setTimeout 300ms) prevents flicker
+- twitter-focus-ring CSS class provides consistent focus styling across components
+- Acknowledge button now uses heart pulse animation matching Twitter's like behavior
+Status: COMPLETE
+---
+
