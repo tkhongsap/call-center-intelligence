@@ -21,20 +21,19 @@ export function SearchBar({ className, placeholder = 'Search cases, alerts...', 
 
   const [query, setQuery] = useState(initialQuery);
   const [isFocused, setIsFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  // Load recent searches from localStorage
-  useEffect(() => {
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
     if (stored) {
       try {
-        setRecentSearches(JSON.parse(stored));
+        return JSON.parse(stored);
       } catch {
-        setRecentSearches([]);
+        return [];
       }
     }
-  }, []);
+    return [];
+  });
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Keyboard shortcut (Cmd/Ctrl + K)
   useEffect(() => {

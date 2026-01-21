@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useLayoutEffect, useState, useCallback, useRef } from 'react';
 import { Bell, MessageSquare, User, ChevronDown } from 'lucide-react';
 import { SearchBar } from '@/components/search/SearchBar';
 import { DemoModeToggle } from '@/components/realtime/DemoModeToggle';
@@ -38,8 +38,9 @@ export function Header({ title }: HeaderProps) {
   });
 
   // Trigger animation when count changes
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (alertCount.total !== prevCountRef.current && prevCountRef.current !== 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Animation trigger is a legitimate pattern for visual feedback
       setIsAnimating(true);
       const timer = setTimeout(() => setIsAnimating(false), 600);
       return () => clearTimeout(timer);

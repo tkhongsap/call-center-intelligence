@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   AlertTriangle,
   FileText,
@@ -153,9 +154,11 @@ export function InboxItem({ item, onMarkAsRead, onMarkAsActioned }: InboxItemPro
         {/* Sender Avatar */}
         <div className="flex-shrink-0">
           {item.sender?.avatarUrl ? (
-            <img
+            <Image
               src={item.sender.avatarUrl}
               alt={item.sender.name}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full"
             />
           ) : (

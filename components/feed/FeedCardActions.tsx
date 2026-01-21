@@ -84,7 +84,7 @@ export function FeedCardActions({
         setActionState('idle');
         setFeedbackMessage(null);
       }, 3000);
-    } catch (error) {
+    } catch {
       setActionState('error');
       setFeedbackMessage('Failed to share. Please try again.');
 

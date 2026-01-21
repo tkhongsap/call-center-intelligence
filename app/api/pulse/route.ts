@@ -116,10 +116,12 @@ export async function GET() {
   const openCasesYesterday = openCasesYesterdayResult[0]?.count || 1;
   const criticalUrgent = criticalUrgentResult[0]?.count || 0;
   const criticalUrgentYesterday = criticalUrgentYesterdayResult[0]?.count || 1;
-  const resolvedToday = resolvedTodayResult[0]?.count || 0;
-  const totalTodayForRate = totalTodayForRateResult[0]?.count || 1;
-  const resolvedYesterday = resolvedYesterdayResult[0]?.count || 0;
-  const totalYesterdayForRate = totalYesterdayForRateResult[0]?.count || 1;
+  // Note: resolvedTodayResult, totalTodayForRateResult, resolvedYesterdayResult, totalYesterdayForRateResult
+  // are intentionally unused - kept for potential future rate calculations based on daily data
+  void resolvedTodayResult;
+  void totalTodayForRateResult;
+  void resolvedYesterdayResult;
+  void totalYesterdayForRateResult;
   const activeAlerts = activeAlertsResult[0]?.count || 0;
 
   // Calculate resolution rates

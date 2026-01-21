@@ -47,7 +47,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
   const [error, setError] = useState<string | null>(null);
   const [newItemsCount, setNewItemsCount] = useState(0);
   const [pendingItems, setPendingItems] = useState<FeedItemWithMeta[]>([]);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const knownItemIds = useRef<Set<string>>(new Set());

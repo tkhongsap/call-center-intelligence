@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { createPolling, POLLING_INTERVALS, type PollingOptions } from '@/lib/polling';
 
-interface UsePollingOptions<T> extends Omit<PollingOptions, 'onError'> {
+interface UsePollingOptions extends Omit<PollingOptions, 'onError'> {
   /** Whether polling is enabled (default: true) */
   enabled?: boolean;
   /** Dependencies that trigger a refresh when changed */
@@ -14,7 +14,7 @@ interface UsePollingOptions<T> extends Omit<PollingOptions, 'onError'> {
   retryDelay?: number;
 }
 
-interface UsePollingResult<T> {
+interface UsePollingResult {
   /** Manually trigger a poll */
   refresh: () => Promise<void>;
   /** Whether a poll is currently in progress */
@@ -49,8 +49,8 @@ interface UsePollingResult<T> {
  */
 export function usePolling<T = void>(
   callback: () => Promise<T>,
-  options: UsePollingOptions<T> = {}
-): UsePollingResult<T> {
+  options: UsePollingOptions = {}
+): UsePollingResult {
   const {
     interval = POLLING_INTERVALS.default,
     immediate = false,

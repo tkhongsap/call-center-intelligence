@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface RelativeTimeProps {
@@ -50,7 +50,8 @@ export function RelativeTime({
   }, [timestamp]);
 
   // Initial mount
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration guard requires setState on mount
     setMounted(true);
     updateTime();
   }, [updateTime]);

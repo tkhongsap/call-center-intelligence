@@ -481,6 +481,7 @@ function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: numb
   return cases;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function seedAlerts(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
   const alerts: schema.NewAlert[] = [];
 
@@ -638,6 +639,7 @@ function seedAlerts(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
   return alerts;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
   // Helper to compute baseline count from current count and percentage change
   const computeBaseline = (current: number, percentChange: number): number => {
@@ -802,6 +804,7 @@ function seedFeedItems(db: ReturnType<typeof drizzle>, alerts: schema.NewAlert[]
   return feedItems;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function seedShares(db: ReturnType<typeof drizzle>, _alerts: schema.NewAlert[], _users: schema.NewUser[]) {
   const shares: schema.NewShare[] = [
     {

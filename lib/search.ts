@@ -5,7 +5,7 @@
 
 import { db } from './db';
 import { cases, type Case } from './db/schema';
-import { and, or, like, eq, gte, lte, sql, desc, asc } from 'drizzle-orm';
+import { and, or, eq, gte, lte } from 'drizzle-orm';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -448,7 +448,8 @@ function extractFlags(query: string): QueryFlags {
 /**
  * Extract remaining keywords after removing matched entities
  */
-function extractKeywords(query: string, parsed: ParsedQuery): string[] {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function extractKeywords(query: string, _parsed: ParsedQuery): string[] {
   let remaining = query.toLowerCase();
 
   // Remove time-related words
