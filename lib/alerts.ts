@@ -243,7 +243,6 @@ export async function generateSpikeAlerts(
   timeWindow: TimeWindow = 'daily'
 ): Promise<NewAlert[]> {
   const spikes = await detectSpikeAlerts(timeWindow);
-  const windowConfig = ALERT_CONFIG.timeWindows[timeWindow];
 
   const newAlerts: NewAlert[] = spikes.map((spike, index) => ({
     id: `alert-spike-${Date.now()}-${index}`,

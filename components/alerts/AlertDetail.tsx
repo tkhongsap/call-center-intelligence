@@ -20,7 +20,7 @@ import {
 import { Badge, SeverityBadge } from '@/components/ui/Badge';
 import { ShareModal } from '@/components/ui/ShareModal';
 import { formatRelativeTime, formatDateTime } from '@/lib/utils';
-import type { Alert, Case } from '@/lib/db/schema';
+import type { Alert } from '@/lib/db/schema';
 
 interface SampleCase {
   id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Flame, RefreshCw, Clock } from 'lucide-react';
 import { TrendingTopicCard } from './TrendingTopicCard';
 import type { TrendingTopicData, TimeWindow } from '@/lib/trending';
@@ -17,8 +17,9 @@ export function TrendingList({ initialTopics = [], initialWindow = '24h', classN
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(initialWindow);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialFetchDone = useRef(false);
 
-  const fetchTopics = async (window: TimeWindow) => {
+  const fetchTopics = useCallback(async (window: TimeWindow) => {
     setLoading(true);
     setError(null);
     try {
@@ -33,14 +34,15 @@ export function TrendingList({ initialTopics = [], initialWindow = '24h', classN
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Only fetch if no initial topics provided
-    if (initialTopics.length === 0) {
+    // Only fetch if no initial topics provided and haven't fetched yet
+    if (initialTopics.length === 0 && !initialFetchDone.current) {
+      initialFetchDone.current = true;
       fetchTopics(timeWindow);
     }
-  }, []);
+  }, [initialTopics.length, timeWindow, fetchTopics]);
 
   const handleWindowChange = (window: TimeWindow) => {
     setTimeWindow(window);

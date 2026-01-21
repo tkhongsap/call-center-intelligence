@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from 'react';
 
@@ -41,6 +42,28 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [intervalMs, setIntervalMsState] = useState(DEFAULT_INTERVAL);
   const [mounted, setMounted] = useState(false);
+  const intervalMsRef = useRef(intervalMs);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    intervalMsRef.current = intervalMs;
+  }, [intervalMs]);
+
+  // Sync demo mode state with the server
+  const syncWithServer = useCallback(async (enabled: boolean, interval?: number) => {
+    try {
+      await fetch('/api/demo-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled,
+          intervalMs: interval ?? intervalMsRef.current
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to sync demo mode with server:', error);
+    }
+  }, []);
 
   // Load persisted state on mount
   useEffect(() => {
@@ -57,23 +80,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     if (storedInterval) {
       setIntervalMsState(parseInt(storedInterval, 10));
     }
-  }, []);
-
-  // Sync demo mode state with the server
-  const syncWithServer = async (enabled: boolean, interval?: number) => {
-    try {
-      await fetch('/api/demo-mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enabled,
-          intervalMs: interval ?? intervalMs
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to sync demo mode with server:', error);
-    }
-  };
+  }, [syncWithServer]);
 
   const toggle = useCallback(async () => {
     setIsLoading(true);
@@ -88,7 +95,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isEnabled, intervalMs]);
+  }, [isEnabled, syncWithServer]);
 
   const enable = useCallback(async () => {
     if (isEnabled) return;
@@ -103,7 +110,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isEnabled, intervalMs]);
+  }, [isEnabled, syncWithServer]);
 
   const disable = useCallback(async () => {
     if (!isEnabled) return;
@@ -118,7 +125,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [isEnabled]);
+  }, [isEnabled, syncWithServer]);
 
   const setIntervalMs = useCallback(async (ms: number) => {
     const clampedMs = Math.max(30000, Math.min(60000, ms));
@@ -129,7 +136,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
       // Update server with new interval
       await syncWithServer(true, clampedMs);
     }
-  }, [isEnabled]);
+  }, [isEnabled, syncWithServer]);
 
   // Prevent hydration mismatch
   if (!mounted) {

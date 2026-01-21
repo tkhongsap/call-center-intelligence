@@ -5,7 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
+  useLayoutEffect,
   type ReactNode,
 } from 'react';
 
@@ -45,7 +45,8 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
   const [mounted, setMounted] = useState(false);
 
   // Load persisted state on mount
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration guard requires setState on mount
     setMounted(true);
     const stored = localStorage.getItem(STORAGE_KEY) as RealtimeMode | null;
     if (stored === 'sse' || stored === 'polling') {

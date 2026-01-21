@@ -67,7 +67,6 @@ export function useSSE(
     reconnectDelay = 3000,
     maxReconnectAttempts = 5,
     onOpen,
-    onClose,
     onError,
     onFallback,
   } = options;
@@ -208,6 +207,7 @@ export function useSSE(
   // Effect to manage connection lifecycle
   useEffect(() => {
     if (enabled && !isFallback) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSE connection management requires setState through connect()
       connect();
     } else {
       close();
