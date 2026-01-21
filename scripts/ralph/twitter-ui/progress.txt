@@ -215,3 +215,24 @@ Learnings:
 Status: COMPLETE
 ---
 
+=== US-012: Update HomeContent layout proportions ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/HomeContent.tsx
+Changes:
+- Set feed column max-width to 600px (Twitter-style fixed width)
+- Set right rail width to 350px with flex-shrink-0 to prevent collapse
+- Removed white card wrapper around feed - cards now render as individual units
+- Added centering container with max-w-[1000px] for proper alignment
+- Made sidebar sticky with top-20 offset to stay visible while scrolling
+- Added mobile responsive behavior with "View Insights" bottom bar button
+- Added mobile sidebar drawer overlay (slides in from right)
+- Hidden sidebar on small screens (lg:hidden / lg:block breakpoints)
+Learnings:
+- flex-shrink-0 is essential for fixed-width columns in flex layouts
+- Sticky positioning on sidebar needs top offset to account for header
+- Mobile drawer pattern uses fixed positioning with z-index layering
+- Document.getElementById approach works for simple toggle without state management
+- max-w-[1000px] with justify-center creates centered Twitter-like layout
+Status: COMPLETE
+---
+

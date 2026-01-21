@@ -210,7 +210,7 @@
         "Responsive behavior on smaller screens",
         "Passes typecheck and lint"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-013",
