@@ -161,11 +161,11 @@ export function AlertFilters() {
 
         {/* Sort */}
         <div className="flex items-center gap-1">
-          <ArrowUpDown className="w-4 h-4 text-slate-400" />
+          <ArrowUpDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
           <select
             value={currentSort}
             onChange={(e) => updateSort(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+            className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
           >
             {sortOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, ChevronRightIcon } from 'lucide-react';
 import { Badge, SeverityBadge, StatusBadge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
 import type { Case } from '@/lib/db/schema';
@@ -38,6 +38,59 @@ function SortHeader({ column, children, currentSortBy, onSort }: SortHeaderProps
   );
 }
 
+function CaseCard({ caseItem, onClick }: { caseItem: Case; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white rounded-lg border border-slate-200 p-4 hover:bg-slate-50 cursor-pointer transition-colors active:bg-slate-100"
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/cases/${caseItem.id}`}
+            className="text-sm font-semibold text-blue-600 hover:text-blue-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {caseItem.caseNumber}
+          </Link>
+          <p className="text-xs text-slate-500 mt-0.5">{formatDate(caseItem.createdAt)}</p>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <SeverityBadge severity={caseItem.severity} />
+          <ChevronRightIcon className="w-4 h-4 text-slate-400" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-slate-500 min-w-[60px]">BU:</span>
+          <span className="text-slate-700 font-medium">{caseItem.businessUnit}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-slate-500 min-w-[60px]">Channel:</span>
+          <span className="text-slate-700 capitalize">{caseItem.channel}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-slate-500 min-w-[60px]">Category:</span>
+          <span className="text-slate-700">{caseItem.category}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+        <StatusBadge status={caseItem.status} />
+        <div className="flex gap-1">
+          {caseItem.riskFlag && (
+            <Badge variant="urgent">Urgent</Badge>
+          )}
+          {caseItem.needsReviewFlag && (
+            <Badge variant="needsReview">Review</Badge>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CaseList({ cases, pagination }: CaseListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -64,8 +117,19 @@ export function CaseList({ cases, pagination }: CaseListProps) {
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="lg:hidden p-4 space-y-3">
+        {cases.map((caseItem) => (
+          <CaseCard
+            key={caseItem.id}
+            caseItem={caseItem}
+            onClick={() => router.push(`/cases/${caseItem.id}`)}
+          />
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -129,9 +193,9 @@ export function CaseList({ cases, pagination }: CaseListProps) {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
-        <div className="text-sm text-slate-600">
+      {/* Pagination - responsive layout */}
+      <div className="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="text-sm text-slate-600 text-center sm:text-left">
           Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
           {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
           {pagination.total} cases
@@ -140,17 +204,17 @@ export function CaseList({ cases, pagination }: CaseListProps) {
           <button
             onClick={() => handlePageChange(pagination.page - 1)}
             disabled={pagination.page === 1}
-            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-slate-600 min-w-[80px] text-center">
             Page {pagination.page} of {pagination.totalPages}
           </span>
           <button
             onClick={() => handlePageChange(pagination.page + 1)}
             disabled={pagination.page === pagination.totalPages}
-            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
