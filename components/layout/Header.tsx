@@ -54,7 +54,8 @@ export function Header({ title, showBackButton }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 h-14 bg-white/80 backdrop-blur-md border-b border-[#E1E8ED] px-4 flex items-center justify-between">
       {/* Left Section: Back Button (conditional) + Title */}
-      <div className="flex items-center gap-3">
+      {/* Add left padding on mobile for hamburger menu */}
+      <div className="flex items-center gap-3 pl-10 lg:pl-0">
         {showBackButton && (
           <button
             onClick={() => router.back()}
@@ -70,15 +71,19 @@ export function Header({ title, showBackButton }: HeaderProps) {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-2">
-        {/* SSE Toggle */}
-        <SSEToggle compact />
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* SSE Toggle - hidden on mobile */}
+        <div className="hidden sm:block">
+          <SSEToggle compact />
+        </div>
 
-        {/* Demo Mode Toggle */}
-        <DemoModeToggle compact />
+        {/* Demo Mode Toggle - hidden on mobile */}
+        <div className="hidden sm:block">
+          <DemoModeToggle compact />
+        </div>
 
-        {/* Search */}
-        <SearchBar className="w-64" />
+        {/* Search - responsive width */}
+        <SearchBar className="w-32 sm:w-40 md:w-64" />
 
         {/* Settings */}
         <Link

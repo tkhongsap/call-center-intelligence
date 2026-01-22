@@ -298,3 +298,46 @@ body {
 .hover\:text-twitter-blue:hover {
   color: var(--twitter-blue);
 }
+
+/* ========================================
+   Safe Area Insets for iOS
+   ======================================== */
+
+/* Padding utilities for safe areas */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.p-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Bottom spacing that accounts for safe area */
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Min height accounting for safe area */
+.min-h-screen-safe {
+  min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+
+/* Bottom position accounting for safe area */
+.bottom-safe {
+  bottom: env(safe-area-inset-bottom, 0px);
+}

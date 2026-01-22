@@ -135,7 +135,7 @@ export default async function AlertsPage({
   return (
     <>
       <Header title="Alerts" />
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Suspense fallback={<div className="h-20 bg-slate-100 rounded-lg animate-pulse mb-4" />}>
           <AlertFilters />
         </Suspense>

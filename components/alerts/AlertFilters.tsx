@@ -73,14 +73,14 @@ export function AlertFilters() {
   }, [router]);
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <Filter className="w-4 h-4 text-slate-500" />
         <span className="font-medium text-slate-700">Filters</span>
         {hasFilters && (
           <button
             onClick={clearAllFilters}
-            className="ml-auto flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+            className="ml-auto flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 min-h-[44px]"
           >
             <X className="w-4 h-4" />
             Clear all
@@ -88,12 +88,12 @@ export function AlertFilters() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         {/* Alert Type */}
         <select
           value={currentType}
           onChange={(e) => updateFilter('type', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Types</option>
           {alertTypes.map((type) => (
@@ -105,7 +105,7 @@ export function AlertFilters() {
         <select
           value={currentSeverity}
           onChange={(e) => updateFilter('severity', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Severities</option>
           {severities.map((sev) => (
@@ -119,7 +119,7 @@ export function AlertFilters() {
         <select
           value={currentStatus}
           onChange={(e) => updateFilter('status', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Statuses</option>
           {statuses.map((status) => (
@@ -133,7 +133,7 @@ export function AlertFilters() {
         <select
           value={currentBu}
           onChange={(e) => updateFilter('bu', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All BUs</option>
           {businessUnits.map((bu) => (
@@ -146,7 +146,7 @@ export function AlertFilters() {
           type="date"
           value={currentStartDate}
           onChange={(e) => updateFilter('startDate', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Start Date"
         />
 
@@ -155,17 +155,17 @@ export function AlertFilters() {
           type="date"
           value={currentEndDate}
           onChange={(e) => updateFilter('endDate', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="End Date"
         />
 
         {/* Sort */}
         <div className="flex items-center gap-1">
-          <ArrowUpDown className="w-4 h-4 text-slate-400" />
+          <ArrowUpDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
           <select
             value={currentSort}
             onChange={(e) => updateSort(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+            className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
           >
             {sortOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

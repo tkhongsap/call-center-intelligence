@@ -177,7 +177,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             placeholder="Search cases"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-12 pr-4 bg-[#E1E8ED] rounded-full text-[#14171A] placeholder-[#657786] text-[15px] twitter-input-focus transition-colors hover:bg-[#d6dce1]"
+            className="w-full h-11 min-h-[44px] pl-12 pr-4 bg-[#E1E8ED] rounded-full text-[#14171A] placeholder-[#657786] text-[15px] twitter-input-focus transition-colors hover:bg-[#d6dce1]"
           />
         </div>
       </form>
@@ -194,7 +194,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             <button
               key={item.topic}
               onClick={() => handleTopicClick(item.topic)}
-              className="w-full px-4 py-3 text-left hover:bg-black/[0.03] transition-colors twitter-focus-ring"
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.03] transition-colors twitter-focus-ring min-h-[48px]"
             >
               <p className="text-[13px] text-[#657786]">{item.category}</p>
               <p className="font-bold text-[15px] text-[#14171A]">{item.topic}</p>
@@ -233,7 +233,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             <button
               key={team.name}
               onClick={() => handleTeamClick(team.name)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group twitter-focus-ring"
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group twitter-focus-ring min-h-[48px]"
             >
               <div>
                 <p className="font-bold text-[15px] text-[#14171A]">{team.name}</p>

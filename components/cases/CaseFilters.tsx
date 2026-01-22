@@ -102,8 +102,8 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
 
   return (
     <>
-    <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <Filter className="w-4 h-4 text-slate-500" />
         <span className="font-medium text-slate-700">Filters</span>
         {hasFilters && (
@@ -117,19 +117,19 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
         )}
         <button
           onClick={() => setShowExportModal(true)}
-          className="ml-auto flex items-center gap-2 h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-colors"
+          className="ml-auto flex items-center gap-2 h-9 px-3 sm:px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-colors min-h-[44px]"
         >
           <Download className="w-4 h-4" />
-          Export
+          <span className="hidden sm:inline">Export</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         {/* Business Unit */}
         <select
           value={currentBu}
           onChange={(e) => updateFilter('bu', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All BUs</option>
           {businessUnits.map((bu) => (
@@ -141,7 +141,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
         <select
           value={currentChannel}
           onChange={(e) => updateFilter('channel', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Channels</option>
           {channels.map((channel) => (
@@ -155,7 +155,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
         <select
           value={currentCategory}
           onChange={(e) => updateFilter('category', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Categories</option>
           {categories.map((cat) => (
@@ -167,7 +167,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
         <select
           value={currentSeverity}
           onChange={(e) => updateFilter('severity', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Severities</option>
           {severities.map((sev) => (
@@ -181,7 +181,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
         <select
           value={currentStatus}
           onChange={(e) => updateFilter('status', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Statuses</option>
           {statuses.map((status) => (
@@ -196,7 +196,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           type="date"
           value={currentStartDate}
           onChange={(e) => updateFilter('startDate', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Start Date"
         />
 
@@ -205,7 +205,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           type="date"
           value={currentEndDate}
           onChange={(e) => updateFilter('endDate', e.target.value)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="End Date"
         />
       </div>

@@ -42,8 +42,8 @@ export function ExportModal({ isOpen, onClose, onExport, totalCount, hasFilters 
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+      {/* Modal - responsive width with mobile margins */}
+      <div className="relative bg-white rounded-xl shadow-xl w-[calc(100%-2rem)] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200">
           <div className="flex items-center justify-between">

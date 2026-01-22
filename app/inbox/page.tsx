@@ -74,7 +74,7 @@ export default async function InboxPage({
   return (
     <>
       <Header title="Inbox" />
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-slate-800">Management Inbox</h2>
           <p className="text-sm text-slate-500 mt-1">

@@ -53,7 +53,7 @@ export default function UploadsPage() {
   return (
     <>
       <Header title="Upload Cases" />
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Page Description */}
           <div>
