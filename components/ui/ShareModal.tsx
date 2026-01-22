@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Send, Users, AlertTriangle } from 'lucide-react';
 
 interface ShareModalProps {
@@ -24,6 +25,8 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
   const [selectedUser, setSelectedUser] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations('share');
+  const tCommon = useTranslations('common');
 
   if (!isOpen) return null;
 
@@ -86,7 +89,7 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
           {/* Recipient selector */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Select Recipient
+              {t('selectRecipients')}
             </label>
             <select
               value={selectedUser}
@@ -94,7 +97,7 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
               required
               className="w-full h-11 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Choose a recipient...</option>
+              <option value="">{t('selectRecipients')}...</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name} - {user.role} ({user.department})
@@ -106,12 +109,12 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
           {/* Message */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Message (optional)
+              {t('addMessage')}
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={isEscalate ? 'Describe why this needs escalation...' : 'Add a note for the recipient...'}
+              placeholder={t('messagePlaceholder')}
               rows={3}
               className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
@@ -124,7 +127,7 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
               onClick={onClose}
               className="flex-1 h-11 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
             <button
               type="submit"
@@ -136,7 +139,7 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
               }`}
             >
               <Send className="w-4 h-4" />
-              {isSubmitting ? 'Sending...' : (isEscalate ? 'Escalate' : 'Share')}
+              {isSubmitting ? tCommon('loading') : t('shareButton')}
             </button>
           </div>
         </form>

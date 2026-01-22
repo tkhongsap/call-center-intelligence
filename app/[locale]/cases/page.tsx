@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
 import { CaseFilters } from '@/components/cases/CaseFilters';
 import { CaseList } from '@/components/cases/CaseList';
@@ -76,10 +77,11 @@ export default async function CasesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const t = await getTranslations('pages.cases');
 
   return (
     <>
-      <Header title="Cases" />
+      <Header title={t('title')} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Suspense fallback={<CasesLoading />}>
           <CasesContent searchParams={params} />

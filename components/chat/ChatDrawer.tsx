@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { MessageSquare, X, Minus, Filter, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage, TypingIndicator, type Message } from './ChatMessage';
@@ -16,6 +17,8 @@ export function ChatDrawer() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const filterContext = useOptionalFilterContext();
+  const t = useTranslations('chat');
+  const tHeader = useTranslations('header');
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -112,7 +115,7 @@ export function ChatDrawer() {
           'bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6',
           isOpen && !isMinimized && 'scale-0 opacity-0'
         )}
-        aria-label="Open chat"
+        aria-label={tHeader('openChat')}
       >
         <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
@@ -137,9 +140,9 @@ export function ChatDrawer() {
               <MessageSquare className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm">AI Assistant</h3>
+              <h3 className="font-semibold text-sm">{t('title')}</h3>
               {!isMinimized && (
-                <p className="text-xs text-blue-100">Ask me anything about your data</p>
+                <p className="text-xs text-blue-100">{t('placeholder')}</p>
               )}
             </div>
           </div>
@@ -157,7 +160,7 @@ export function ChatDrawer() {
                 setIsMinimized(false);
               }}
               className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-              aria-label="Close chat"
+              aria-label={tHeader('closeChat')}
             >
               <X className="w-4 h-4" />
             </button>

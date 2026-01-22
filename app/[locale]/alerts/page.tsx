@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
 import { AlertFilters } from '@/components/alerts/AlertFilters';
 import { AlertCard } from '@/components/alerts/AlertCard';
@@ -84,11 +85,11 @@ function getSpikeTimeWindow(alert: Alert): string | undefined {
   return 'Comparison period';
 }
 
-function AlertList({ alerts, pagination }: AlertsResponse) {
+function AlertList({ alerts, pagination, emptyText }: AlertsResponse & { emptyText: string }) {
   if (alerts.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
-        <p className="text-slate-500">No alerts found</p>
+        <p className="text-slate-500">{emptyText}</p>
       </div>
     );
   }
@@ -122,7 +123,8 @@ function AlertList({ alerts, pagination }: AlertsResponse) {
 
 async function AlertsContent({ searchParams }: { searchParams: SearchParams }) {
   const data = await getAlerts(searchParams);
-  return <AlertList alerts={data.alerts} pagination={data.pagination} />;
+  const t = await getTranslations('pages.alerts');
+  return <AlertList alerts={data.alerts} pagination={data.pagination} emptyText={t('emptyState')} />;
 }
 
 export default async function AlertsPage({
@@ -131,10 +133,11 @@ export default async function AlertsPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const t = await getTranslations('pages.alerts');
 
   return (
     <>
-      <Header title="Alerts" />
+      <Header title={t('title')} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Suspense fallback={<div className="h-20 bg-slate-100 rounded-lg animate-pulse mb-4" />}>
           <AlertFilters />

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Home,
   AlertTriangle,
@@ -15,23 +16,37 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 
-const navigation = [
-  { name: 'Home', href: '/home', icon: Home },
-  { name: 'Alerts', href: '/alerts', icon: AlertTriangle },
-  { name: 'Cases', href: '/cases', icon: FileText },
-  { name: 'Uploads', href: '/uploads', icon: Upload },
-  { name: 'Inbox', href: '/inbox', icon: Inbox },
-  { name: 'Search', href: '/search', icon: Search },
+const navigationItems = [
+  { key: 'home', href: '/home', icon: Home },
+  { key: 'alerts', href: '/alerts', icon: AlertTriangle },
+  { key: 'cases', href: '/cases', icon: FileText },
+  { key: 'uploads', href: '/uploads', icon: Upload },
+  { key: 'inbox', href: '/inbox', icon: Inbox },
+  { key: 'search', href: '/search', icon: Search },
 ];
 
-const secondaryNavigation = [
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+const secondaryNavigationItems = [
+  { key: 'analytics', href: '/analytics', icon: BarChart3 },
+  { key: 'settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations('navigation');
+  const tBrand = useTranslations('brand');
+  const tHeader = useTranslations('header');
+
+  // Helper to create locale-aware hrefs
+  const getLocalizedHref = (href: string) => `/${locale}${href}`;
+
+  // Check if path is active (accounting for locale prefix)
+  const isPathActive = (href: string) => {
+    const localizedHref = getLocalizedHref(href);
+    return pathname === localizedHref || pathname.startsWith(`${localizedHref}/`);
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#E1E8ED] min-h-screen">
@@ -41,20 +56,25 @@ export function Sidebar() {
           <BarChart3 className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-[#14171A]">Call Center</h1>
-          <p className="text-xs text-[#657786]">Intelligence</p>
+          <h1 className="text-base font-bold text-[#14171A]">{tBrand('title')}</h1>
+          <p className="text-xs text-[#657786]">{tBrand('subtitle')}</p>
         </div>
+      </div>
+
+      {/* Language Switcher */}
+      <div className="px-4 py-2">
+        <LanguageSwitcher />
       </div>
 
       {/* Primary Navigation */}
       <nav className="flex-1 px-2 py-2">
         <ul className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          {navigationItems.map((item) => {
+            const isActive = isPathActive(item.href);
             return (
-              <li key={item.name}>
+              <li key={item.key}>
                 <Link
-                  href={item.href}
+                  href={getLocalizedHref(item.href)}
                   className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors twitter-focus-ring ${
                     isActive
                       ? 'font-bold text-[#14171A]'
@@ -62,7 +82,7 @@ export function Sidebar() {
                   }`}
                 >
                   <item.icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                  {item.name}
+                  {t(item.key)}
                 </Link>
               </li>
             );
@@ -74,12 +94,12 @@ export function Sidebar() {
 
         {/* Secondary Navigation */}
         <ul className="space-y-1">
-          {secondaryNavigation.map((item) => {
-            const isActive = pathname === item.href;
+          {secondaryNavigationItems.map((item) => {
+            const isActive = isPathActive(item.href);
             return (
-              <li key={item.name}>
+              <li key={item.key}>
                 <Link
-                  href={item.href}
+                  href={getLocalizedHref(item.href)}
                   className={`flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors twitter-focus-ring ${
                     isActive
                       ? 'font-bold text-[#14171A]'
@@ -87,7 +107,7 @@ export function Sidebar() {
                   }`}
                 >
                   <item.icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                  {item.name}
+                  {t(item.key)}
                 </Link>
               </li>
             );
@@ -98,7 +118,7 @@ export function Sidebar() {
         <div className="mt-4 px-2">
           <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#1DA1F2] hover:bg-[#1a91da] text-white font-bold rounded-full transition-colors shadow-md twitter-focus-ring-light">
             <Bell className="w-5 h-5" />
-            <span>New Alert</span>
+            <span>{tHeader('newAlert')}</span>
           </button>
         </div>
       </nav>

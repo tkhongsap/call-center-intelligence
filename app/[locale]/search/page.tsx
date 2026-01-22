@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Search, Clock, AlertTriangle, Lightbulb } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -25,25 +26,26 @@ function SearchLoading() {
 }
 
 function NoResults({ query }: { query: string }) {
+  const t = useTranslations('pages.search');
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <Search className="w-8 h-8 text-slate-400" />
       </div>
-      <h3 className="text-lg font-medium text-slate-900 mb-2">No results found</h3>
+      <h3 className="text-lg font-medium text-slate-900 mb-2">{t('noResults')}</h3>
       <p className="text-slate-600 mb-6">
         We couldn&apos;t find any cases matching &quot;{query}&quot;
       </p>
       <div className="text-left bg-slate-50 rounded-lg p-4 max-w-md mx-auto">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
           <Lightbulb className="w-4 h-4" />
-          Search tips
+          {t('searchTips')}
         </div>
         <ul className="text-sm text-slate-600 space-y-1">
-          <li>• Try different keywords or synonyms</li>
-          <li>• Use natural language like &quot;urgent cases this week&quot;</li>
-          <li>• Specify a BU or channel like &quot;credit card phone cases&quot;</li>
-          <li>• Check for typos in your search</li>
+          <li>• {t('tip1')}</li>
+          <li>• {t('tip2')}</li>
+          <li>• {t('tip3')}</li>
         </ul>
       </div>
     </div>
@@ -59,6 +61,8 @@ interface PopularSearch {
 function EmptySearch() {
   const [popularSearches, setPopularSearches] = useState<PopularSearch[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations('pages.search');
+  const locale = useLocale();
 
   // Default suggestions to show while loading or if no analytics data
   const defaultSuggestions = [
@@ -95,13 +99,13 @@ function EmptySearch() {
       <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
         <Search className="w-8 h-8 text-blue-500" />
       </div>
-      <h3 className="text-lg font-medium text-slate-900 mb-2">Search for cases</h3>
+      <h3 className="text-lg font-medium text-slate-900 mb-2">{t('title')}</h3>
       <p className="text-slate-600 mb-6">
-        Use natural language to find cases by keywords, BU, channel, severity, or date range.
+        {t('emptyState')}
       </p>
       <div className="text-left max-w-md mx-auto">
         <div className="text-sm font-medium text-slate-700 mb-3">
-          {popularSearches.length > 0 ? 'Popular searches:' : 'Try searching for:'}
+          {t('searchTips')}:
         </div>
         {loading ? (
           <div className="flex flex-wrap gap-2">
@@ -114,7 +118,7 @@ function EmptySearch() {
             {searchesToShow.map((search) => (
               <Link
                 key={search}
-                href={`/search?q=${encodeURIComponent(search)}`}
+                href={`/${locale}/search?q=${encodeURIComponent(search)}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-700 transition-colors"
               >
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -263,9 +267,11 @@ function SearchResultsContent() {
 }
 
 export default function SearchPage() {
+  const t = useTranslations('pages.search');
+
   return (
     <>
-      <Header title="Search" />
+      <Header title={t('title')} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         {/* Search bar at top of results page */}
         <div className="mb-6">

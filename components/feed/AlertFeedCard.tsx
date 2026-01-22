@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { Bell, AlertTriangle, TrendingUp, BarChart3, HelpCircle, ArrowUpRight } from 'lucide-react';
 import { TwitterCard } from './TwitterCard';
 import { EngagementAction, EngagementActionType } from './EngagementBar';
@@ -74,7 +75,7 @@ function getStatusBadgeStyles(status: string) {
   }
 }
 
-function AlertStats({ metadata }: { metadata: AlertMetadata }) {
+function AlertStats({ metadata, t }: { metadata: AlertMetadata; t: (key: string) => string }) {
   if (metadata.baselineValue === undefined || metadata.currentValue === undefined) {
     return null;
   }
@@ -85,19 +86,19 @@ function AlertStats({ metadata }: { metadata: AlertMetadata }) {
   return (
     <div className="flex items-center gap-4 p-3 bg-[#F5F8FA] rounded-xl mt-3 border border-[#E1E8ED]">
       <div className="flex-1">
-        <div className="text-xs text-[#657786] mb-1">Baseline</div>
+        <div className="text-xs text-[#657786] mb-1">{t('alertCard.baseline')}</div>
         <div className="text-lg font-bold text-[#14171A]">{metadata.baselineValue}</div>
       </div>
       <div className="flex items-center">
         <ArrowUpRight className={cn('w-5 h-5', increase ? 'text-red-500' : 'text-green-500 rotate-90')} />
       </div>
       <div className="flex-1">
-        <div className="text-xs text-[#657786] mb-1">Current</div>
+        <div className="text-xs text-[#657786] mb-1">{t('alertCard.current')}</div>
         <div className="text-lg font-bold text-[#14171A]">{metadata.currentValue}</div>
       </div>
       {metadata.percentageChange !== undefined && (
         <div className="flex-1">
-          <div className="text-xs text-[#657786] mb-1">Change</div>
+          <div className="text-xs text-[#657786] mb-1">{t('alertCard.change')}</div>
           <div className={cn('text-lg font-bold', changeColor)}>
             {increase ? '+' : ''}{metadata.percentageChange.toFixed(1)}%
           </div>
@@ -109,6 +110,10 @@ function AlertStats({ metadata }: { metadata: AlertMetadata }) {
 
 export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('feed');
+  const tShare = useTranslations('share');
+  const tFilters = useTranslations('filters');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareType, setShareType] = useState<'share' | 'escalate'>('share');
 
@@ -136,7 +141,7 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
   const handleAction = (actionType: EngagementActionType) => {
     switch (actionType) {
       case 'viewCases':
-        router.push(`/alerts/${alertId}`);
+        router.push(`/${locale}/alerts/${alertId}`);
         break;
       case 'share':
         handleOpenShare('share');
@@ -156,18 +161,40 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
   };
 
   const actions: EngagementAction[] = [
-    { type: 'viewCases', label: 'View' },
+    { type: 'viewCases' },
     { type: 'acknowledge' },
     { type: 'bookmark' },
     { type: 'share' },
     { type: 'escalate' },
   ];
 
+  // Get translated status label
+  const getStatusLabel = (statusKey: string) => {
+    const statusMap: Record<string, string> = {
+      active: tFilters('status.open'),
+      acknowledged: tFilters('status.acknowledged'),
+      resolved: tFilters('status.resolved'),
+      dismissed: tFilters('status.closed'),
+    };
+    return statusMap[statusKey] || statusKey;
+  };
+
+  // Get translated alert type label
+  const getAlertTypeLabel = (typeKey: string) => {
+    const typeMap: Record<string, string> = {
+      spike: tFilters('type.spike'),
+      threshold: tFilters('type.threshold'),
+      urgency: tFilters('type.urgency'),
+      misclassification: tFilters('type.anomaly'),
+    };
+    return typeMap[typeKey] || typeKey;
+  };
+
   return (
     <>
       <TwitterCard
-        authorName="System Alert"
-        authorHandle={`alerts · ${businessUnit}`}
+        authorName={t('systemAlert')}
+        authorHandle={`${t('alerts')} · ${businessUnit}`}
         timestamp={item.createdAt}
         avatarIcon={AlertIcon}
         avatarBgColor={iconStyles.bg}
@@ -180,14 +207,14 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-bold text-[#14171A]">{item.title}</span>
           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium capitalize', getStatusBadgeStyles(status))}>
-            {status}
+            {getStatusLabel(status)}
           </span>
         </div>
 
         {/* Severity and type badges */}
         <div className="flex items-center gap-2 mt-1">
           <SeverityBadge severity={severity} />
-          <span className="text-sm text-[#657786] capitalize">{alertType} Alert</span>
+          <span className="text-sm text-[#657786] capitalize">{getAlertTypeLabel(alertType)} {t('alert')}</span>
           {metadata.category && (
             <Badge variant="default">{metadata.category}</Badge>
           )}
@@ -197,14 +224,14 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
         <p className="text-[#14171A] mt-2">{item.content}</p>
 
         {/* Stats */}
-        <AlertStats metadata={metadata} />
+        <AlertStats metadata={metadata} t={t} />
       </TwitterCard>
 
       <ShareModal
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         onShare={handleShare}
-        title={shareType === 'escalate' ? 'Escalate Alert' : 'Share Alert'}
+        title={shareType === 'escalate' ? `${tShare('title')} - ${t('alert')}` : `${tShare('title')} ${t('alert')}`}
         type={shareType}
       />
     </>

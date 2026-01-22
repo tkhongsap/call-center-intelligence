@@ -2,17 +2,12 @@
 
 import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { X, Filter, ArrowUpDown } from 'lucide-react';
 
-const alertTypes = [
-  { value: 'spike', label: 'Spike' },
-  { value: 'threshold', label: 'Threshold' },
-  { value: 'urgency', label: 'Urgency' },
-  { value: 'misclassification', label: 'Misclassification' },
-];
-
-const severities = ['low', 'medium', 'high', 'critical'];
-const statuses = ['active', 'acknowledged', 'resolved', 'dismissed'];
+const alertTypeKeys = ['spike', 'threshold', 'urgency'] as const;
+const severityKeys = ['low', 'medium', 'high', 'critical'] as const;
+const statusKeys = ['open', 'acknowledged', 'resolved', 'closed'] as const;
 
 const businessUnits = [
   'Beer & Spirits',
@@ -25,16 +20,11 @@ const businessUnits = [
   'Corporate & Events',
 ];
 
-const sortOptions = [
-  { value: 'createdAt:desc', label: 'Newest First' },
-  { value: 'createdAt:asc', label: 'Oldest First' },
-  { value: 'severity:desc', label: 'Severity (High to Low)' },
-  { value: 'severity:asc', label: 'Severity (Low to High)' },
-];
-
 export function AlertFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations('filters');
 
   const currentType = searchParams.get('type') || '';
   const currentSeverity = searchParams.get('severity') || '';
@@ -58,8 +48,8 @@ export function AlertFilters() {
       params.delete(key);
     }
     params.set('page', '1'); // Reset to first page when filtering
-    router.push(`/alerts?${params.toString()}`);
-  }, [router, searchParams]);
+    router.push(`/${locale}/alerts?${params.toString()}`);
+  }, [router, searchParams, locale]);
 
   const updateSort = useCallback((sortValue: string) => {
     const [sortBy, sortOrder] = sortValue.split(':');
@@ -67,25 +57,33 @@ export function AlertFilters() {
     params.set('sortBy', sortBy);
     params.set('sortOrder', sortOrder);
     params.set('page', '1');
-    router.push(`/alerts?${params.toString()}`);
-  }, [router, searchParams]);
+    router.push(`/${locale}/alerts?${params.toString()}`);
+  }, [router, searchParams, locale]);
 
   const clearAllFilters = useCallback(() => {
-    router.push('/alerts');
-  }, [router]);
+    router.push(`/${locale}/alerts`);
+  }, [router, locale]);
+
+  // Sort options with translations
+  const sortOptions = [
+    { value: 'createdAt:desc', label: locale === 'th' ? 'ใหม่สุดก่อน' : 'Newest First' },
+    { value: 'createdAt:asc', label: locale === 'th' ? 'เก่าสุดก่อน' : 'Oldest First' },
+    { value: 'severity:desc', label: locale === 'th' ? 'ความรุนแรง (สูง→ต่ำ)' : 'Severity (High to Low)' },
+    { value: 'severity:asc', label: locale === 'th' ? 'ความรุนแรง (ต่ำ→สูง)' : 'Severity (Low to High)' },
+  ];
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 mb-4">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Filter className="w-4 h-4 text-slate-500" />
-        <span className="font-medium text-slate-700">Filters</span>
+        <span className="font-medium text-slate-700">{t('label') || 'Filters'}</span>
         {hasFilters && (
           <button
             onClick={clearAllFilters}
             className="ml-auto flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 min-h-[44px]"
           >
             <X className="w-4 h-4" />
-            Clear all
+            {t('clearAll')}
           </button>
         )}
       </div>
@@ -97,9 +95,9 @@ export function AlertFilters() {
           onChange={(e) => updateFilter('type', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Types</option>
-          {alertTypes.map((type) => (
-            <option key={type.value} value={type.value}>{type.label}</option>
+          <option value="">{t('allTypes')}</option>
+          {alertTypeKeys.map((typeKey) => (
+            <option key={typeKey} value={typeKey}>{t(`type.${typeKey}`)}</option>
           ))}
         </select>
 
@@ -109,10 +107,10 @@ export function AlertFilters() {
           onChange={(e) => updateFilter('severity', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Severities</option>
-          {severities.map((sev) => (
+          <option value="">{t('allSeverities')}</option>
+          {severityKeys.map((sev) => (
             <option key={sev} value={sev}>
-              {sev.charAt(0).toUpperCase() + sev.slice(1)}
+              {t(`severity.${sev}`)}
             </option>
           ))}
         </select>
@@ -123,10 +121,10 @@ export function AlertFilters() {
           onChange={(e) => updateFilter('status', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Statuses</option>
-          {statuses.map((status) => (
+          <option value="">{t('allStatuses')}</option>
+          {statusKeys.map((status) => (
             <option key={status} value={status}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {t(`status.${status}`)}
             </option>
           ))}
         </select>
@@ -137,7 +135,7 @@ export function AlertFilters() {
           onChange={(e) => updateFilter('bu', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All BUs</option>
+          <option value="">{t('allBUs')}</option>
           {businessUnits.map((bu) => (
             <option key={bu} value={bu}>{bu}</option>
           ))}
@@ -149,7 +147,7 @@ export function AlertFilters() {
           value={currentStartDate}
           onChange={(e) => updateFilter('startDate', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Start Date"
+          placeholder={t('from')}
         />
 
         {/* End Date */}
@@ -158,7 +156,7 @@ export function AlertFilters() {
           value={currentEndDate}
           onChange={(e) => updateFilter('endDate', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="End Date"
+          placeholder={t('to')}
         />
 
         {/* Sort */}

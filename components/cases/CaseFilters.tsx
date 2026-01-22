@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { X, Filter, Download } from 'lucide-react';
 import { ExportModal, ExportFormat } from '@/components/export/ExportModal';
 
@@ -16,7 +17,7 @@ const businessUnits = [
   'Corporate & Events',
 ];
 
-const channels = ['phone', 'email', 'line', 'web'];
+const channelKeys = ['phone', 'email', 'chat', 'web'] as const;
 const categories = [
   'Order Issues',
   'Product Quality',
@@ -31,8 +32,8 @@ const categories = [
   'Corporate & Bulk Orders',
   'Food Safety',
 ];
-const severities = ['low', 'medium', 'high', 'critical'];
-const statuses = ['open', 'in_progress', 'resolved', 'closed'];
+const severityKeys = ['low', 'medium', 'high', 'critical'] as const;
+const statusKeys = ['open', 'inProgress', 'resolved', 'closed'] as const;
 
 interface CaseFiltersProps {
   totalCount?: number;
@@ -41,6 +42,9 @@ interface CaseFiltersProps {
 export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations('filters');
+  const tExport = useTranslations('export');
   const [showExportModal, setShowExportModal] = useState(false);
 
   const currentBu = searchParams.get('bu') || '';
@@ -101,26 +105,26 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
       params.delete(key);
     }
     params.set('page', '1'); // Reset to first page when filtering
-    router.push(`/cases?${params.toString()}`);
-  }, [router, searchParams]);
+    router.push(`/${locale}/cases?${params.toString()}`);
+  }, [router, searchParams, locale]);
 
   const clearAllFilters = useCallback(() => {
-    router.push('/cases');
-  }, [router]);
+    router.push(`/${locale}/cases`);
+  }, [router, locale]);
 
   return (
     <>
     <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 mb-4">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Filter className="w-4 h-4 text-slate-500" />
-        <span className="font-medium text-slate-700">Filters</span>
+        <span className="font-medium text-slate-700">{t('label') || 'Filters'}</span>
         {hasFilters && (
           <button
             onClick={clearAllFilters}
             className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
           >
             <X className="w-4 h-4" />
-            Clear all
+            {t('clearAll')}
           </button>
         )}
         <button
@@ -128,7 +132,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           className="ml-auto flex items-center gap-2 h-9 px-3 sm:px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white transition-colors min-h-[44px]"
         >
           <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Export</span>
+          <span className="hidden sm:inline">{tExport('exportButton')}</span>
         </button>
       </div>
 
@@ -139,7 +143,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           onChange={(e) => updateFilter('bu', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All BUs</option>
+          <option value="">{t('allBUs')}</option>
           {businessUnits.map((bu) => (
             <option key={bu} value={bu}>{bu}</option>
           ))}
@@ -151,10 +155,10 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           onChange={(e) => updateFilter('channel', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Channels</option>
-          {channels.map((channel) => (
+          <option value="">{t('allChannels')}</option>
+          {channelKeys.map((channel) => (
             <option key={channel} value={channel}>
-              {channel.charAt(0).toUpperCase() + channel.slice(1)}
+              {t(`channel.${channel}`)}
             </option>
           ))}
         </select>
@@ -165,7 +169,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           onChange={(e) => updateFilter('category', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Categories</option>
+          <option value="">{t('allCategories')}</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
@@ -177,10 +181,10 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           onChange={(e) => updateFilter('severity', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Severities</option>
-          {severities.map((sev) => (
+          <option value="">{t('allSeverities')}</option>
+          {severityKeys.map((sev) => (
             <option key={sev} value={sev}>
-              {sev.charAt(0).toUpperCase() + sev.slice(1)}
+              {t(`severity.${sev}`)}
             </option>
           ))}
         </select>
@@ -191,10 +195,10 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           onChange={(e) => updateFilter('status', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Statuses</option>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status === 'in_progress' ? 'In Progress' : status.charAt(0).toUpperCase() + status.slice(1)}
+          <option value="">{t('allStatuses')}</option>
+          {statusKeys.map((status) => (
+            <option key={status} value={status === 'inProgress' ? 'in_progress' : status}>
+              {t(`status.${status}`)}
             </option>
           ))}
         </select>
@@ -205,7 +209,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           value={currentStartDate}
           onChange={(e) => updateFilter('startDate', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Start Date"
+          placeholder={t('from')}
         />
 
         {/* End Date */}
@@ -214,7 +218,7 @@ export function CaseFilters({ totalCount = 0 }: CaseFiltersProps) {
           value={currentEndDate}
           onChange={(e) => updateFilter('endDate', e.target.value)}
           className="h-11 sm:h-9 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="End Date"
+          placeholder={t('to')}
         />
       </div>
     </div>
