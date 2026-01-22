@@ -1,15 +1,18 @@
 import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
-import path from 'path';
-import fs from 'fs';
 
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const defaultDbPath = '/home/runner/workspace/data/call-center.db';
+
+function getSqliteDbPath(): string {
+  const envUrl = process.env.DATABASE_URL;
+  if (envUrl && !envUrl.startsWith('postgresql://') && !envUrl.startsWith('postgres://')) {
+    return envUrl;
+  }
+  return defaultDbPath;
 }
 
-const dbPath = process.env.DATABASE_URL || path.join(dataDir, 'call-center.db');
+const dbPath = getSqliteDbPath();
 const sqlite = new Database(dbPath);
 
 export const db = drizzle(sqlite, { schema });
