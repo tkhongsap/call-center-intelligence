@@ -56,6 +56,7 @@
     "closeMenu": "Close navigation menu"
   },
   "filters": {
+    "label": "Filters",
     "allTypes": "All Types",
     "allSeverities": "All Severities",
     "allStatuses": "All Statuses",
