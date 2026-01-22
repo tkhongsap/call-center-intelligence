@@ -35,29 +35,90 @@ export function HomeContent() {
   const effectiveDateRange = filters.dateRange || '30d';
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Main Feed Area - 70% on large screens */}
-      <div className="w-full lg:w-[70%] space-y-6">
-        {/* Today Feed */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="px-4 md:px-6 py-4 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900">Today Feed</h2>
-            <p className="text-sm text-slate-500">Real-time updates from your call center</p>
-          </div>
-          <div className="p-4 md:p-6">
-            <FeedContainer
-              bu={filters.bu || undefined}
-              channel={filters.channel || undefined}
-              dateRange={effectiveDateRange as 'today' | '7d' | '30d'}
-              type={filters.type as 'alert' | 'trending' | 'highlight' | 'upload' | undefined}
-            />
+    <div className="flex justify-center w-full">
+      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-[1000px]">
+        {/* Main Feed Area - Twitter-style max-width 600px */}
+        <div className="w-full lg:w-[600px] lg:flex-shrink-0">
+          {/* Feed cards render as individual units - no wrapper card */}
+          <FeedContainer
+            bu={filters.bu || undefined}
+            channel={filters.channel || undefined}
+            dateRange={effectiveDateRange as 'today' | '7d' | '30d'}
+            type={filters.type as 'alert' | 'trending' | 'highlight' | 'upload' | undefined}
+          />
+        </div>
+
+        {/* Right Rail - Twitter-style width 350px */}
+        <div className="w-full lg:w-[350px] lg:flex-shrink-0 hidden lg:block">
+          <div className="sticky top-20">
+            <PulseSidebar filters={filters} onFilterChange={handleFilterChange} />
           </div>
         </div>
       </div>
 
-      {/* Pulse Sidebar - 30% on large screens */}
-      <div className="w-full lg:w-[30%]">
-        <PulseSidebar filters={filters} onFilterChange={handleFilterChange} />
+      {/* Mobile-only bottom sheet for sidebar on small screens */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E1E8ED] p-4 z-30">
+        <button
+          className="w-full py-3 px-4 bg-[#F5F8FA] hover:bg-[#E1E8ED] rounded-full text-[#14171A] font-medium transition-colors twitter-focus-ring"
+          onClick={() => {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const drawer = sidebar?.querySelector('[data-drawer]') as HTMLElement;
+            if (sidebar) {
+              sidebar.classList.remove('hidden');
+              // Trigger slide-in animation on next frame
+              requestAnimationFrame(() => {
+                if (drawer) {
+                  drawer.classList.remove('translate-x-full');
+                }
+              });
+            }
+          }}
+        >
+          View Insights
+        </button>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      <div
+        id="mobile-sidebar"
+        className="lg:hidden hidden fixed inset-0 z-40 bg-black/50 transition-opacity duration-300"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            const sidebar = e.currentTarget as HTMLElement;
+            const drawer = sidebar.querySelector('[data-drawer]') as HTMLElement;
+            if (drawer) {
+              drawer.classList.add('translate-x-full');
+            }
+            setTimeout(() => sidebar.classList.add('hidden'), 300);
+          }
+        }}
+      >
+        <div
+          data-drawer
+          className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[350px] bg-white overflow-y-auto transform translate-x-full transition-transform duration-300 ease-out"
+        >
+          <div className="p-4">
+            <button
+              className="mb-4 p-2 hover:bg-[#F5F8FA] rounded-full transition-colors twitter-focus-ring"
+              aria-label="Close sidebar"
+              onClick={() => {
+                const sidebar = document.getElementById('mobile-sidebar');
+                const drawer = sidebar?.querySelector('[data-drawer]') as HTMLElement;
+                if (drawer) {
+                  drawer.classList.add('translate-x-full');
+                }
+                setTimeout(() => {
+                  if (sidebar) sidebar.classList.add('hidden');
+                }, 300);
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <PulseSidebar filters={filters} onFilterChange={handleFilterChange} />
+          </div>
+        </div>
       </div>
     </div>
   );

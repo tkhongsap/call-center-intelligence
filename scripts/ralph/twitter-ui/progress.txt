@@ -1,0 +1,259 @@
+# Twitter UI Redesign - Ralph Progress Log
+# Started: Wed Jan 21 09:53:59 +07 2026
+
+=== US-001: Add Twitter color palette to globals.css ===
+Date: Wed Jan 21 2026
+Files changed: app/globals.css
+Changes:
+- Added Twitter color palette CSS variables in :root
+- Added engagement colors (like, retweet, bookmark)
+- Added heartPulse keyframe animation for like button
+- Added bookmarkFill keyframe animation
+- Added hover transition utilities (.twitter-hover-transition, .twitter-action-hover, etc.)
+- Added focus ring utilities (.twitter-focus-ring, .twitter-input-focus)
+- Added utility classes for Twitter colors (text-twitter-*, bg-twitter-*, border-twitter-*)
+Learnings:
+- CSS custom properties work well with Tailwind's @import "tailwindcss"
+- Organized animations and utilities into clear sections for maintainability
+Status: COMPLETE
+---
+
+=== US-002: Create Avatar component ===
+Date: Wed Jan 21 2026
+Files changed: components/ui/Avatar.tsx
+Changes:
+- Created Avatar component with discriminated union types for icon/user variants
+- Implemented three sizes: sm (32px), md (40px), lg (48px)
+- Icon variant accepts LucideIcon with customizable background
+- User variant supports image src with initials fallback
+- Added convenience components: SystemAvatar, UserAvatar
+- Exported types: AvatarSize, AvatarVariant, AvatarProps
+Learnings:
+- Used discriminated union pattern for variant props (variant: 'icon' | 'user')
+- flex-shrink-0 prevents avatar from collapsing in flex containers
+- eslint-disable comment needed for img element (Next.js prefers Image component)
+Status: COMPLETE
+---
+
+=== US-003: Create EngagementBar component ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/EngagementBar.tsx
+Changes:
+- Created EngagementBar with configurable actions array
+- Added action types: viewCases, acknowledge, bookmark, share, escalate, watch, learnMore, viewBatch, comment
+- Implemented Twitter-style hover colors using CSS variable values directly
+- Added bookmark animation trigger using animate-bookmark-fill class
+- Created preset action configurations for each card type
+- Support sm and md size variants
+Learnings:
+- Used direct hex colors (#1DA1F2, #17BF63, #E0245E) for hover states as Tailwind arbitrary values
+- Discriminated action type allows type-safe action handling
+- Preset action arrays make it easy to use consistent actions per card type
+Status: COMPLETE
+---
+
+=== US-004: Create TwitterCard base component ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/TwitterCard.tsx
+Changes:
+- Created TwitterCard base component with Avatar + author + timestamp header
+- Support for @handle or subtitle secondary line
+- Flexible content area via children prop
+- Integrated EngagementBar in footer
+- Added twitter-card-hover class for hover background effect
+- Border bottom using Twitter extra-light color (#E1E8ED)
+- Added SystemTwitterCard wrapper for icon-based cards
+- Added UserTwitterCard wrapper for user avatar cards
+Learnings:
+- Composing Avatar and EngagementBar into TwitterCard creates clean base component
+- Using formatRelativeTime from lib/utils for consistent timestamp formatting
+- min-w-0 on flex children prevents text overflow issues with truncate
+Status: COMPLETE
+---
+
+=== US-005: Redesign Sidebar with light theme ===
+Date: Wed Jan 21 2026
+Files changed: components/layout/Sidebar.tsx
+Changes:
+- Changed to light background (white) with Twitter border color (#E1E8ED)
+- Added pill-shaped hover states (rounded-full) on all nav items
+- Increased icon size to 24px (w-6 h-6) with stroke-[2.5] for active state
+- Added prominent 'New Alert' compose button in Twitter blue with shadow
+- Added user section with Avatar component showing initials, name, @handle and role
+- Integrated Avatar component from UI library
+Learnings:
+- rounded-full creates pill-shaped buttons like Twitter
+- stroke-[2.5] creates bolder icon on active state without changing icon
+- mt-auto on user section pushes it to bottom of flex container
+Status: COMPLETE
+---
+
+=== US-006: Update Header with blur effect ===
+Date: Wed Jan 21 2026
+Files changed: components/layout/Header.tsx
+Changes:
+- Added sticky positioning with backdrop-blur-md for glass effect
+- Simplified to: Back arrow (conditional) | Title | Icons layout
+- Added showBackButton prop with router.back() navigation
+- Twitter-style round icon buttons (rounded-full) with blue hover
+- Clean border using Twitter extra-light color (#E1E8ED)
+- Removed user menu section (moved to sidebar)
+- Reduced height to h-14 for more compact look
+Learnings:
+- bg-white/80 + backdrop-blur-md creates nice glass morphism effect
+- sticky + top-0 + z-40 ensures header stays on top while scrolling
+- useRouter from next/navigation for programmatic back navigation
+Status: COMPLETE
+---
+
+=== US-007: Refactor AlertFeedCard to TwitterCard ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/AlertFeedCard.tsx
+Changes:
+- Refactored to use TwitterCard as base component
+- Avatar shows alert type icon (TrendingUp/BarChart3/AlertTriangle/HelpCircle/Bell)
+- Icon background color varies by severity (red/orange/yellow/blue)
+- Author = 'System Alert', handle = '@alerts · {businessUnit}'
+- Content includes title with status badge, severity badge, description
+- Stats panel styled with Twitter background color (#F5F8FA)
+- EngagementBar with View, Acknowledge, Bookmark, Share, Escalate actions
+- Maintained ShareModal integration for share/escalate functionality
+- Used useRouter for programmatic navigation
+Learnings:
+- Return LucideIcon component type from helper function for dynamic icon rendering
+- TwitterCard's children prop allows flexible content composition
+- Maintain onShare callback for backwards compatibility with parent components
+Status: COMPLETE
+---
+
+=== US-008: Refactor TrendingCard to TwitterCard ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/TrendingCard.tsx
+Changes:
+- Refactored to use TwitterCard as base component
+- Avatar = Flame icon with orange background (bg-orange-100, text-orange-600)
+- Author = Topic name (item.title)
+- AuthorSub = '{caseCount} cases · Trending'
+- Hashtag-style pills for top phrases with Twitter blue styling (#1DA1F2)
+- Sample case as 'quoted tweet' nested card with rounded-xl border and hover effect
+- EngagementBar with View Cases, Watch, Bookmark, Share actions
+- Maintained ShareModal integration for share functionality
+- Used useRouter for programmatic navigation to cases page
+- Simplified trend styling (removed border-l-4 styling in favor of inline indicators)
+Learnings:
+- authorSubtitle prop in TwitterCard allows flexible subtitle without @ prefix
+- Hashtag pills use bg-[#1DA1F2]/10 for light Twitter blue background
+- 'Quoted tweet' style uses rounded-xl border + hover:bg-[#F5F8FA] for nested card effect
+- Removed Link component in favor of router.push for consistent action handling
+Status: COMPLETE
+---
+
+=== US-009: Refactor HighlightCard to TwitterCard ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/HighlightCard.tsx
+Changes:
+- Refactored to use TwitterCard as base component
+- Avatar varies by highlight type: Pin (daily_summary), Lightbulb (top_themes), Star (hot_bu), BarChart3 (resolution_rate)
+- Author name varies by type: Daily Digest, Top Themes, Hot Business Unit, Performance Update
+- AuthorSubtitle pattern: '@insights · {item.title}'
+- Compact inline metrics display using Twitter colors (#F5F8FA bg, #E1E8ED border)
+- EngagementBar with Learn More, Bookmark, Share actions via highlightCardActions preset
+- Removed border-l-4 accent styling in favor of icon-based differentiation
+- Simplified styling by removing custom header and footer sections
+Learnings:
+- getHighlightConfig helper function cleanly maps highlight types to icon/color/author configurations
+- Twitter card pattern works well for all highlight types with authorSubtitle for context
+- Compact metric displays use rounded-xl borders for 'quoted tweet' style nested cards
+- Removed unused imports (Link, ArrowRight, Badge) when switching to TwitterCard pattern
+Status: COMPLETE
+---
+
+=== US-010: Refactor UploadCard to TwitterCard ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/UploadCard.tsx
+Changes:
+- Refactored to use TwitterCard as base component
+- Avatar = Upload icon with status color background (green/blue/red based on status)
+- Author = Uploader name (or 'System' fallback)
+- AuthorSubtitle pattern: '@uploads · {businessUnit} · {channel}'
+- Prominent status badge with Twitter-style rounded pill design
+- Upload details in 'quoted content' style box (bg-[#F5F8FA], rounded-xl, border)
+- Case count displayed prominently with FileCheck icon
+- File name and size shown inline when available
+- Error count shown with AlertCircle icon when present
+- EngagementBar with View Batch and Bookmark actions
+- Removed old border-l-4 accent styling and header/footer sections
+- Simplified code from 181 to 159 lines
+Learnings:
+- getStatusConfig helper returns icon colors and badge styles based on upload status
+- 'Quoted content' style box works well for displaying upload metadata
+- authorSubtitle prop with multiple dot-separated values creates clean Twitter-style subtitle
+- Simplified structure by removing unused Link import and old styled sections
+Status: COMPLETE
+---
+
+=== US-011: Transform PulseSidebar to What's Happening ===
+Date: Wed Jan 21 2026
+Files changed: components/pulse/PulseSidebar.tsx
+Changes:
+- Added pill-shaped search box at top with Twitter styling (#E1E8ED bg, rounded-full)
+- Created 'What's happening' section header with Twitter font styling (text-xl font-extrabold)
+- Trending topics derived from word cloud API data with category labels
+- Added 'Teams to Watch' section showing active business units with case counts
+- Replaced KPITile grid with compact inline metrics using SparklineMini
+- Each KPI row shows icon avatar, label, value, mini sparkline, and change percentage
+- Added 'Show more' expandable links for trending and teams sections
+- Updated all styling to use Twitter color palette (#F5F8FA, #E1E8ED, #657786, #14171A)
+- Maintained QuickFilters integration as optional section at bottom
+- Added useRouter for navigation from search box and clickable items
+Learnings:
+- SparklineMini component provides compact trend visualization without labels
+- Twitter uses #F5F8FA for section backgrounds (light gray) and #E1E8ED for borders
+- 'Show more' toggle pattern is simple with useState controlling slice limits
+- Trending topics can be derived from existing word cloud data with minimal transformation
+- Compact KPI rows (icon + label + value + sparkline + change) are more Twitter-like than cards
+Status: COMPLETE
+---
+
+=== US-012: Update HomeContent layout proportions ===
+Date: Wed Jan 21 2026
+Files changed: components/feed/HomeContent.tsx
+Changes:
+- Set feed column max-width to 600px (Twitter-style fixed width)
+- Set right rail width to 350px with flex-shrink-0 to prevent collapse
+- Removed white card wrapper around feed - cards now render as individual units
+- Added centering container with max-w-[1000px] for proper alignment
+- Made sidebar sticky with top-20 offset to stay visible while scrolling
+- Added mobile responsive behavior with "View Insights" bottom bar button
+- Added mobile sidebar drawer overlay (slides in from right)
+- Hidden sidebar on small screens (lg:hidden / lg:block breakpoints)
+Learnings:
+- flex-shrink-0 is essential for fixed-width columns in flex layouts
+- Sticky positioning on sidebar needs top offset to account for header
+- Mobile drawer pattern uses fixed positioning with z-index layering
+- Document.getElementById approach works for simple toggle without state management
+- max-w-[1000px] with justify-center creates centered Twitter-like layout
+Status: COMPLETE
+---
+
+=== US-013: Add animations and hover states ===
+Date: Wed Jan 22 2026
+Files changed: components/feed/EngagementBar.tsx, components/feed/HomeContent.tsx, components/layout/Header.tsx, components/layout/Sidebar.tsx, components/pulse/PulseSidebar.tsx
+Changes:
+- Added heart pulse animation (animate-heart-pulse) for acknowledge action button
+- Added smooth slide transition on mobile sidebar drawer (translate-x-full with duration-300)
+- Added Twitter-style focus rings (twitter-focus-ring) to all interactive elements
+- Applied focus states to sidebar nav links, header icons, engagement buttons
+- Applied focus states to "View Insights" button, mobile drawer close button
+- Applied focus states to PulseSidebar trending topics, teams, and show more buttons
+- Mobile drawer now slides in/out smoothly with proper animation sequencing
+- Used requestAnimationFrame for smooth animation trigger on drawer open
+Learnings:
+- requestAnimationFrame ensures CSS transition classes are applied after DOM update
+- translate-x-full combined with transition-transform creates smooth slide effect
+- Sequencing overlay hide after drawer slide-out (setTimeout 300ms) prevents flicker
+- twitter-focus-ring CSS class provides consistent focus styling across components
+- Acknowledge button now uses heart pulse animation matching Twitter's like behavior
+Status: COMPLETE
+---
+
