@@ -266,7 +266,7 @@ export default function SearchPage() {
   return (
     <>
       <Header title="Search" />
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         {/* Search bar at top of results page */}
         <div className="mb-6">
           <Suspense fallback={null}>

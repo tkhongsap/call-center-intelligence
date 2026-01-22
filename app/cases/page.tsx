@@ -80,7 +80,7 @@ export default async function CasesPage({
   return (
     <>
       <Header title="Cases" />
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Suspense fallback={<CasesLoading />}>
           <CasesContent searchParams={params} />
         </Suspense>

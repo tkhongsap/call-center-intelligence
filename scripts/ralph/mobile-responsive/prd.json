@@ -1,0 +1,229 @@
+{
+  "project": "Call Center Intelligence - Mobile Responsive",
+  "branchName": "feat/mobile-responsive",
+  "description": "Make the app fully responsive across mobile, tablet, and desktop viewports",
+  "userStories": [
+    {
+      "id": "MR-001",
+      "title": "Create mobile navigation with hamburger menu",
+      "priority": 1,
+      "phase": "Foundation",
+      "file": "components/layout/MobileNav.tsx",
+      "description": "Create a MobileNav component with hamburger button and slide-out drawer containing navigation items. Only visible on screens < 1024px.",
+      "acceptanceCriteria": [
+        "Create MobileNav component in components/layout/MobileNav.tsx",
+        "Hamburger button visible only on screens < lg (1024px)",
+        "Slide-out drawer contains same nav items as Sidebar",
+        "Drawer closes when clicking outside or selecting nav item",
+        "Uses Twitter-inspired styling matching existing Sidebar",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px and 768px viewports"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-002",
+      "title": "Make Sidebar responsive with mobile hiding",
+      "priority": 2,
+      "phase": "Layout",
+      "file": "components/layout/Sidebar.tsx",
+      "description": "Hide desktop Sidebar on mobile and integrate MobileNav into root layout.",
+      "acceptanceCriteria": [
+        "Sidebar hidden on screens < lg using hidden lg:block",
+        "Update app/layout.tsx to include MobileNav component",
+        "MobileNav shows on mobile, Sidebar shows on desktop",
+        "Navigation functional at all breakpoints",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-003",
+      "title": "Make Header responsive with collapsible search",
+      "priority": 3,
+      "phase": "Layout",
+      "file": "components/layout/Header.tsx",
+      "description": "Make header controls responsive - search bar adapts width, toggles hidden on mobile.",
+      "acceptanceCriteria": [
+        "SearchBar width: w-full sm:w-48 md:w-64",
+        "On mobile, search becomes icon that expands to overlay",
+        "SSEToggle and DemoModeToggle hidden on mobile (sm:flex)",
+        "Header actions don't overflow on small screens",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-004",
+      "title": "Make ChatDrawer fully responsive",
+      "priority": 4,
+      "phase": "Layout",
+      "file": "components/chat/ChatDrawer.tsx",
+      "description": "Make chat drawer full-screen on mobile with proper positioning.",
+      "acceptanceCriteria": [
+        "ChatDrawer width: w-full sm:w-96",
+        "ChatDrawer height: h-[100dvh] sm:h-[600px] sm:max-h-[80vh]",
+        "On mobile, drawer opens as full-screen overlay",
+        "Floating button avoids mobile nav overlap",
+        "Input accessible above mobile keyboard",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-005",
+      "title": "Make CaseFilters responsive",
+      "priority": 5,
+      "phase": "Components",
+      "file": "components/cases/CaseFilters.tsx",
+      "description": "Optimize filter grid for tablet and mobile with better stacking.",
+      "acceptanceCriteria": [
+        "Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7",
+        "Export button on separate row on mobile",
+        "Date inputs stack on small screens",
+        "No horizontal scrolling at any breakpoint",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-006",
+      "title": "Make AlertFilters responsive",
+      "priority": 6,
+      "phase": "Components",
+      "file": "components/alerts/AlertFilters.tsx",
+      "description": "Optimize alert filter grid for tablet and mobile.",
+      "acceptanceCriteria": [
+        "Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7",
+        "Sort dropdown full width on mobile",
+        "Date inputs stack on small screens",
+        "No horizontal scrolling at any breakpoint",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-007",
+      "title": "Add responsive padding to all pages",
+      "priority": 7,
+      "phase": "Components",
+      "file": "app/cases/page.tsx",
+      "description": "Update all page layouts to use responsive padding pattern.",
+      "acceptanceCriteria": [
+        "Cases page: p-4 md:p-6",
+        "Alerts page: p-4 md:p-6",
+        "Uploads page: p-4 md:p-6",
+        "Inbox page: p-4 md:p-6",
+        "Search page: p-4 md:p-6",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-008",
+      "title": "Make modals mobile-friendly",
+      "priority": 8,
+      "phase": "Components",
+      "file": "components/cases/ShareModal.tsx",
+      "description": "Ensure ShareModal and ExportModal don't overflow on mobile.",
+      "acceptanceCriteria": [
+        "ShareModal: max-w-md w-[calc(100%-2rem)]",
+        "ExportModal: max-w-md w-[calc(100%-2rem)]",
+        "Modal content scrolls if exceeding viewport",
+        "Touch targets minimum 44px height",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px viewport"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-009",
+      "title": "Make UploadHistory responsive",
+      "priority": 9,
+      "phase": "Components",
+      "file": "components/upload/UploadHistory.tsx",
+      "description": "Optimize upload history display for mobile.",
+      "acceptanceCriteria": [
+        "Stacked card layout on mobile",
+        "Show file name, status, date; hide byte size on mobile",
+        "Row count in condensed format",
+        "Touch-friendly hover states",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px viewport"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-010",
+      "title": "Optimize PulseSidebar for mobile drawer",
+      "priority": 10,
+      "phase": "Polish",
+      "file": "components/feed/PulseSidebar.tsx",
+      "description": "Ensure KPIs display clearly in mobile drawer.",
+      "acceptanceCriteria": [
+        "KPI tiles readable in mobile drawer (85vw)",
+        "Sparkline charts scale appropriately",
+        "Touch targets 44px minimum for trending topics",
+        "Search uses full available width",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser at 375px viewport"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-011",
+      "title": "Add safe area insets for iOS",
+      "priority": 11,
+      "phase": "Polish",
+      "file": "app/layout.tsx",
+      "description": "Add safe area support for iPhone notch and home indicator.",
+      "acceptanceCriteria": [
+        "Viewport meta has viewport-fit=cover",
+        "MobileNav uses pb-safe for home indicator",
+        "ChatDrawer button above safe area on mobile",
+        "Fixed bottom elements respect safe-area-inset-bottom",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "Verify in browser with iPhone simulation"
+      ],
+      "passes": true
+    },
+    {
+      "id": "MR-012",
+      "title": "Final responsive QA audit",
+      "priority": 12,
+      "phase": "Polish",
+      "file": "app/home/page.tsx",
+      "description": "Verify all responsive changes and touch targets.",
+      "acceptanceCriteria": [
+        "All touch targets minimum 44x44px",
+        "No horizontal scroll on any page at 375px",
+        "Navigation works at all routes on mobile",
+        "Chat drawer smooth on mobile",
+        "Filters usable on tablet/mobile",
+        "All modals close correctly on mobile",
+        "npm run typecheck passes",
+        "npm run lint passes",
+        "npm run build passes",
+        "Verify all routes at 375px, 768px, 1024px+"
+      ],
+      "passes": true
+    }
+  ]
+}

@@ -71,29 +71,30 @@ export function UploadHistory({ uploads }: UploadHistoryProps) {
         return (
           <div
             key={upload.id}
-            className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
+            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors gap-3"
           >
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-lg ${status.bgColor}`}>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className={`p-2 rounded-lg ${status.bgColor} flex-shrink-0`}>
                 <StatusIcon className={`w-5 h-5 ${status.color}`} />
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-900">{upload.fileName}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{upload.fileName}</p>
                 <p className="text-xs text-slate-500">
-                  {formatDate(upload.createdAt)} • {formatFileSize(upload.fileSize)}
+                  {formatDate(upload.createdAt)}
+                  <span className="hidden sm:inline"> • {formatFileSize(upload.fileSize)}</span>
                 </p>
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="text-left sm:text-right flex items-center sm:block gap-2 pl-11 sm:pl-0">
               <span className={`text-xs font-medium ${status.color}`}>
                 {status.label}
               </span>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {upload.successCount} of {upload.totalRows} rows
+              <p className="text-xs text-slate-500 sm:mt-0.5">
+                {upload.successCount}/{upload.totalRows} rows
                 {upload.errorCount > 0 && (
                   <span className="text-red-500 ml-1">
-                    ({upload.errorCount} errors)
+                    ({upload.errorCount} err)
                   </span>
                 )}
               </p>

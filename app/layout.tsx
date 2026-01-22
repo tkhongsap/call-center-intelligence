@@ -1,6 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { FilterProvider } from '@/contexts/FilterContext';
 import { DemoModeProvider } from '@/contexts/DemoModeContext';
@@ -22,6 +23,12 @@ export const metadata: Metadata = {
   description: 'Control Tower for call center operations with live feed, alerts, and analytics',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,8 +43,9 @@ export default function RootLayout({
           <DemoModeProvider>
             <RealtimeProvider>
               <div className="flex min-h-screen bg-slate-50">
+                <MobileNav />
                 <Sidebar />
-                <main className="flex-1 flex flex-col">
+                <main className="flex-1 flex flex-col lg:ml-0">
                   {children}
                 </main>
                 <ChatDrawer />

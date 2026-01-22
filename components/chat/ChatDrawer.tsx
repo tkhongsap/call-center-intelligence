@@ -100,27 +100,34 @@ export function ChatDrawer() {
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {/* Floating Chat Button - positioned to avoid mobile nav and safe area */}
       <button
         onClick={() => {
           setIsOpen(true);
           setIsMinimized(false);
         }}
         className={cn(
-          'fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-105',
+          'fixed right-4 sm:right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-105',
+          // Position: above safe area and mobile nav on small screens
+          'bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6',
           isOpen && !isMinimized && 'scale-0 opacity-0'
         )}
         aria-label="Open chat"
       >
-        <MessageSquare className="w-6 h-6" />
+        <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
-      {/* Chat Drawer */}
+      {/* Chat Drawer - full screen on mobile, floating on desktop */}
       <div
         className={cn(
-          'fixed bottom-6 right-6 z-50 w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col transition-all duration-300 ease-out overflow-hidden',
+          'fixed z-50 bg-white shadow-2xl border border-slate-200 flex flex-col transition-all duration-300 ease-out overflow-hidden',
+          // Mobile: full screen overlay
+          'inset-0 sm:inset-auto sm:bottom-6 sm:right-6',
+          // Desktop: fixed size with rounded corners
+          'sm:w-96 sm:rounded-2xl',
           isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
-          isMinimized ? 'h-14' : 'h-[600px] max-h-[80vh]'
+          // Height: full on mobile, constrained on desktop
+          isMinimized ? 'h-14' : 'h-[100dvh] sm:h-[600px] sm:max-h-[80vh]'
         )}
       >
         {/* Header */}

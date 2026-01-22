@@ -54,8 +54,8 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+      {/* Modal - responsive width with mobile margins */}
+      <div className="relative bg-white rounded-xl shadow-xl w-[calc(100%-2rem)] max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className={`px-6 py-4 border-b border-slate-200 ${isEscalate ? 'bg-amber-50' : ''}`}>
           <div className="flex items-center justify-between">
@@ -92,7 +92,7 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               required
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-11 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Choose a recipient...</option>
               {users.map((user) => (
@@ -122,14 +122,14 @@ export function ShareModal({ isOpen, onClose, onShare, title, type }: ShareModal
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              className="flex-1 h-11 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!selectedUser || isSubmitting}
-              className={`flex-1 h-10 px-4 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`flex-1 h-11 px-4 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                 isEscalate
                   ? 'bg-amber-600 hover:bg-amber-700'
                   : 'bg-blue-600 hover:bg-blue-700'
