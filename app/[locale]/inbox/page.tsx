@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
 import { InboxList } from '@/components/inbox/InboxList';
 import type { InboxItemData } from '@/components/inbox/InboxItem';
@@ -70,15 +71,16 @@ export default async function InboxPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const t = await getTranslations('pages.inbox');
 
   return (
     <>
-      <Header title="Inbox" />
+      <Header title={t('title')} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-slate-800">Management Inbox</h2>
+          <h2 className="text-lg font-semibold text-slate-800">{t('title')}</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Shared alerts and cases, and escalated items directed to you.
+            {t('sharedWith')} & {t('escalatedTo')}
           </p>
         </div>
 

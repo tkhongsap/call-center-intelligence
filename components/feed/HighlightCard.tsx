@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { Pin, TrendingUp, TrendingDown, Star, BarChart3, Lightbulb } from 'lucide-react';
 import { TwitterCard } from './TwitterCard';
 import { highlightCardActions, EngagementActionType } from './EngagementBar';
@@ -39,7 +40,7 @@ interface HighlightCardProps {
   className?: string;
 }
 
-function getHighlightConfig(highlightType: string): {
+function getHighlightConfig(highlightType: string, t: (key: string) => string): {
   icon: LucideIcon;
   iconClassName: string;
   bgColor: string;
@@ -51,21 +52,21 @@ function getHighlightConfig(highlightType: string): {
         icon: Lightbulb,
         iconClassName: 'text-purple-600',
         bgColor: 'bg-purple-100',
-        authorName: 'Top Themes',
+        authorName: t('highlightCard.topThemes'),
       };
     case 'hot_bu':
       return {
         icon: Star,
         iconClassName: 'text-red-600',
         bgColor: 'bg-red-100',
-        authorName: 'Hot Business Unit',
+        authorName: t('highlightCard.hotBU'),
       };
     case 'resolution_rate':
       return {
         icon: BarChart3,
         iconClassName: 'text-green-600',
         bgColor: 'bg-green-100',
-        authorName: 'Performance Update',
+        authorName: t('highlightCard.performanceUpdate'),
       };
     case 'daily_summary':
     default:
@@ -73,7 +74,7 @@ function getHighlightConfig(highlightType: string): {
         icon: Pin,
         iconClassName: 'text-blue-600',
         bgColor: 'bg-blue-100',
-        authorName: 'Daily Digest',
+        authorName: t('highlightCard.dailySummary'),
       };
   }
 }
@@ -90,22 +91,25 @@ function TrendIcon({ trend }: { trend?: 'up' | 'down' | 'stable' }) {
 
 export function HighlightCard({ item, className }: HighlightCardProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('feed');
+  const tTrending = useTranslations('feed.trendingCard');
   const metadata: HighlightMetadata = item.metadata ? JSON.parse(item.metadata) : {};
   const highlightType = metadata.highlightType || 'daily_summary';
-  const config = getHighlightConfig(highlightType);
+  const config = getHighlightConfig(highlightType, t);
 
   // Determine the drilldown URL based on highlight type
   const getDrilldownUrl = () => {
     if (metadata.drilldownUrl) return metadata.drilldownUrl;
     switch (highlightType) {
       case 'top_themes':
-        return '/cases';
+        return `/${locale}/cases`;
       case 'hot_bu':
-        return metadata.hotBu ? `/cases?businessUnit=${encodeURIComponent(metadata.hotBu.name)}` : '/cases';
+        return metadata.hotBu ? `/${locale}/cases?businessUnit=${encodeURIComponent(metadata.hotBu.name)}` : `/${locale}/cases`;
       case 'resolution_rate':
-        return '/cases?status=resolved';
+        return `/${locale}/cases?status=resolved`;
       default:
-        return '/cases';
+        return `/${locale}/cases`;
     }
   };
 
@@ -158,7 +162,7 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
                 <span className="text-sm font-medium text-[#14171A]">{theme.name}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#657786]">{theme.count} cases</span>
+                <span className="text-xs text-[#657786]">{theme.count} {tTrending('cases')}</span>
                 <TrendIcon trend={theme.trend} />
               </div>
             </div>
@@ -182,7 +186,7 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
           <p className="text-sm text-[#657786]">{metadata.hotBu.reason}</p>
           {metadata.hotBu.caseCount !== undefined && (
             <div className="mt-1.5 text-xs text-[#657786]">
-              {metadata.hotBu.caseCount} cases today
+              {metadata.hotBu.caseCount} {tTrending('cases')} {t('highlightCard.today')}
             </div>
           )}
         </div>
@@ -195,14 +199,14 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
             <div className="text-2xl font-bold text-green-600">
               {metadata.resolutionRate.current}%
             </div>
-            <div className="text-xs text-[#657786]">Current rate</div>
+            <div className="text-xs text-[#657786]">{t('highlightCard.currentRate')}</div>
           </div>
           <div className="text-[#AAB8C2]">→</div>
           <div>
             <div className="text-lg text-[#AAB8C2] line-through">
               {metadata.resolutionRate.previous}%
             </div>
-            <div className="text-xs text-[#657786]">Previous</div>
+            <div className="text-xs text-[#657786]">{t('highlightCard.previous')}</div>
           </div>
           <div className="ml-auto">
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">

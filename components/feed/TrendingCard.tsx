@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { Flame, TrendingUp, TrendingDown, Minus, MessageSquare } from 'lucide-react';
 import { TwitterCard } from './TwitterCard';
 import { EngagementAction, EngagementActionType } from './EngagementBar';
@@ -58,6 +59,9 @@ function getTrendTextColor(trend: string) {
 
 export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('feed');
+  const tShare = useTranslations('share');
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const metadata: TrendingMetadata = item.metadata ? JSON.parse(item.metadata) : {};
@@ -79,7 +83,7 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
   const handleAction = (actionType: EngagementActionType) => {
     switch (actionType) {
       case 'viewCases':
-        router.push(`/cases?topic=${topicQuery}`);
+        router.push(`/${locale}/cases?topic=${topicQuery}`);
         break;
       case 'share':
         setShareModalOpen(true);
@@ -96,14 +100,14 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
   };
 
   const actions: EngagementAction[] = [
-    { type: 'viewCases', label: 'View' },
+    { type: 'viewCases' },
     { type: 'watch' },
     { type: 'bookmark' },
     { type: 'share' },
   ];
 
   // Build subtitle: "{caseCount} cases · Trending"
-  const authorSubtitle = `${caseCount} cases · Trending`;
+  const authorSubtitle = `${caseCount} ${t('trendingCard.cases')} · ${t('trendingCard.trending')}`;
 
   return (
     <>
@@ -123,7 +127,7 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
           <TrendDirectionIcon trend={trend} />
           {percentageChange !== undefined && (
             <span className={cn('text-sm font-medium', getTrendTextColor(trend))}>
-              {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(0)}% from baseline
+              {percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(0)}% {t('fromBaseline')}
             </span>
           )}
           {metadata.businessUnit && (
@@ -153,7 +157,7 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
           <div className="mt-3 p-3 rounded-xl border border-[#E1E8ED] hover:bg-[#F5F8FA] transition-colors cursor-pointer">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-[#657786]" />
-              <span className="text-sm font-bold text-[#14171A]">Sample Case</span>
+              <span className="text-sm font-bold text-[#14171A]">{t('trendingCard.sampleCase')}</span>
               {metadata.sampleCase.caseNumber && (
                 <span className="text-sm text-[#657786]">#{metadata.sampleCase.caseNumber}</span>
               )}
@@ -169,7 +173,7 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         onShare={handleShare}
-        title="Share Trending Topic"
+        title={`${tShare('title')} ${t('trendingCard.trending')}`}
         type="share"
       />
     </>

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
 import { UploadSection } from './UploadSection';
 import { UploadHistory } from '@/components/upload/UploadHistory';
@@ -49,17 +50,19 @@ async function UploadHistoryContent() {
   return <UploadHistory uploads={data.uploads} />;
 }
 
-export default function UploadsPage() {
+export default async function UploadsPage() {
+  const t = await getTranslations('pages.uploads');
+
   return (
     <>
-      <Header title="Upload Cases" />
+      <Header title={t('title')} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Page Description */}
           <div>
-            <h2 className="text-lg font-semibold text-slate-800">Batch Upload</h2>
+            <h2 className="text-lg font-semibold text-slate-800">{t('uploadFile')}</h2>
             <p className="text-sm text-slate-500 mt-1">
-              Upload case data via CSV file. Cases will be validated and processed automatically.
+              {t('supportedFormats')}
             </p>
           </div>
 
@@ -68,13 +71,13 @@ export default function UploadsPage() {
 
           {/* File Upload Section */}
           <div className="bg-white border border-slate-200 rounded-lg p-6">
-            <h3 className="font-medium text-slate-900 mb-4">Upload File</h3>
+            <h3 className="font-medium text-slate-900 mb-4">{t('uploadFile')}</h3>
             <UploadSection />
           </div>
 
           {/* Upload History */}
           <div>
-            <h3 className="font-medium text-slate-900 mb-4">Recent Uploads</h3>
+            <h3 className="font-medium text-slate-900 mb-4">{t('uploadHistory')}</h3>
             <Suspense fallback={<UploadHistoryLoading />}>
               <UploadHistoryContent />
             </Suspense>

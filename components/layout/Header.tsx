@@ -8,6 +8,7 @@ import { SSEToggle } from '@/components/realtime/SSEToggle';
 import { usePolling, POLLING_INTERVALS } from '@/hooks/usePolling';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface AlertCount {
   total: number;
@@ -22,9 +23,14 @@ interface HeaderProps {
 
 export function Header({ title, showBackButton }: HeaderProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('common');
   const [alertCount, setAlertCount] = useState<AlertCount>({ total: 0, critical: 0, high: 0 });
   const [isAnimating, setIsAnimating] = useState(false);
   const prevCountRef = useRef<number>(0);
+
+  // Helper to create locale-aware hrefs
+  const getLocalizedHref = (href: string) => `/${locale}${href}`;
 
   const fetchAlertCount = useCallback(async () => {
     const response = await fetch('/api/alerts/count');
@@ -60,7 +66,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
           <button
             onClick={() => router.back()}
             className="p-2 -ml-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors twitter-focus-ring"
-            aria-label="Go back"
+            aria-label={t('back')}
           >
             <ArrowLeft className="w-5 h-5 text-[#14171A]" />
           </button>
@@ -87,7 +93,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
 
         {/* Settings */}
         <Link
-          href="/settings"
+          href={getLocalizedHref('/settings')}
           className="p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring"
         >
           <Settings className="w-5 h-5" />
@@ -101,7 +107,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
 
         {/* Notifications/Alerts - Twitter Style Bell */}
         <Link
-          href="/alerts"
+          href={getLocalizedHref('/alerts')}
           className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring"
         >
           <Bell className={`w-5 h-5 ${isAnimating ? 'animate-wiggle' : ''}`} />

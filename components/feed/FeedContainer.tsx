@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useTransition, memo, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Inbox, ChevronUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { cn, formatRelativeTime, debounce } from '@/lib/utils';
 import { AlertFeedCard } from './AlertFeedCard';
@@ -39,6 +40,8 @@ interface FeedContainerProps {
 }
 
 export function FeedContainer({ bu, channel, dateRange, type, className, enablePolling = true }: FeedContainerProps) {
+  const t = useTranslations('feed');
+  const tCommon = useTranslations('common');
   const [items, setItems] = useState<FeedItemWithMeta[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -270,14 +273,14 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mb-4">
           <AlertCircle className="h-6 w-6 text-red-500" />
         </div>
-        <h3 className="text-lg font-medium text-slate-900 mb-2">Unable to load feed</h3>
+        <h3 className="text-lg font-medium text-slate-900 mb-2">{t('unableToLoad')}</h3>
         <p className="text-sm text-slate-500 mb-4 max-w-sm mx-auto">{error}</p>
         <button
           onClick={() => fetchFeed(1, false)}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
-          Try again
+          {tCommon('retry')}
         </button>
       </div>
     );
@@ -287,11 +290,9 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
     return (
       <div className={cn('text-center py-12', className)}>
         <Inbox className="h-12 w-12 mx-auto text-slate-300" />
-        <h3 className="mt-4 text-lg font-medium text-slate-900">No feed items</h3>
+        <h3 className="mt-4 text-lg font-medium text-slate-900">{t('noItems')}</h3>
         <p className="mt-2 text-sm text-slate-500">
-          {type
-            ? `No ${type} items found for the selected filters.`
-            : 'There are no items in the feed right now.'}
+          {t('noItemsDescription')}
         </p>
       </div>
     );
@@ -327,9 +328,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
         >
           <ChevronUp className="h-4 w-4" />
           <span>
-            {newItemsCount === 1
-              ? '1 new item'
-              : `${newItemsCount} new items`}
+            {t('newItems', { count: newItemsCount })}
           </span>
         </button>
       )}
@@ -347,7 +346,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
           <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
         )}
         {!hasMore && items.length > 0 && (
-          <p className="text-sm text-slate-500">No more items</p>
+          <p className="text-sm text-slate-500">{t('endOfFeed')}</p>
         )}
       </div>
     </div>

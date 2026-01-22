@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { Upload, FileCheck, AlertCircle } from 'lucide-react';
 import { TwitterCard } from './TwitterCard';
 import { EngagementAction, EngagementActionType } from './EngagementBar';
@@ -24,44 +25,46 @@ interface UploadCardProps {
   className?: string;
 }
 
-function getStatusConfig(status: string) {
+function getStatusConfig(status: string, t: (key: string) => string) {
   switch (status) {
     case 'completed':
       return {
         iconBg: 'bg-green-100',
         iconColor: 'text-green-600',
         badgeBg: 'bg-green-50 text-green-700 border border-green-200',
-        label: 'Completed',
+        label: t('uploadCard.completed'),
       };
     case 'processing':
       return {
         iconBg: 'bg-blue-100',
         iconColor: 'text-blue-600',
         badgeBg: 'bg-blue-50 text-blue-700 border border-blue-200',
-        label: 'Processing',
+        label: t('uploadCard.processing'),
       };
     case 'failed':
       return {
         iconBg: 'bg-red-100',
         iconColor: 'text-red-600',
         badgeBg: 'bg-red-50 text-red-700 border border-red-200',
-        label: 'Failed',
+        label: t('uploadCard.failed'),
       };
     default:
       return {
         iconBg: 'bg-slate-100',
         iconColor: 'text-slate-600',
         badgeBg: 'bg-slate-50 text-slate-600 border border-slate-200',
-        label: 'Unknown',
+        label: t('uploadCard.unknown'),
       };
   }
 }
 
 export function UploadCard({ item, className }: UploadCardProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('feed');
   const metadata: UploadMetadata = item.metadata ? JSON.parse(item.metadata) : {};
   const status = metadata.status || 'completed';
-  const statusConfig = getStatusConfig(status);
+  const statusConfig = getStatusConfig(status, t);
   const caseCount = metadata.caseCount || 0;
   const batchId = metadata.batchId || item.referenceId || item.id;
   const uploaderName = metadata.uploadedBy || 'System';
@@ -70,8 +73,8 @@ export function UploadCard({ item, className }: UploadCardProps) {
     switch (actionType) {
       case 'viewBatch':
         const viewCasesUrl = batchId
-          ? `/cases?uploadBatch=${encodeURIComponent(batchId)}`
-          : '/cases';
+          ? `/${locale}/cases?uploadBatch=${encodeURIComponent(batchId)}`
+          : `/${locale}/cases`;
         router.push(viewCasesUrl);
         break;
       case 'bookmark':
@@ -82,7 +85,7 @@ export function UploadCard({ item, className }: UploadCardProps) {
   };
 
   const actions: EngagementAction[] = [
-    { type: 'viewBatch', label: 'View Batch' },
+    { type: 'viewBatch' },
     { type: 'bookmark' },
   ];
 
@@ -95,6 +98,13 @@ export function UploadCard({ item, className }: UploadCardProps) {
     subtitleParts.push(metadata.channel);
   }
   const authorSubtitle = subtitleParts.join(' · ');
+
+  // Get error message with proper singular/plural
+  const getErrorMessage = (count: number) => {
+    return count === 1
+      ? t('uploadCard.recordsFailed', { count })
+      : t('uploadCard.recordsFailedPlural', { count });
+  };
 
   return (
     <TwitterCard
@@ -127,7 +137,7 @@ export function UploadCard({ item, className }: UploadCardProps) {
             <FileCheck className="w-4 h-4 text-[#657786]" />
             <div>
               <span className="text-lg font-bold text-[#14171A]">{caseCount.toLocaleString()}</span>
-              <span className="text-sm text-[#657786] ml-1">cases</span>
+              <span className="text-sm text-[#657786] ml-1">{t('uploadCard.cases')}</span>
             </div>
           </div>
 
@@ -149,7 +159,7 @@ export function UploadCard({ item, className }: UploadCardProps) {
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#E1E8ED]">
             <AlertCircle className="w-4 h-4 text-red-500" />
             <span className="text-sm text-red-600">
-              {metadata.errorCount} record{metadata.errorCount === 1 ? '' : 's'} failed to process
+              {getErrorMessage(metadata.errorCount)}
             </span>
           </div>
         )}

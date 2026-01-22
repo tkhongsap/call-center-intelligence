@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Eye,
   Share2,
@@ -46,63 +47,63 @@ const actionConfig: Record<
   {
     icon: LucideIcon;
     activeIcon?: LucideIcon;
-    label: string;
+    labelKey: string;
     hoverClass: string;
     activeClass: string;
   }
 > = {
   viewCases: {
     icon: Eye,
-    label: 'View',
+    labelKey: 'viewCases',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
   acknowledge: {
     icon: CheckCircle,
-    label: 'Acknowledge',
+    labelKey: 'acknowledge',
     hoverClass: 'hover:text-[#17BF63] hover:bg-[#17BF63]/10',
     activeClass: 'text-[#17BF63]',
   },
   bookmark: {
     icon: Bookmark,
     activeIcon: BookmarkCheck,
-    label: 'Bookmark',
+    labelKey: 'bookmark',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
   share: {
     icon: Share2,
-    label: 'Share',
+    labelKey: 'share',
     hoverClass: 'hover:text-[#17BF63] hover:bg-[#17BF63]/10',
     activeClass: 'text-[#17BF63]',
   },
   escalate: {
     icon: AlertTriangle,
-    label: 'Escalate',
+    labelKey: 'escalate',
     hoverClass: 'hover:text-[#E0245E] hover:bg-[#E0245E]/10',
     activeClass: 'text-[#E0245E]',
   },
   watch: {
     icon: TrendingUp,
-    label: 'Watch',
+    labelKey: 'watch',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
   learnMore: {
     icon: FileText,
-    label: 'Learn More',
+    labelKey: 'learnMore',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
   viewBatch: {
     icon: Eye,
-    label: 'View Batch',
+    labelKey: 'viewBatch',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
   comment: {
     icon: MessageCircle,
-    label: 'Comment',
+    labelKey: 'comment',
     hoverClass: 'hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10',
     activeClass: 'text-[#1DA1F2]',
   },
@@ -114,6 +115,7 @@ export function EngagementBar({
   className,
   size = 'md',
 }: EngagementBarProps) {
+  const t = useTranslations('engagement');
   const [animatingAction, setAnimatingAction] = useState<EngagementActionType | null>(null);
 
   const handleClick = (action: EngagementAction) => {
@@ -156,7 +158,7 @@ export function EngagementBar({
       {actions.map((action) => {
         const config = actionConfig[action.type];
         const Icon = action.active && config.activeIcon ? config.activeIcon : config.icon;
-        const label = action.label ?? config.label;
+        const label = action.label ?? t(config.labelKey);
         const isAnimating = animatingAction === action.type;
 
         return (
