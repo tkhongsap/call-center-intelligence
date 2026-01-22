@@ -6,22 +6,30 @@ import { X, Filter, Download } from 'lucide-react';
 import { ExportModal, ExportFormat } from '@/components/export/ExportModal';
 
 const businessUnits = [
-  'Credit Cards',
-  'Mobile Banking',
-  'Online Banking',
-  'Personal Loans',
-  'Mortgage',
-  'Insurance',
+  'Beer & Spirits',
+  'Non-Alcoholic Beverages',
+  'Oishi Beverages',
+  'Oishi Restaurants',
+  'KFC Delivery',
+  'KFC Restaurants',
+  'KFC Loyalty',
+  'Corporate & Events',
 ];
 
 const channels = ['phone', 'email', 'line', 'web'];
 const categories = [
-  'Technical Issue',
-  'Account Access',
-  'Billing Inquiry',
-  'Fraud Report',
-  'Product Question',
-  'Complaint',
+  'Order Issues',
+  'Product Quality',
+  'Delivery Problems',
+  'Payment & Billing',
+  'App & Technical',
+  'Loyalty & Rewards',
+  'Restaurant Experience',
+  'Promotions & Pricing',
+  'Product Availability',
+  'Feedback & Suggestions',
+  'Corporate & Bulk Orders',
+  'Food Safety',
 ];
 const severities = ['low', 'medium', 'high', 'critical'];
 const statuses = ['open', 'in_progress', 'resolved', 'closed'];

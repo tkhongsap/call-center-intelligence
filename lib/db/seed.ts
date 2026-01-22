@@ -1,6 +1,10 @@
 /**
- * Seed script for Call Center Intelligence database
- * Generates deterministic test data for development and demos
+ * Seed script for ThaiBev Call Center Intelligence database
+ * Generates realistic test data for ThaiBev Group companies:
+ * - ThaiBev (Beer & Spirits)
+ * - Sermsuk (Non-Alcoholic Beverages)
+ * - Oishi (Beverages & Restaurants)
+ * - KFC Thailand (Delivery, Restaurants, Loyalty)
  *
  * Run with: npm run db:seed
  */
@@ -11,6 +15,29 @@ import * as schema from './schema';
 import path from 'path';
 import fs from 'fs';
 import { calculateTrendScore } from '../trending';
+import {
+  BUSINESS_UNITS,
+  BU_WEIGHTS,
+  CATEGORIES,
+  SUBCATEGORIES,
+  BU_CATEGORIES,
+  THAI_FIRST_NAMES,
+  THAI_LAST_NAMES,
+  ENGLISH_FIRST_NAMES,
+  ENGLISH_LAST_NAMES,
+  PRODUCTS,
+  KFC_BRANCHES,
+  OISHI_BRANCHES,
+  RETAIL_STORES,
+  CASE_SUMMARIES,
+  KFC_APP_OUTAGE_SUMMARIES,
+  OISHI_QUALITY_SUMMARIES,
+  CHANG_PROMO_SUMMARIES,
+  ALERT_TEMPLATES,
+  TRENDING_TOPICS_TEMPLATES,
+  type BusinessUnit,
+  type Category,
+} from './seed-data';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -31,11 +58,11 @@ class SeededRandom {
     return this.seed / 0x7fffffff;
   }
 
-  pick<T>(arr: T[]): T {
+  pick<T>(arr: readonly T[]): T {
     return arr[Math.floor(this.next() * arr.length)];
   }
 
-  pickMultiple<T>(arr: T[], count: number): T[] {
+  pickMultiple<T>(arr: readonly T[], count: number): T[] {
     const shuffled = [...arr].sort(() => this.next() - 0.5);
     return shuffled.slice(0, count);
   }
@@ -47,116 +74,29 @@ class SeededRandom {
   bool(probability = 0.5): boolean {
     return this.next() < probability;
   }
+
+  // Weighted random selection
+  weightedPick<T extends string>(weights: Record<T, number>): T {
+    const entries = Object.entries(weights) as [T, number][];
+    const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
+    let random = this.next() * totalWeight;
+
+    for (const [item, weight] of entries) {
+      random -= weight;
+      if (random <= 0) return item;
+    }
+
+    return entries[0][0];
+  }
 }
 
 const rng = new SeededRandom(SEED);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Seed Data Constants
-// ═══════════════════════════════════════════════════════════════════════════════
-const BUSINESS_UNITS = [
-  'Credit Cards', 'Mortgages', 'Personal Loans', 'Auto Finance',
-  'Savings Accounts', 'Checking Accounts', 'Investments', 'Insurance',
-  'Business Banking', 'Wealth Management', 'Mobile Banking', 'Online Banking',
-  'Customer Support', 'Fraud Prevention', 'Collections'
-];
-
-const CHANNELS: Array<'phone' | 'email' | 'line' | 'web'> = ['phone', 'email', 'line', 'web'];
-
-const CATEGORIES = [
-  'Account Access', 'Payment Issues', 'Technical Support', 'Billing Dispute',
-  'Product Inquiry', 'Complaint', 'Feedback', 'Cancellation Request',
-  'Fraud Report', 'Documentation Request', 'Rate Inquiry', 'Balance Inquiry',
-  'Card Activation', 'PIN Reset', 'Statement Request'
-];
-
-const SUBCATEGORIES: Record<string, string[]> = {
-  'Account Access': ['Login Issues', 'Password Reset', 'Account Locked', 'MFA Problems'],
-  'Payment Issues': ['Failed Transaction', 'Double Charge', 'Delayed Payment', 'Refund Request'],
-  'Technical Support': ['App Crash', 'Website Error', 'Slow Performance', 'Feature Not Working'],
-  'Billing Dispute': ['Incorrect Amount', 'Unauthorized Charge', 'Missing Credit', 'Late Fee'],
-  'Fraud Report': ['Suspicious Activity', 'Identity Theft', 'Card Skimming', 'Phishing Attempt'],
-};
-
-const CUSTOMER_NAMES = [
-  'John Smith', 'Maria Garcia', 'James Johnson', 'Sarah Williams', 'Michael Brown',
-  'Jennifer Davis', 'Robert Miller', 'Linda Wilson', 'David Moore', 'Elizabeth Taylor',
-  'Christopher Anderson', 'Patricia Thomas', 'Daniel Jackson', 'Barbara White', 'Matthew Harris',
-  'Nancy Martin', 'Anthony Thompson', 'Karen Garcia', 'Mark Martinez', 'Lisa Robinson'
-];
-
-const CASE_SUMMARIES: Record<string, string[]> = {
-  'Account Access': [
-    'Customer unable to log into mobile banking app',
-    'Password reset not working after multiple attempts',
-    'Account locked after failed login attempts',
-    'Two-factor authentication not receiving codes',
-  ],
-  'Payment Issues': [
-    'Payment failed but amount deducted from account',
-    'Customer charged twice for single transaction',
-    'Payment pending for more than 5 business days',
-    'Refund not received after 30 days',
-  ],
-  'Technical Support': [
-    'Mobile app crashes on startup',
-    'Unable to view account statements online',
-    'Transfer feature not working properly',
-    'Push notifications not being received',
-  ],
-  'Billing Dispute': [
-    'Customer disputes charge from merchant',
-    'Unauthorized subscription charge on statement',
-    'Missing cashback reward credit',
-    'Late fee charged despite on-time payment',
-  ],
-  'Fraud Report': [
-    'Suspicious transactions from foreign country',
-    'Customer reports stolen card used online',
-    'Potential identity theft - new accounts opened',
-    'Phishing email claiming to be from bank',
-  ],
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Predicted Risk Scenario Summaries
-// These summaries contain specific terms that will create prediction patterns
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Scenario 1: "wire transfer" - 3+ consecutive day increase
-const WIRE_TRANSFER_SUMMARIES = [
-  'Customer reports failed wire transfer to international account',
-  'Wire transfer funds not received after 5 business days',
-  'Unable to initiate wire transfer through online banking',
-  'Wire transfer rejected with no explanation provided',
-  'Customer disputes wire transfer fee charges',
-];
-
-// Scenario 2: "system outage" - Approaching 85% of threshold (100)
-const SYSTEM_OUTAGE_SUMMARIES = [
-  'System outage preventing account access',
-  'Unable to complete transactions due to system outage',
-  'Customer impacted by system outage during payment',
-  'System outage caused double billing issue',
-  'Scheduled payment failed during system outage',
-];
-
-// Scenario 3: "overdraft fee" - Accelerating growth (rapid recent increase)
-const OVERDRAFT_FEE_SUMMARIES = [
-  'Customer disputes multiple overdraft fee charges',
-  'Requesting overdraft fee waiver due to bank error',
-  'Excessive overdraft fee complaints after balance change',
-  'Overdraft fee charged despite positive balance',
-  'Customer unhappy with repeated overdraft fee assessments',
-];
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // Helper Functions
 // ═══════════════════════════════════════════════════════════════════════════════
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _generateId(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
-}
+
+const CHANNELS: Array<'phone' | 'email' | 'line' | 'web'> = ['phone', 'email', 'line', 'web'];
 
 function generateCaseNumber(index: number): string {
   return `CC-${String(index).padStart(6, '0')}`;
@@ -173,26 +113,83 @@ function getRandomDateInRange(minDaysAgo: number, maxDaysAgo: number): string {
   return getDateInRange(daysAgo);
 }
 
+function generateCustomerName(): string {
+  // 70% Thai names, 30% English names
+  if (rng.bool(0.7)) {
+    return `${rng.pick(THAI_FIRST_NAMES)} ${rng.pick(THAI_LAST_NAMES)}`;
+  }
+  return `${rng.pick(ENGLISH_FIRST_NAMES)} ${rng.pick(ENGLISH_LAST_NAMES)}`;
+}
+
+function generateLotNumber(): string {
+  const year = rng.int(2024, 2025);
+  const month = String(rng.int(1, 12)).padStart(2, '0');
+  const day = String(rng.int(1, 28)).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function generateQuantity(): string {
+  return String(rng.int(2, 20));
+}
+
+function processSummaryTemplate(template: string): string {
+  return template
+    .replace(/\{\{lot\}\}/g, generateLotNumber())
+    .replace(/\{\{quantity\}\}/g, generateQuantity());
+}
+
+function getSummaryForCase(businessUnit: BusinessUnit, category: Category): string {
+  const buSummaries = CASE_SUMMARIES[businessUnit];
+  if (!buSummaries) return `Customer inquiry regarding ${category.toLowerCase()} for ${businessUnit}`;
+
+  const categorySummaries = buSummaries[category];
+  if (!categorySummaries || categorySummaries.length === 0) {
+    // Generate a generic summary with context
+    const product = rng.pick(PRODUCTS[businessUnit] || ['product']);
+    return `Customer reported ${category.toLowerCase()} issue with ${product}`;
+  }
+
+  return processSummaryTemplate(rng.pick(categorySummaries));
+}
+
+function getLocationForBU(businessUnit: BusinessUnit): string | null {
+  if (businessUnit === 'KFC Delivery' || businessUnit === 'KFC Restaurants' || businessUnit === 'KFC Loyalty') {
+    return rng.pick(KFC_BRANCHES);
+  }
+  if (businessUnit === 'Oishi Restaurants') {
+    return rng.pick(OISHI_BRANCHES);
+  }
+  if (businessUnit === 'Beer & Spirits' || businessUnit === 'Non-Alcoholic Beverages' || businessUnit === 'Oishi Beverages') {
+    return rng.pick(RETAIL_STORES);
+  }
+  return null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Seed Functions
 // ═══════════════════════════════════════════════════════════════════════════════
 function seedUsers(db: ReturnType<typeof drizzle>) {
+  const thaiManagerNames = [
+    'สุรศักดิ์ วงศ์ประเสริฐ', 'พรรณี จันทร์เจริญ', 'วิชัย พิทักษ์ธรรม',
+    'อรุณี สุขสมบูรณ์', 'ธนกร เจริญกิจ', 'มาลี ศรีสุข',
+  ];
+
   const users: schema.NewUser[] = [
     // Admins
     {
       id: 'user-admin-1',
-      name: 'Alex Chen',
-      email: 'alex.chen@company.com',
+      name: 'ธนพล ธนะวัฒน์',
+      email: 'thanapol.t@thaibev.com',
       role: 'admin',
       businessUnit: null,
       avatarUrl: null,
       createdAt: getDateInRange(365),
     },
     // BU Managers
-    ...BUSINESS_UNITS.slice(0, 5).map((bu, i) => ({
+    ...BUSINESS_UNITS.slice(0, 6).map((bu, i) => ({
       id: `user-manager-${i + 1}`,
-      name: rng.pick(CUSTOMER_NAMES),
-      email: `manager${i + 1}@company.com`,
+      name: thaiManagerNames[i] || generateCustomerName(),
+      email: `manager${i + 1}@thaibev.com`,
       role: 'bu_manager' as const,
       businessUnit: bu,
       avatarUrl: null,
@@ -201,8 +198,8 @@ function seedUsers(db: ReturnType<typeof drizzle>) {
     // Supervisors
     ...Array.from({ length: 10 }, (_, i) => ({
       id: `user-supervisor-${i + 1}`,
-      name: rng.pick(CUSTOMER_NAMES),
-      email: `supervisor${i + 1}@company.com`,
+      name: generateCustomerName(),
+      email: `supervisor${i + 1}@thaibev.com`,
       role: 'supervisor' as const,
       businessUnit: rng.pick(BUSINESS_UNITS),
       avatarUrl: null,
@@ -219,15 +216,21 @@ function seedCases(db: ReturnType<typeof drizzle>, count: number) {
   const cases: schema.NewCase[] = [];
 
   for (let i = 0; i < count; i++) {
-    const category = rng.pick(CATEGORIES);
+    // Weighted business unit selection
+    const businessUnit = rng.weightedPick(BU_WEIGHTS);
+
+    // Get category relevant to business unit
+    const relevantCategories = BU_CATEGORIES[businessUnit];
+    const category = rng.pick(relevantCategories);
+
     const subcategories = SUBCATEGORIES[category];
-    const summaries = CASE_SUMMARIES[category] || CASE_SUMMARIES['Technical Support'];
+    const subcategory = subcategories ? rng.pick(subcategories) : null;
 
     const createdAt = getRandomDateInRange(0, 30);
     const status = rng.pick(['open', 'in_progress', 'resolved', 'closed'] as const);
 
     // Higher chance of negative sentiment for certain categories
-    const isNegativeCategory = ['Complaint', 'Fraud Report', 'Billing Dispute'].includes(category);
+    const isNegativeCategory = ['Food Safety', 'Order Issues', 'Delivery Problems', 'Product Quality'].includes(category);
     const sentimentWeights = isNegativeCategory
       ? ['negative', 'negative', 'negative', 'neutral', 'positive']
       : ['positive', 'neutral', 'neutral', 'negative'];
@@ -238,20 +241,27 @@ function seedCases(db: ReturnType<typeof drizzle>, count: number) {
     const riskFlag = sentiment === 'negative' && ['high', 'critical'].includes(severity) && rng.bool(0.3);
     const needsReviewFlag = rng.bool(0.1);
 
+    // Generate summary with location context
+    let summary = getSummaryForCase(businessUnit, category);
+    const location = getLocationForBU(businessUnit);
+    if (location && rng.bool(0.4)) {
+      summary = `${summary} - ${location}`;
+    }
+
     cases.push({
       id: `case-${i + 1}`,
       caseNumber: generateCaseNumber(i + 1),
       channel: rng.pick(CHANNELS),
       status,
       category,
-      subcategory: subcategories ? rng.pick(subcategories) : null,
+      subcategory,
       sentiment,
       severity,
       riskFlag,
       needsReviewFlag,
-      businessUnit: rng.pick(BUSINESS_UNITS),
-      summary: rng.pick(summaries),
-      customerName: rng.pick(CUSTOMER_NAMES),
+      businessUnit,
+      summary,
+      customerName: generateCustomerName(),
       agentId: `agent-${rng.int(1, 50)}`,
       assignedTo: rng.bool(0.7) ? `user-supervisor-${rng.int(1, 10)}` : null,
       createdAt,
@@ -273,9 +283,9 @@ function seedCases(db: ReturnType<typeof drizzle>, count: number) {
 
 /**
  * Seeds additional cases to create specific prediction scenarios:
- * 1. Wire Transfer: 3+ consecutive day increase (day0: 2, day1: 4, day2: 7, day3: 12)
- * 2. System Outage: Approaching 85% of 100 threshold (creates ~88 cases in last 7 days)
- * 3. Overdraft Fee: Accelerating growth (earlier: 3->4, recent: 6->12)
+ * 1. KFC App Outage: 300% increase in App & Technical issues
+ * 2. Oishi Green Tea Quality: Multiple quality complaints with same lot
+ * 3. Chang Promotion Error: Spike in promotion issues
  */
 function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: number): schema.NewCase[] {
   const cases: schema.NewCase[] = [];
@@ -285,24 +295,25 @@ function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: numb
   const createPredictionCase = (
     daysAgo: number,
     summary: string,
-    businessUnit: string,
-    category: string
+    businessUnit: BusinessUnit,
+    category: Category
   ): schema.NewCase => {
     const createdAt = getDateInRange(daysAgo);
+    const subcategories = SUBCATEGORIES[category];
     return {
       id: `case-${caseIndex++}`,
       caseNumber: generateCaseNumber(caseIndex),
       channel: rng.pick(CHANNELS),
       status: rng.pick(['open', 'in_progress', 'resolved', 'closed'] as const),
       category,
-      subcategory: null,
+      subcategory: subcategories ? rng.pick(subcategories) : null,
       sentiment: rng.pick(['negative', 'negative', 'neutral'] as const),
       severity: rng.pick(['medium', 'high'] as const),
       riskFlag: rng.bool(0.2),
       needsReviewFlag: rng.bool(0.1),
       businessUnit,
-      summary,
-      customerName: rng.pick(CUSTOMER_NAMES),
+      summary: processSummaryTemplate(summary),
+      customerName: generateCustomerName(),
       agentId: `agent-${rng.int(1, 50)}`,
       assignedTo: rng.bool(0.7) ? `user-supervisor-${rng.int(1, 10)}` : null,
       createdAt,
@@ -312,158 +323,114 @@ function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: numb
   };
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // Scenario 1: Wire Transfer - Consecutive Increase (3+ days)
-  // Day 3 ago: 2 cases, Day 2 ago: 4 cases, Day 1 ago: 7 cases, Day 0: 12 cases
-  // This creates a clear consecutive rising pattern
+  // Scenario 1: KFC Delivery App Outage
+  // Spike in "App Crash" and "Payment Failed" cases - 300% increase
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Day 3 ago - 2 cases
-  for (let i = 0; i < 2; i++) {
+  // Day 3 ago - 3 cases (baseline)
+  for (let i = 0; i < 3; i++) {
     cases.push(createPredictionCase(
       3,
-      rng.pick(WIRE_TRANSFER_SUMMARIES),
-      'Personal Loans',
-      'Payment Issues'
+      rng.pick(KFC_APP_OUTAGE_SUMMARIES),
+      'KFC Delivery',
+      'App & Technical'
     ));
   }
 
-  // Day 2 ago - 4 cases
-  for (let i = 0; i < 4; i++) {
+  // Day 2 ago - 5 cases
+  for (let i = 0; i < 5; i++) {
     cases.push(createPredictionCase(
       2,
-      rng.pick(WIRE_TRANSFER_SUMMARIES),
-      'Personal Loans',
-      'Payment Issues'
+      rng.pick(KFC_APP_OUTAGE_SUMMARIES),
+      'KFC Delivery',
+      'App & Technical'
     ));
   }
 
-  // Day 1 ago - 7 cases
-  for (let i = 0; i < 7; i++) {
+  // Day 1 ago - 10 cases
+  for (let i = 0; i < 10; i++) {
     cases.push(createPredictionCase(
       1,
-      rng.pick(WIRE_TRANSFER_SUMMARIES),
-      'Personal Loans',
-      'Payment Issues'
+      rng.pick(KFC_APP_OUTAGE_SUMMARIES),
+      'KFC Delivery',
+      'App & Technical'
     ));
   }
 
-  // Today - 12 cases
-  for (let i = 0; i < 12; i++) {
+  // Today - 18 cases (300% increase)
+  for (let i = 0; i < 18; i++) {
     cases.push(createPredictionCase(
       0,
-      rng.pick(WIRE_TRANSFER_SUMMARIES),
-      'Personal Loans',
-      'Payment Issues'
+      rng.pick(KFC_APP_OUTAGE_SUMMARIES),
+      'KFC Delivery',
+      'App & Technical'
     ));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // Scenario 2: System Outage - Approaching Threshold (85-95% of 100)
-  // Creates ~88 cases over the last 7 days to approach 100 threshold
-  // Baseline (days 7-14): ~20 cases total
-  // Current (days 0-7): ~88 cases total
+  // Scenario 2: Oishi Green Tea Quality Issue
+  // Multiple "Taste Complaint" and "Foreign Object" reports with same lot number
   // ═══════════════════════════════════════════════════════════════════════════════
+
+  const problematicLot = '2025-01-10';
 
   // Baseline period (7-14 days ago) - lower volume
   for (let day = 14; day >= 7; day--) {
-    const casesPerDay = rng.int(2, 4); // ~3 per day = ~24 total
+    const casesPerDay = rng.int(1, 2);
     for (let i = 0; i < casesPerDay; i++) {
       cases.push(createPredictionCase(
         day,
-        rng.pick(SYSTEM_OUTAGE_SUMMARIES),
-        'Mobile Banking',
-        'Technical Support'
+        rng.pick(OISHI_QUALITY_SUMMARIES).replace('{{lot}}', generateLotNumber()),
+        'Oishi Beverages',
+        'Product Quality'
       ));
     }
   }
 
-  // Current period (0-7 days ago) - high volume approaching threshold
+  // Current period (0-7 days ago) - spike with same lot
   for (let day = 6; day >= 0; day--) {
-    const casesPerDay = rng.int(10, 15); // ~12-13 per day = ~88 total
+    const casesPerDay = rng.int(3, 5);
     for (let i = 0; i < casesPerDay; i++) {
+      // 80% of cases mention the problematic lot
+      const lot = rng.bool(0.8) ? problematicLot : generateLotNumber();
       cases.push(createPredictionCase(
         day,
-        rng.pick(SYSTEM_OUTAGE_SUMMARIES),
-        'Mobile Banking',
-        'Technical Support'
+        rng.pick(OISHI_QUALITY_SUMMARIES).replace('{{lot}}', lot),
+        'Oishi Beverages',
+        'Product Quality'
       ));
     }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // Scenario 3: Overdraft Fee - Accelerating Growth
-  // Earlier period growth: 3->4 (33% growth)
-  // Recent period growth: 6->12 (100% growth) - much faster
+  // Scenario 3: Chang Beer Promotion Error
+  // Threshold breach - 50+ cases in 24 hours for promotion issues
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Day 6 ago - 3 cases (baseline start)
-  for (let i = 0; i < 3; i++) {
-    cases.push(createPredictionCase(
-      6,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
+  // Baseline (days 7-3 ago) - normal volume
+  for (let day = 7; day >= 3; day--) {
+    const casesPerDay = rng.int(2, 4);
+    for (let i = 0; i < casesPerDay; i++) {
+      cases.push(createPredictionCase(
+        day,
+        rng.pick(CHANG_PROMO_SUMMARIES),
+        'Beer & Spirits',
+        'Promotions & Pricing'
+      ));
+    }
   }
 
-  // Day 5 ago - 4 cases (33% growth from day 6)
-  for (let i = 0; i < 4; i++) {
-    cases.push(createPredictionCase(
-      5,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
-  }
-
-  // Day 4 ago - 4 cases (stable)
-  for (let i = 0; i < 4; i++) {
-    cases.push(createPredictionCase(
-      4,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
-  }
-
-  // Day 3 ago - 5 cases (slight uptick)
-  for (let i = 0; i < 5; i++) {
-    cases.push(createPredictionCase(
-      3,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
-  }
-
-  // Day 2 ago - 6 cases (acceleration begins)
-  for (let i = 0; i < 6; i++) {
-    cases.push(createPredictionCase(
-      2,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
-  }
-
-  // Day 1 ago - 9 cases (50% growth)
-  for (let i = 0; i < 9; i++) {
-    cases.push(createPredictionCase(
-      1,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
-  }
-
-  // Today - 15 cases (67% growth - clear acceleration)
-  for (let i = 0; i < 15; i++) {
-    cases.push(createPredictionCase(
-      0,
-      rng.pick(OVERDRAFT_FEE_SUMMARIES),
-      'Checking Accounts',
-      'Billing Dispute'
-    ));
+  // Spike period (last 2 days) - promo goes wrong
+  for (let day = 2; day >= 0; day--) {
+    const casesPerDay = day === 0 ? 25 : 15;
+    for (let i = 0; i < casesPerDay; i++) {
+      cases.push(createPredictionCase(
+        day,
+        rng.pick(CHANG_PROMO_SUMMARIES),
+        'Beer & Spirits',
+        'Promotions & Pricing'
+      ));
+    }
   }
 
   // Batch insert
@@ -474,256 +441,139 @@ function seedPredictedRiskCases(db: ReturnType<typeof drizzle>, startingId: numb
   }
 
   console.log(`✓ Seeded ${cases.length} predicted risk scenario cases`);
-  console.log('  - Wire Transfer: Consecutive 3+ day increase pattern');
-  console.log('  - System Outage: Approaching 85%+ of alert threshold');
-  console.log('  - Overdraft Fee: Accelerating growth pattern');
+  console.log('  - KFC App Outage: 300% increase in app/technical issues');
+  console.log('  - Oishi Quality: Multiple complaints for lot ' + problematicLot);
+  console.log('  - Chang Promo: 50+ cases approaching threshold');
 
   return cases;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function seedAlerts(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
+function seedAlerts(db: ReturnType<typeof drizzle>) {
   const alerts: schema.NewAlert[] = [];
 
-  // Create spike alerts (65%+ volume increase)
-  const spikeAlerts = [
-    {
-      id: 'alert-spike-1',
+  // Spike alerts
+  ALERT_TEMPLATES.spike.forEach((template, i) => {
+    const percent = rng.int(65, 150);
+    alerts.push({
+      id: `alert-spike-${i + 1}`,
       type: 'spike' as const,
-      severity: 'high' as const,
-      title: 'Fraud Reports Spike - Credit Cards',
-      description: 'Fraud report volume increased by 78% in the last 4 hours compared to baseline',
-      businessUnit: 'Credit Cards',
-      category: 'Fraud Report',
-      channel: 'phone',
-      baselineValue: 45,
-      currentValue: 80,
-      percentageChange: 78,
-      status: 'active' as const,
-      createdAt: getDateInRange(0),
+      severity: percent > 100 ? 'critical' as const : 'high' as const,
+      title: template.title,
+      description: template.description.replace('{{percent}}', String(percent)),
+      businessUnit: template.businessUnit,
+      category: template.category,
+      channel: rng.pick(CHANNELS),
+      baselineValue: rng.int(20, 50),
+      currentValue: rng.int(60, 120),
+      percentageChange: percent,
+      status: i === 0 ? 'active' as const : rng.pick(['active', 'acknowledged'] as const),
+      acknowledgedBy: i > 0 && rng.bool(0.5) ? 'user-manager-1' : null,
+      acknowledgedAt: i > 0 && rng.bool(0.5) ? getDateInRange(0) : null,
+      createdAt: getDateInRange(rng.int(0, 2)),
       updatedAt: getDateInRange(0),
-    },
-    {
-      id: 'alert-spike-2',
-      type: 'spike' as const,
-      severity: 'critical' as const,
-      title: 'Account Access Issues Surge - Mobile Banking',
-      description: 'Login failure cases increased by 125% following app update',
-      businessUnit: 'Mobile Banking',
-      category: 'Account Access',
-      channel: 'web',
-      baselineValue: 20,
-      currentValue: 45,
-      percentageChange: 125,
-      status: 'active' as const,
-      createdAt: getDateInRange(0),
-      updatedAt: getDateInRange(0),
-    },
-    {
-      id: 'alert-spike-3',
-      type: 'spike' as const,
-      severity: 'medium' as const,
-      title: 'Payment Issues Increase - Online Banking',
-      description: 'Failed payment complaints up 67% in the last 2 hours',
-      businessUnit: 'Online Banking',
-      category: 'Payment Issues',
-      channel: 'email',
-      baselineValue: 30,
-      currentValue: 50,
-      percentageChange: 67,
-      status: 'acknowledged' as const,
-      acknowledgedBy: 'user-manager-1',
-      acknowledgedAt: getDateInRange(0),
-      createdAt: getDateInRange(1),
-      updatedAt: getDateInRange(0),
-    },
-  ];
+    });
+  });
 
-  // Create threshold alerts
-  const thresholdAlerts = [
-    {
-      id: 'alert-threshold-1',
-      type: 'threshold' as const,
-      severity: 'medium' as const,
-      title: 'High Negative Sentiment Rate',
-      description: 'Negative sentiment cases exceeded 40% threshold in Collections',
-      businessUnit: 'Collections',
-      category: null,
-      channel: null,
-      baselineValue: 40,
-      currentValue: 52,
-      percentageChange: 30,
-      status: 'active' as const,
-      createdAt: getDateInRange(2),
-      updatedAt: getDateInRange(2),
-    },
-    {
-      id: 'alert-threshold-2',
+  // Threshold alerts
+  ALERT_TEMPLATES.threshold.forEach((template, i) => {
+    alerts.push({
+      id: `alert-threshold-${i + 1}`,
       type: 'threshold' as const,
       severity: 'high' as const,
-      title: 'Critical Cases Backlog',
-      description: 'Unresolved critical cases exceeded 10 in Business Banking',
-      businessUnit: 'Business Banking',
-      category: null,
+      title: template.title,
+      description: template.description,
+      businessUnit: template.businessUnit,
+      category: template.category,
       channel: null,
-      baselineValue: 10,
-      currentValue: 15,
-      percentageChange: 50,
+      baselineValue: rng.int(30, 50),
+      currentValue: rng.int(55, 75),
+      percentageChange: rng.int(20, 40),
       status: 'active' as const,
-      createdAt: getDateInRange(1),
+      acknowledgedBy: null,
+      acknowledgedAt: null,
+      createdAt: getDateInRange(rng.int(1, 3)),
       updatedAt: getDateInRange(1),
-    },
-  ];
+    });
+  });
 
-  // Create urgency alerts
-  const urgencyAlerts = [
-    {
-      id: 'alert-urgency-1',
+  // Urgency alerts
+  ALERT_TEMPLATES.urgency.forEach((template, i) => {
+    alerts.push({
+      id: `alert-urgency-${i + 1}`,
       type: 'urgency' as const,
       severity: 'critical' as const,
-      title: 'VIP Customer Complaint - Wealth Management',
-      description: 'High-value customer reporting unauthorized transactions',
-      businessUnit: 'Wealth Management',
-      category: 'Fraud Report',
-      channel: 'phone',
+      title: template.title,
+      description: template.description,
+      businessUnit: template.businessUnit,
+      category: template.category,
+      channel: rng.pick(CHANNELS),
       baselineValue: null,
       currentValue: null,
       percentageChange: null,
       status: 'active' as const,
+      acknowledgedBy: null,
+      acknowledgedAt: null,
       createdAt: getDateInRange(0),
       updatedAt: getDateInRange(0),
-    },
-  ];
+    });
+  });
 
-  // Create misclassification alerts
-  const misclassificationAlerts = [
-    {
-      id: 'alert-misclass-1',
+  // Misclassification alerts
+  ALERT_TEMPLATES.misclassification.forEach((template, i) => {
+    const count = rng.int(5, 12);
+    alerts.push({
+      id: `alert-misclass-${i + 1}`,
       type: 'misclassification' as const,
       severity: 'high' as const,
-      title: 'Review needed: 8 potentially misclassified cases in Auto Finance',
-      description: 'Low-severity cases contain risk indicators (legal, complaint, lawsuit) that may warrant reclassification. Found in the last 24 hours. Keywords detected: legal, lawsuit, complaint. Review recommended to ensure proper severity assignment.',
-      businessUnit: 'Auto Finance',
-      category: 'Billing Dispute',
+      title: template.title.replace('{{count}}', String(count)),
+      description: template.description,
+      businessUnit: template.businessUnit,
+      category: template.category,
       channel: null,
       baselineValue: null,
-      currentValue: 8,
+      currentValue: count,
       percentageChange: null,
-      status: 'active' as const,
-      createdAt: getDateInRange(1),
-      updatedAt: getDateInRange(1),
-    },
-    {
-      id: 'alert-misclass-2',
-      type: 'misclassification' as const,
-      severity: 'medium' as const,
-      title: 'Review needed: 3 potentially misclassified cases in Insurance',
-      description: 'Low-severity cases contain risk indicators (injury, accident) that may warrant reclassification. Found in the last 24 hours. Keywords detected: injury, accident. Review recommended to ensure proper severity assignment.',
-      businessUnit: 'Insurance',
-      category: 'Complaint',
-      channel: null,
-      baselineValue: null,
-      currentValue: 3,
-      percentageChange: null,
-      status: 'acknowledged' as const,
-      acknowledgedBy: 'user-manager-3',
-      acknowledgedAt: getDateInRange(0),
-      createdAt: getDateInRange(2),
+      status: rng.pick(['active', 'acknowledged'] as const),
+      acknowledgedBy: rng.bool(0.3) ? 'user-manager-2' : null,
+      acknowledgedAt: rng.bool(0.3) ? getDateInRange(0) : null,
+      createdAt: getDateInRange(rng.int(0, 2)),
       updatedAt: getDateInRange(0),
-    },
-  ];
+    });
+  });
 
-  alerts.push(...spikeAlerts, ...thresholdAlerts, ...urgencyAlerts, ...misclassificationAlerts);
   db.insert(schema.alerts).values(alerts).run();
   console.log(`✓ Seeded ${alerts.length} alerts`);
   return alerts;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function seedTrendingTopics(db: ReturnType<typeof drizzle>, _cases: schema.NewCase[]) {
-  // Helper to compute baseline count from current count and percentage change
+function seedTrendingTopics(db: ReturnType<typeof drizzle>) {
   const computeBaseline = (current: number, percentChange: number): number => {
     if (percentChange === 0) return current;
     return Math.round(current / (1 + percentChange / 100));
   };
 
-  const topics: schema.NewTrendingTopic[] = [
-    {
-      id: 'trend-1',
-      topic: 'Mobile App Login Failures',
-      description: 'Increasing reports of users unable to access accounts via mobile app',
-      caseCount: 156,
-      baselineCount: computeBaseline(156, 45),
-      trend: 'rising',
-      percentageChange: 45,
-      trendScore: calculateTrendScore(156, computeBaseline(156, 45)),
-      businessUnit: 'Mobile Banking',
-      category: 'Account Access',
-      sampleCaseIds: JSON.stringify(['case-1', 'case-5', 'case-12']),
-      createdAt: getDateInRange(2),
+  const topics: schema.NewTrendingTopic[] = TRENDING_TOPICS_TEMPLATES.map((template, i) => {
+    const caseCount = rng.int(30, 150);
+    const percentageChange = rng.int(15, 85);
+    const baselineCount = computeBaseline(caseCount, percentageChange);
+    const trend = percentageChange > 30 ? 'rising' : percentageChange > 10 ? 'stable' : 'declining';
+
+    return {
+      id: `trend-${i + 1}`,
+      topic: template.topic,
+      description: template.description,
+      caseCount,
+      baselineCount,
+      trend: trend as 'rising' | 'stable' | 'declining',
+      percentageChange,
+      trendScore: calculateTrendScore(caseCount, baselineCount),
+      businessUnit: template.businessUnit,
+      category: template.category,
+      sampleCaseIds: JSON.stringify([`case-${rng.int(1, 100)}`, `case-${rng.int(101, 200)}`, `case-${rng.int(201, 300)}`]),
+      createdAt: getDateInRange(rng.int(1, 5)),
       updatedAt: getDateInRange(0),
-    },
-    {
-      id: 'trend-2',
-      topic: 'Credit Card Fraud - International',
-      description: 'Spike in fraud reports from international transactions',
-      caseCount: 89,
-      baselineCount: computeBaseline(89, 78),
-      trend: 'rising',
-      percentageChange: 78,
-      trendScore: calculateTrendScore(89, computeBaseline(89, 78)),
-      businessUnit: 'Credit Cards',
-      category: 'Fraud Report',
-      sampleCaseIds: JSON.stringify(['case-23', 'case-45', 'case-67']),
-      createdAt: getDateInRange(1),
-      updatedAt: getDateInRange(0),
-    },
-    {
-      id: 'trend-3',
-      topic: 'Payment Processing Delays',
-      description: 'Multiple complaints about delayed payment processing',
-      caseCount: 67,
-      baselineCount: computeBaseline(67, 32),
-      trend: 'rising',
-      percentageChange: 32,
-      trendScore: calculateTrendScore(67, computeBaseline(67, 32)),
-      businessUnit: 'Online Banking',
-      category: 'Payment Issues',
-      sampleCaseIds: JSON.stringify(['case-89', 'case-112', 'case-134']),
-      createdAt: getDateInRange(3),
-      updatedAt: getDateInRange(0),
-    },
-    {
-      id: 'trend-4',
-      topic: 'Rate Increase Complaints',
-      description: 'Customer complaints following interest rate changes',
-      caseCount: 45,
-      baselineCount: computeBaseline(45, 5),
-      trend: 'stable',
-      percentageChange: 5,
-      trendScore: calculateTrendScore(45, computeBaseline(45, 5)),
-      businessUnit: 'Mortgages',
-      category: 'Complaint',
-      sampleCaseIds: JSON.stringify(['case-156', 'case-178']),
-      createdAt: getDateInRange(7),
-      updatedAt: getDateInRange(1),
-    },
-    {
-      id: 'trend-5',
-      topic: 'Card Activation Issues',
-      description: 'New card activation process causing confusion',
-      caseCount: 34,
-      baselineCount: computeBaseline(34, -15),
-      trend: 'declining',
-      percentageChange: -15,
-      trendScore: calculateTrendScore(34, computeBaseline(34, -15)),
-      businessUnit: 'Credit Cards',
-      category: 'Technical Support',
-      sampleCaseIds: JSON.stringify(['case-200', 'case-210']),
-      createdAt: getDateInRange(10),
-      updatedAt: getDateInRange(2),
-    },
-  ];
+    };
+  });
 
   db.insert(schema.trendingTopics).values(topics).run();
   console.log(`✓ Seeded ${topics.length} trending topics`);
@@ -765,32 +615,33 @@ function seedFeedItems(db: ReturnType<typeof drizzle>, alerts: schema.NewAlert[]
     });
   });
 
-  // Add highlight feed items
+  // Add ThaiBev-themed highlight feed items
   feedItems.push({
     id: 'feed-highlight-1',
     type: 'highlight',
-    title: 'Daily Summary: Top Issues',
-    content: 'Mobile Banking and Credit Cards seeing highest case volumes today',
+    title: 'Daily Summary: ThaiBev Group',
+    content: 'KFC Delivery and Oishi Restaurants showing highest case volumes today. Chang promotion issues require attention.',
     metadata: JSON.stringify({
-      topBUs: ['Mobile Banking', 'Credit Cards', 'Online Banking'],
-      totalCases: 234,
+      topBUs: ['KFC Delivery', 'Oishi Restaurants', 'Beer & Spirits'],
+      totalCases: rng.int(200, 350),
     }),
     priority: 80,
     referenceId: null,
     referenceType: null,
     createdAt: getDateInRange(0),
-    expiresAt: getDateInRange(-1), // Expires tomorrow
+    expiresAt: getDateInRange(-1),
   });
 
   feedItems.push({
     id: 'feed-upload-1',
     type: 'upload',
     title: 'New Batch Upload Processed',
-    content: '1,250 cases imported from overnight call recordings',
+    content: '1,850 cases imported from overnight call recordings across all ThaiBev channels',
     metadata: JSON.stringify({
-      recordCount: 1250,
+      recordCount: 1850,
       source: 'call_recordings',
-      processingTime: '45 minutes',
+      processingTime: '52 minutes',
+      channels: ['KFC 1150 Hotline', 'Oishi Customer Service', 'ThaiBev Corporate'],
     }),
     priority: 40,
     referenceId: null,
@@ -805,17 +656,17 @@ function seedFeedItems(db: ReturnType<typeof drizzle>, alerts: schema.NewAlert[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function seedShares(db: ReturnType<typeof drizzle>, _alerts: schema.NewAlert[], _users: schema.NewUser[]) {
+function seedShares(db: ReturnType<typeof drizzle>, alerts: schema.NewAlert[], _users: schema.NewUser[]) {
   const shares: schema.NewShare[] = [
     {
       id: 'share-1',
       type: 'escalation',
       sourceType: 'alert',
-      sourceId: 'alert-urgency-1',
+      sourceId: alerts.find(a => a.type === 'urgency')?.id || 'alert-urgency-1',
       senderId: 'user-supervisor-1',
       recipientId: 'user-manager-1',
       channel: 'internal',
-      message: 'VIP customer issue requiring immediate attention',
+      message: 'Food safety issue at KFC requires immediate attention from management',
       status: 'pending',
       createdAt: getDateInRange(0),
       readAt: null,
@@ -825,11 +676,11 @@ function seedShares(db: ReturnType<typeof drizzle>, _alerts: schema.NewAlert[], 
       id: 'share-2',
       type: 'share',
       sourceType: 'alert',
-      sourceId: 'alert-spike-1',
+      sourceId: alerts.find(a => a.title.includes('App'))?.id || 'alert-spike-1',
       senderId: 'user-manager-1',
       recipientId: 'user-admin-1',
       channel: 'email',
-      message: 'FYI - Fraud spike may require additional resources',
+      message: 'FYI - KFC app issues may require IT team involvement',
       status: 'read',
       createdAt: getDateInRange(1),
       readAt: getDateInRange(0),
@@ -843,7 +694,7 @@ function seedShares(db: ReturnType<typeof drizzle>, _alerts: schema.NewAlert[], 
       senderId: 'user-supervisor-3',
       recipientId: 'user-manager-2',
       channel: 'line',
-      message: 'Customer threatening legal action - needs immediate callback',
+      message: 'Customer threatening social media exposure - needs immediate callback',
       status: 'actioned',
       createdAt: getDateInRange(2),
       readAt: getDateInRange(1),
@@ -860,8 +711,9 @@ function seedShares(db: ReturnType<typeof drizzle>, _alerts: schema.NewAlert[], 
 // Main Seed Function
 // ═══════════════════════════════════════════════════════════════════════════════
 async function main() {
-  console.log('\n🌱 Seeding Call Center Intelligence Database\n');
+  console.log('\n🌱 Seeding ThaiBev Call Center Intelligence Database\n');
   console.log(`Mode: ${DEMO_MODE ? 'Demo (deterministic timestamps)' : 'Development'}`);
+  console.log('Companies: ThaiBev, Sermsuk, Oishi, KFC Thailand');
   console.log('─'.repeat(50));
 
   // Setup database
@@ -911,7 +763,8 @@ async function main() {
       assigned_to TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      resolved_at TEXT
+      resolved_at TEXT,
+      upload_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS alerts (
@@ -977,14 +830,45 @@ async function main() {
       actioned_at TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS uploads (
+      id TEXT PRIMARY KEY,
+      file_name TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'processing',
+      total_rows INTEGER NOT NULL DEFAULT 0,
+      success_count INTEGER NOT NULL DEFAULT 0,
+      error_count INTEGER NOT NULL DEFAULT 0,
+      errors TEXT,
+      uploaded_by TEXT,
+      created_at TEXT NOT NULL,
+      completed_at TEXT,
+      recompute_status TEXT,
+      recompute_started_at TEXT,
+      recompute_completed_at TEXT,
+      alerts_generated INTEGER DEFAULT 0,
+      trending_updated INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS search_analytics (
+      id TEXT PRIMARY KEY,
+      query TEXT NOT NULL,
+      normalized_query TEXT NOT NULL,
+      result_count INTEGER NOT NULL DEFAULT 0,
+      execution_time_ms INTEGER,
+      user_id TEXT,
+      created_at TEXT NOT NULL
+    );
+
     -- Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_cases_business_unit ON cases(business_unit);
     CREATE INDEX IF NOT EXISTS idx_cases_channel ON cases(channel);
     CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
     CREATE INDEX IF NOT EXISTS idx_cases_severity ON cases(severity);
+    CREATE INDEX IF NOT EXISTS idx_cases_category ON cases(category);
     CREATE INDEX IF NOT EXISTS idx_cases_created_at ON cases(created_at);
     CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts(status);
     CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity);
+    CREATE INDEX IF NOT EXISTS idx_alerts_business_unit ON alerts(business_unit);
     CREATE INDEX IF NOT EXISTS idx_feed_items_type ON feed_items(type);
     CREATE INDEX IF NOT EXISTS idx_feed_items_created_at ON feed_items(created_at);
     CREATE INDEX IF NOT EXISTS idx_shares_recipient ON shares(recipient_id);
@@ -996,17 +880,19 @@ async function main() {
   const users = seedUsers(db);
   const cases = seedCases(db, 2000);
   const predictedCases = seedPredictedRiskCases(db, cases.length + 1);
-  const alerts = seedAlerts(db, cases);
-  const topics = seedTrendingTopics(db, cases);
+  const alerts = seedAlerts(db);
+  const topics = seedTrendingTopics(db);
   seedFeedItems(db, alerts, topics);
   seedShares(db, alerts, users);
 
   // Print summary
   const totalCases = cases.length + predictedCases.length;
   console.log('─'.repeat(50));
-  console.log('\n✅ Database seeded successfully!\n');
+  console.log('\n✅ ThaiBev Database seeded successfully!\n');
   console.log(`   Database: ${dbPath}`);
-  console.log(`   Total records: ${16 + totalCases + 8 + 5 + 11 + 3}`);
+  console.log(`   Total cases: ${totalCases}`);
+  console.log(`   Business Units: ${BUSINESS_UNITS.length}`);
+  console.log(`   Categories: ${CATEGORIES.length}`);
   console.log('\n   Run "npm run db:studio" to explore the data\n');
 
   sqlite.close();
