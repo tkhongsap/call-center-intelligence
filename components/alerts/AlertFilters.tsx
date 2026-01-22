@@ -15,12 +15,14 @@ const severities = ['low', 'medium', 'high', 'critical'];
 const statuses = ['active', 'acknowledged', 'resolved', 'dismissed'];
 
 const businessUnits = [
-  'Credit Cards',
-  'Mobile Banking',
-  'Online Banking',
-  'Personal Loans',
-  'Mortgage',
-  'Insurance',
+  'Beer & Spirits',
+  'Non-Alcoholic Beverages',
+  'Oishi Beverages',
+  'Oishi Restaurants',
+  'KFC Delivery',
+  'KFC Restaurants',
+  'KFC Loyalty',
+  'Corporate & Events',
 ];
 
 const sortOptions = [
