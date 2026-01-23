@@ -81,10 +81,10 @@ function getHighlightConfig(highlightType: string, t: (key: string) => string): 
 
 function TrendIcon({ trend }: { trend?: 'up' | 'down' | 'stable' }) {
   if (trend === 'up') {
-    return <TrendingUp className="w-3 h-3 text-red-500" />;
+    return <TrendingUp className="w-3 h-3 text-[var(--severity-critical-text)]" />;
   }
   if (trend === 'down') {
-    return <TrendingDown className="w-3 h-3 text-green-500" />;
+    return <TrendingDown className="w-3 h-3 text-[var(--twitter-retweet)]" />;
   }
   return null;
 }
@@ -140,7 +140,7 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
       className={className}
     >
       {/* Description */}
-      <p className="text-sm text-[#14171A] mb-3">{item.content}</p>
+      <p className="text-sm text-primary mb-3">{item.content}</p>
 
       {/* Top 3 themes - Compact inline display */}
       {highlightType === 'top_themes' && metadata.themes && (
@@ -148,21 +148,21 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
           {metadata.themes.slice(0, 3).map((theme, index) => (
             <div
               key={index}
-              className="flex items-center justify-between py-1.5 px-2 bg-[#F5F8FA] rounded-lg"
+              className="flex items-center justify-between py-1.5 px-2 bg-surface-secondary rounded-lg"
             >
               <div className="flex items-center gap-2">
                 <span className={cn(
                   'w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold',
                   index === 0 ? 'bg-purple-200 text-purple-700' :
                   index === 1 ? 'bg-purple-100 text-purple-600' :
-                  'bg-[#E1E8ED] text-[#657786]'
+                  'bg-surface-tertiary text-secondary'
                 )}>
                   {index + 1}
                 </span>
-                <span className="text-sm font-medium text-[#14171A]">{theme.name}</span>
+                <span className="text-sm font-medium text-primary">{theme.name}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#657786]">{theme.count} {tTrending('cases')}</span>
+                <span className="text-xs text-secondary">{theme.count} {tTrending('cases')}</span>
                 <TrendIcon trend={theme.trend} />
               </div>
             </div>
@@ -172,20 +172,20 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
 
       {/* Hot BU - Compact card style */}
       {highlightType === 'hot_bu' && metadata.hotBu && (
-        <div className="p-3 bg-[#F5F8FA] rounded-xl border border-[#E1E8ED]">
+        <div className="p-3 bg-surface-secondary rounded-xl border border-default">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-bold text-[#14171A]">
+            <span className="text-sm font-bold text-primary">
               {metadata.hotBu.name}
             </span>
             {metadata.hotBu.percentageChange !== undefined && (
-              <span className="text-xs font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-medium text-[var(--severity-critical-text)] bg-[var(--severity-critical-bg)] px-1.5 py-0.5 rounded">
                 +{metadata.hotBu.percentageChange}%
               </span>
             )}
           </div>
-          <p className="text-sm text-[#657786]">{metadata.hotBu.reason}</p>
+          <p className="text-sm text-secondary">{metadata.hotBu.reason}</p>
           {metadata.hotBu.caseCount !== undefined && (
-            <div className="mt-1.5 text-xs text-[#657786]">
+            <div className="mt-1.5 text-xs text-secondary">
               {metadata.hotBu.caseCount} {tTrending('cases')} {t('highlightCard.today')}
             </div>
           )}
@@ -194,22 +194,22 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
 
       {/* Resolution rate - Inline metrics */}
       {highlightType === 'resolution_rate' && metadata.resolutionRate && (
-        <div className="flex items-center gap-4 p-3 bg-[#F5F8FA] rounded-xl border border-[#E1E8ED]">
+        <div className="flex items-center gap-4 p-3 bg-surface-secondary rounded-xl border border-default">
           <div className="flex-1">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[var(--twitter-retweet)]">
               {metadata.resolutionRate.current}%
             </div>
-            <div className="text-xs text-[#657786]">{t('highlightCard.currentRate')}</div>
+            <div className="text-xs text-secondary">{t('highlightCard.currentRate')}</div>
           </div>
-          <div className="text-[#AAB8C2]">→</div>
+          <div className="text-tertiary">→</div>
           <div>
-            <div className="text-lg text-[#AAB8C2] line-through">
+            <div className="text-lg text-tertiary line-through">
               {metadata.resolutionRate.previous}%
             </div>
-            <div className="text-xs text-[#657786]">{t('highlightCard.previous')}</div>
+            <div className="text-xs text-secondary">{t('highlightCard.previous')}</div>
           </div>
           <div className="ml-auto">
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--twitter-retweet-bg)] text-[var(--twitter-retweet)] rounded-full text-xs font-medium">
               <TrendingUp className="w-3 h-3" />
               +{metadata.resolutionRate.change}%
             </span>
@@ -223,11 +223,11 @@ export function HighlightCard({ item, className }: HighlightCardProps) {
           {metadata.summaryItems.map((summaryItem, index) => (
             <div
               key={index}
-              className="p-2.5 bg-[#F5F8FA] rounded-lg"
+              className="p-2.5 bg-surface-secondary rounded-lg"
             >
-              <div className="text-xs text-[#657786] mb-0.5">{summaryItem.label}</div>
+              <div className="text-xs text-secondary mb-0.5">{summaryItem.label}</div>
               <div className="flex items-center gap-1.5">
-                <span className="text-base font-semibold text-[#14171A]">
+                <span className="text-base font-semibold text-primary">
                   {summaryItem.value}
                 </span>
                 <TrendIcon trend={summaryItem.trend} />

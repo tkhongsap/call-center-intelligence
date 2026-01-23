@@ -36,24 +36,24 @@ function TrendDirectionIcon({ trend }: { trend: string }) {
   const iconClasses = 'w-4 h-4';
   switch (trend) {
     case 'rising':
-      return <TrendingUp className={cn(iconClasses, 'text-red-500')} />;
+      return <TrendingUp className={cn(iconClasses, 'text-[var(--severity-critical-text)]')} />;
     case 'declining':
-      return <TrendingDown className={cn(iconClasses, 'text-green-500')} />;
+      return <TrendingDown className={cn(iconClasses, 'text-[var(--twitter-retweet)]')} />;
     case 'stable':
     default:
-      return <Minus className={cn(iconClasses, 'text-[#657786]')} />;
+      return <Minus className={cn(iconClasses, 'text-secondary')} />;
   }
 }
 
 function getTrendTextColor(trend: string) {
   switch (trend) {
     case 'rising':
-      return 'text-red-600';
+      return 'text-[var(--severity-critical-text)]';
     case 'declining':
-      return 'text-green-600';
+      return 'text-[var(--twitter-retweet)]';
     case 'stable':
     default:
-      return 'text-[#657786]';
+      return 'text-secondary';
   }
 }
 
@@ -131,12 +131,12 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
             </span>
           )}
           {metadata.businessUnit && (
-            <span className="text-sm text-[#657786]">· {metadata.businessUnit}</span>
+            <span className="text-sm text-secondary">· {metadata.businessUnit}</span>
           )}
         </div>
 
         {/* Description */}
-        <p className="text-[#14171A]">{item.content}</p>
+        <p className="text-primary">{item.content}</p>
 
         {/* Hashtag-style pills for top phrases */}
         {topPhrases.length > 0 && (
@@ -144,7 +144,7 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
             {topPhrases.slice(0, 5).map((phrase, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-colors cursor-pointer"
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[var(--twitter-blue-light)] text-[var(--twitter-blue)] hover:bg-[var(--twitter-blue)]/20 transition-colors cursor-pointer"
               >
                 #{phrase.replace(/\s+/g, '')}
               </span>
@@ -154,15 +154,15 @@ export function TrendingCard({ item, onShare, className }: TrendingCardProps) {
 
         {/* Sample case as "quoted tweet" nested card */}
         {metadata.sampleCase && (
-          <div className="mt-3 p-3 rounded-xl border border-[#E1E8ED] hover:bg-[#F5F8FA] transition-colors cursor-pointer">
+          <div className="mt-3 p-3 rounded-xl border border-default hover:bg-surface-secondary transition-colors cursor-pointer">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-[#657786]" />
-              <span className="text-sm font-bold text-[#14171A]">{t('trendingCard.sampleCase')}</span>
+              <MessageSquare className="w-4 h-4 text-secondary" />
+              <span className="text-sm font-bold text-primary">{t('trendingCard.sampleCase')}</span>
               {metadata.sampleCase.caseNumber && (
-                <span className="text-sm text-[#657786]">#{metadata.sampleCase.caseNumber}</span>
+                <span className="text-sm text-secondary">#{metadata.sampleCase.caseNumber}</span>
               )}
             </div>
-            <p className="text-sm text-[#14171A] mt-1 line-clamp-2">
+            <p className="text-sm text-primary mt-1 line-clamp-2">
               {metadata.sampleCase.summary}
             </p>
           </div>

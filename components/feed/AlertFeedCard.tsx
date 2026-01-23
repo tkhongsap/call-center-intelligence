@@ -81,24 +81,24 @@ function AlertStats({ metadata, t }: { metadata: AlertMetadata; t: (key: string)
   }
 
   const increase = metadata.percentageChange !== undefined && metadata.percentageChange > 0;
-  const changeColor = increase ? 'text-red-600' : 'text-green-600';
+  const changeColor = increase ? 'text-[var(--severity-critical-text)]' : 'text-[var(--twitter-retweet)]';
 
   return (
-    <div className="flex items-center gap-4 p-3 bg-[#F5F8FA] rounded-xl mt-3 border border-[#E1E8ED]">
+    <div className="flex items-center gap-4 p-3 bg-surface-secondary rounded-xl mt-3 border border-default">
       <div className="flex-1">
-        <div className="text-xs text-[#657786] mb-1">{t('alertCard.baseline')}</div>
-        <div className="text-lg font-bold text-[#14171A]">{metadata.baselineValue}</div>
+        <div className="text-xs text-secondary mb-1">{t('alertCard.baseline')}</div>
+        <div className="text-lg font-bold text-primary">{metadata.baselineValue}</div>
       </div>
       <div className="flex items-center">
-        <ArrowUpRight className={cn('w-5 h-5', increase ? 'text-red-500' : 'text-green-500 rotate-90')} />
+        <ArrowUpRight className={cn('w-5 h-5', increase ? 'text-[var(--severity-critical-text)]' : 'text-[var(--twitter-retweet)] rotate-90')} />
       </div>
       <div className="flex-1">
-        <div className="text-xs text-[#657786] mb-1">{t('alertCard.current')}</div>
-        <div className="text-lg font-bold text-[#14171A]">{metadata.currentValue}</div>
+        <div className="text-xs text-secondary mb-1">{t('alertCard.current')}</div>
+        <div className="text-lg font-bold text-primary">{metadata.currentValue}</div>
       </div>
       {metadata.percentageChange !== undefined && (
         <div className="flex-1">
-          <div className="text-xs text-[#657786] mb-1">{t('alertCard.change')}</div>
+          <div className="text-xs text-secondary mb-1">{t('alertCard.change')}</div>
           <div className={cn('text-lg font-bold', changeColor)}>
             {increase ? '+' : ''}{metadata.percentageChange.toFixed(1)}%
           </div>
@@ -205,7 +205,7 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
       >
         {/* Title with status badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-bold text-[#14171A]">{item.title}</span>
+          <span className="font-bold text-primary">{item.title}</span>
           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium capitalize', getStatusBadgeStyles(status))}>
             {getStatusLabel(status)}
           </span>
@@ -214,14 +214,14 @@ export function AlertFeedCard({ item, onShare, className }: AlertFeedCardProps) 
         {/* Severity and type badges */}
         <div className="flex items-center gap-2 mt-1">
           <SeverityBadge severity={severity} />
-          <span className="text-sm text-[#657786] capitalize">{getAlertTypeLabel(alertType)} {t('alert')}</span>
+          <span className="text-sm text-secondary capitalize">{getAlertTypeLabel(alertType)} {t('alert')}</span>
           {metadata.category && (
             <Badge variant="default">{metadata.category}</Badge>
           )}
         </div>
 
         {/* Content */}
-        <p className="text-[#14171A] mt-2">{item.content}</p>
+        <p className="text-primary mt-2">{item.content}</p>
 
         {/* Stats */}
         <AlertStats metadata={metadata} t={t} />
