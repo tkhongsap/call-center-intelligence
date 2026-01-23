@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { ChevronLeft, ChevronRight, ArrowUpDown, ChevronRightIcon } from 'lucide-react';
 import { Badge, SeverityBadge, StatusBadge } from '@/components/ui/Badge';
 import { formatDate } from '@/lib/utils';
@@ -38,7 +39,7 @@ function SortHeader({ column, children, currentSortBy, onSort }: SortHeaderProps
   );
 }
 
-function CaseCard({ caseItem, onClick }: { caseItem: Case; onClick: () => void }) {
+function CaseCard({ caseItem, onClick, locale }: { caseItem: Case; onClick: () => void; locale: string }) {
   return (
     <div
       onClick={onClick}
@@ -53,7 +54,7 @@ function CaseCard({ caseItem, onClick }: { caseItem: Case; onClick: () => void }
           >
             {caseItem.caseNumber}
           </Link>
-          <p className="text-xs text-slate-500 mt-0.5">{formatDate(caseItem.createdAt)}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{formatDate(caseItem.createdAt, locale)}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <SeverityBadge severity={caseItem.severity} />
@@ -94,6 +95,7 @@ function CaseCard({ caseItem, onClick }: { caseItem: Case; onClick: () => void }
 export function CaseList({ cases, pagination }: CaseListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
 
   const currentSortBy = searchParams.get('sortBy') || 'createdAt';
   const currentSortOrder = searchParams.get('sortOrder') || 'desc';
@@ -123,6 +125,7 @@ export function CaseList({ cases, pagination }: CaseListProps) {
           <CaseCard
             key={caseItem.id}
             caseItem={caseItem}
+            locale={locale}
             onClick={() => router.push(`/cases/${caseItem.id}`)}
           />
         ))}
@@ -151,7 +154,7 @@ export function CaseList({ cases, pagination }: CaseListProps) {
                 onClick={() => router.push(`/cases/${caseItem.id}`)}
               >
                 <td className="px-4 py-3 text-sm text-slate-600">
-                  {formatDate(caseItem.createdAt)}
+                  {formatDate(caseItem.createdAt, locale)}
                 </td>
                 <td className="px-4 py-3">
                   <Link

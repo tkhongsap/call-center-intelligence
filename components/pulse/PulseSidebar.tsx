@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { SparklineData } from './Sparkline';
 import { SparklineMini } from './Sparkline';
 import { WordCloudWord } from './WordCloud';
@@ -68,6 +69,8 @@ const teamsToWatch = [
 
 export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const [data, setData] = useState<PulseData | null>(null);
   const [sparklineData, setSparklineData] = useState<SparklineApiData | null>(null);
   const [wordCloudData, setWordCloudData] = useState<WordCloudApiData | null>(null);
@@ -198,7 +201,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
             >
               <p className="text-[13px] text-[#657786]">{item.category}</p>
               <p className="font-bold text-[15px] text-[#14171A]">{item.topic}</p>
-              <p className="text-[13px] text-[#657786]">{item.count.toLocaleString()} cases</p>
+              <p className="text-[13px] text-[#657786]">{item.count.toLocaleString(localeCode)} cases</p>
               {index === 0 && (
                 <span className="inline-block mt-1 px-2 py-0.5 bg-[#1DA1F2]/10 text-[#1DA1F2] text-xs font-medium rounded-full">
                   Trending

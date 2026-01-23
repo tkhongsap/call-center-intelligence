@@ -17,7 +17,7 @@ interface UploadsResponse {
 }
 
 async function getUploads(): Promise<UploadsResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const response = await fetch(`${baseUrl}/api/uploads?limit=10`, {
     cache: 'no-store',
   });

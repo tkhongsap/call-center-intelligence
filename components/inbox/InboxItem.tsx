@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale } from 'next-intl';
 import {
   AlertTriangle,
   FileText,
@@ -14,7 +15,8 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
-function formatTimeAgo(dateString: string): string {
+function formatTimeAgo(dateString: string, locale: string = 'en'): string {
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -26,7 +28,7 @@ function formatTimeAgo(dateString: string): string {
   if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
   if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
   if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(localeCode);
 }
 
 interface Sender {
@@ -97,6 +99,7 @@ function getInitials(name: string): string {
 }
 
 export function InboxItem({ item, onMarkAsRead, onMarkAsActioned }: InboxItemProps) {
+  const locale = useLocale();
   const isUnread = item.status === 'pending';
   const isEscalation = item.type === 'escalation';
 
@@ -241,7 +244,7 @@ export function InboxItem({ item, onMarkAsRead, onMarkAsActioned }: InboxItemPro
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span>
-                {formatTimeAgo(item.createdAt)}
+                {formatTimeAgo(item.createdAt, locale)}
               </span>
               {item.channel !== 'internal' && (
                 <span className="flex items-center gap-1">

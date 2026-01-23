@@ -29,7 +29,7 @@ async function getInboxItems(searchParams: SearchParams): Promise<InboxResponse>
     if (value) params.set(key, value);
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const response = await fetch(`${baseUrl}/api/inbox?${params.toString()}`, {
     cache: 'no-store',
   });

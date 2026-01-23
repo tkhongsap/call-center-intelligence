@@ -1,6 +1,7 @@
 'use client';
 
 import { Circle, CheckCircle, User, Phone, MessageSquare } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { formatDateTime } from '@/lib/utils';
 
 interface TimelineEvent {
@@ -30,6 +31,8 @@ const eventColors: Record<string, string> = {
 };
 
 export function CaseTimeline({ events }: CaseTimelineProps) {
+  const locale = useLocale();
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-6">
       <h3 className="text-lg font-semibold text-slate-900 mb-6">Timeline</h3>
@@ -55,7 +58,7 @@ export function CaseTimeline({ events }: CaseTimelineProps) {
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium text-slate-900">{event.title}</h4>
                     <span className="text-xs text-slate-500">
-                      {formatDateTime(event.timestamp)}
+                      {formatDateTime(event.timestamp, locale)}
                     </span>
                   </div>
                   <p className="text-sm text-slate-600 mt-1">{event.description}</p>

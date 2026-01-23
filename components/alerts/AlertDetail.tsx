@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import {
   TrendingUp,
   BarChart3,
@@ -187,7 +188,7 @@ function ContributingPhrases({ phrases }: { phrases: string[] }) {
   );
 }
 
-function SampleCasesTable({ cases }: { cases: SampleCase[] }) {
+function SampleCasesTable({ cases, locale }: { cases: SampleCase[]; locale: string }) {
   if (!cases || cases.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -244,7 +245,7 @@ function SampleCasesTable({ cases }: { cases: SampleCase[] }) {
                   <span className="text-sm text-slate-600">{caseItem.category}</span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-slate-500">{formatRelativeTime(caseItem.createdAt)}</span>
+                  <span className="text-sm text-slate-500">{formatRelativeTime(caseItem.createdAt, locale)}</span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
@@ -335,6 +336,7 @@ function InfoItem({
 }
 
 export function AlertDetail({ alert, sampleCases, contributingPhrases, timeWindow }: AlertDetailProps) {
+  const locale = useLocale();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
 
@@ -451,7 +453,7 @@ export function AlertDetail({ alert, sampleCases, contributingPhrases, timeWindo
             <InfoItem
               icon={Calendar}
               label="Created"
-              value={formatDateTime(alert.createdAt)}
+              value={formatDateTime(alert.createdAt, locale)}
             />
             {timeWindow && (
               <InfoItem
@@ -485,7 +487,7 @@ export function AlertDetail({ alert, sampleCases, contributingPhrases, timeWindo
       </div>
 
       {/* Sample Cases Table */}
-      <SampleCasesTable cases={sampleCases} />
+      <SampleCasesTable cases={sampleCases} locale={locale} />
 
       {/* Share Modal */}
       <ShareModal

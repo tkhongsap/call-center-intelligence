@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import { ChevronRight, Share2, AlertTriangle, Calendar, User, Phone, Tag, Building2 } from 'lucide-react';
 import { Badge, SeverityBadge, StatusBadge } from '@/components/ui/Badge';
 import { ShareModal } from '@/components/ui/ShareModal';
@@ -34,6 +35,7 @@ interface CaseDetailProps {
 const CURRENT_USER_ID = 'user-admin-1'; // Mock current user
 
 export function CaseDetail({ caseData }: CaseDetailProps) {
+  const locale = useLocale();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
 
@@ -125,7 +127,7 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
           <InfoItem
             icon={Calendar}
             label="Created"
-            value={formatDateTime(caseData.createdAt)}
+            value={formatDateTime(caseData.createdAt, locale)}
           />
           <InfoItem
             icon={Building2}

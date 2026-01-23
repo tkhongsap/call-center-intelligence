@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import type { Upload } from '@/lib/db/schema';
 
 interface UploadHistoryProps {
@@ -34,9 +35,10 @@ const statusConfig = {
   },
 };
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, locale: string = 'en'): string {
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(localeCode, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -52,6 +54,8 @@ function formatFileSize(bytes: number): string {
 }
 
 export function UploadHistory({ uploads }: UploadHistoryProps) {
+  const locale = useLocale();
+
   if (uploads.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500">
@@ -80,7 +84,7 @@ export function UploadHistory({ uploads }: UploadHistoryProps) {
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{upload.fileName}</p>
                 <p className="text-xs text-slate-500">
-                  {formatDate(upload.createdAt)}
+                  {formatDate(upload.createdAt, locale)}
                   <span className="hidden sm:inline"> • {formatFileSize(upload.fileSize)}</span>
                 </p>
               </div>
