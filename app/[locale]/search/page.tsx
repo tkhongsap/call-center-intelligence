@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/Header';
 import { SearchBar } from '@/components/search/SearchBar';
 import { SuggestedFilters } from '@/components/search/SuggestedFilters';
 import { SearchResultCard } from '@/components/search/SearchResultCard';
+import { RelatedTopics } from '@/components/search/RelatedTopics';
 import type { SearchResponse, SuggestedFilter } from '@/lib/search';
 
 function SearchLoading() {
@@ -259,6 +260,9 @@ function SearchResultsContent() {
             />
           ))}
         </div>
+
+        {/* Related Topics */}
+        <RelatedTopics searchQuery={query} maxTopics={5} />
       </div>
     );
   }
