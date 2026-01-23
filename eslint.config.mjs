@@ -15,6 +15,12 @@ const eslintConfig = defineConfig([
     // Project-specific ignores:
     "ralph/flowchart/**",
     "drizzle/**",
+    // Dependencies and caches:
+    ".cache/**",
+    ".pythonlibs/**",
+    "node_modules/**",
+    "data/**",
+    ".claude/**",
   ]),
 ]);
 
