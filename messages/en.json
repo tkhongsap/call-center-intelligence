@@ -8,7 +8,8 @@
     "search": "Search",
     "analytics": "Analytics",
     "settings": "Settings",
-    "trending": "Trending"
+    "trending": "Trending",
+    "menu": "Menu"
   },
   "brand": {
     "title": "Call Center",
@@ -174,7 +175,8 @@
       "tip3": "Use date ranges: last week, this month",
       "results": "Results",
       "showing": "Showing",
-      "of": "of"
+      "of": "of",
+      "relatedTopics": "Related Topics"
     },
     "trending": {
       "title": "Trending Topics",

@@ -66,7 +66,7 @@ export function TwitterCard({
   return (
     <article
       className={cn(
-        'border-b border-[#E1E8ED] bg-white',
+        'border-b border-default bg-card',
         'twitter-card-hover cursor-pointer',
         className
       )}
@@ -100,13 +100,13 @@ export function TwitterCard({
             <div className="flex flex-col min-w-0">
               {/* Author name and timestamp on same line */}
               <div className="flex items-center gap-1 flex-wrap">
-                <span className="font-bold text-[#14171A] truncate">
+                <span className="font-bold text-primary truncate">
                   {authorName}
                 </span>
                 {formattedTime && (
                   <>
-                    <span className="text-[#657786]">·</span>
-                    <span className="text-[#657786] text-sm whitespace-nowrap">
+                    <span className="text-secondary">·</span>
+                    <span className="text-secondary text-sm whitespace-nowrap">
                       {formattedTime}
                     </span>
                   </>
@@ -115,7 +115,7 @@ export function TwitterCard({
 
               {/* Handle or subtitle */}
               {secondaryLine && (
-                <span className="text-[#657786] text-sm truncate">
+                <span className="text-secondary text-sm truncate">
                   {authorHandle ? `@${authorHandle}` : authorSubtitle}
                 </span>
               )}
@@ -123,7 +123,7 @@ export function TwitterCard({
           </div>
 
           {/* Main content */}
-          <div className={cn('mt-1 text-[#14171A]', contentClassName)}>
+          <div className={cn('mt-1 text-primary', contentClassName)}>
             {children}
           </div>
 

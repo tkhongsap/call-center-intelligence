@@ -1,0 +1,58 @@
+Fix Search PRD gaps: Add Related Topics section to search results page.
+
+## Tasks (complete in sequence):
+
+### 1. Create RelatedTopics Component
+- Create `components/search/RelatedTopics.tsx`
+- Props: searchQuery (string), maxTopics (number, default 5)
+- Fetch from `/api/trending` with query as filter
+- Display 3-5 related trending topics as clickable chips
+- Show loading skeleton while fetching
+- Hide section if no related topics found
+- Style to match existing search page aesthetic
+- File: components/search/RelatedTopics.tsx (new)
+
+### 2. Integrate RelatedTopics into Search Page
+- Import RelatedTopics in `app/[locale]/search/page.tsx`
+- Add below search results in SearchResultsContent component
+- Only show when there are search results (not on empty state or no results)
+- Pass current query to RelatedTopics component
+- File: app/[locale]/search/page.tsx
+
+### 3. Enhance Trending API for Related Topics (if needed)
+- Check `app/api/trending/route.ts` for query parameter support
+- If not present, add optional ?q= or ?keywords= parameter
+- Filter topics by relevance to search terms
+- Return topics sorted by relevance score or search count
+- File: app/api/trending/route.ts (if modification needed)
+
+### 4. Add Translation Keys
+- Add translation keys for Related Topics section:
+  - 'pages.search.relatedTopics' - section header
+  - 'pages.search.noRelatedTopics' - fallback text (optional)
+- Files: messages/en.json, messages/th.json
+
+## Technical Requirements:
+- Use Tailwind CSS for all styling
+- Follow existing component patterns in search folder
+- Use lucide-react icons (TrendingUp or similar)
+- Support click navigation to /trending/[topic]
+- TypeScript strict mode required
+- i18n support for English and Thai
+
+## Quality Checks Before Each Commit:
+- npm run typecheck (must pass)
+- npm run lint (must pass)
+
+## Completion Criteria:
+- RelatedTopics component renders correctly
+- Shows relevant topics based on search query
+- Topics are clickable and navigate to trending detail
+- Section hidden when no related topics
+- Responsive design (works on mobile)
+- All quality checks pass
+
+Output <promise>SEARCH GAPS COMPLETE</promise> when ALL tasks are done and quality checks pass.
+
+---
+OPTIONS: --completion-promise "SEARCH GAPS COMPLETE" --max-iterations 6

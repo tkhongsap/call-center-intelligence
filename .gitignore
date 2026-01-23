@@ -77,3 +77,6 @@ secrets.json
 *.tmp
 *.temp
 .cache/
+
+# Claude Code local config
+.claude-user/

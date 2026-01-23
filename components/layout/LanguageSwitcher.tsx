@@ -6,7 +6,11 @@ import { Globe } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { locales, type Locale } from '@/src/i18n';
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  upwards?: boolean;
+}
+
+export function LanguageSwitcher({ upwards = false }: LanguageSwitcherProps) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -48,13 +52,17 @@ export function LanguageSwitcher() {
         title={t('switchLanguage')}
       >
         <Globe className="w-5 h-5 text-[#657786]" />
-        <span className="text-sm font-medium text-[#14171A] hidden sm:inline">
+        <span className="text-sm font-medium text-[#14171A]">
           {languageLabels[locale as Locale]}
         </span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-lg border border-[#E1E8ED] py-1 z-50">
+        <div
+          className={`absolute right-0 w-36 bg-white rounded-xl shadow-lg border border-[#E1E8ED] py-1 z-50 ${
+            upwards ? 'bottom-full mb-2' : 'mt-2'
+          }`}
+        >
           {locales.map((loc) => (
             <button
               key={loc}
