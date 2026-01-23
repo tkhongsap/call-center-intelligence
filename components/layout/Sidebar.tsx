@@ -49,7 +49,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#E1E8ED] min-h-screen">
+    <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#E1E8ED] h-screen">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-4">
         <div className="w-10 h-10 rounded-full bg-[#1DA1F2] flex items-center justify-center">
@@ -61,13 +61,8 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Language Switcher */}
-      <div className="px-4 py-2">
-        <LanguageSwitcher />
-      </div>
-
       {/* Primary Navigation */}
-      <nav className="flex-1 px-2 py-2">
+      <nav className="flex-1 px-2 py-2 overflow-y-auto">
         <ul className="space-y-1">
           {navigationItems.map((item) => {
             const isActive = isPathActive(item.href);
@@ -124,7 +119,10 @@ export function Sidebar() {
       </nav>
 
       {/* User/Role Section */}
-      <div className="px-2 py-3 mt-auto">
+      <div className="px-4 py-2 mt-auto flex-shrink-0">
+        <LanguageSwitcher upwards />
+      </div>
+      <div className="px-2 py-3">
         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-[#E1E8ED]/50 transition-colors twitter-focus-ring">
           <Avatar
             variant="user"
