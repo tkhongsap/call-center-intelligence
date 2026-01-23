@@ -17,6 +17,7 @@ import {
   BarChart3,
   Bell,
   MoreHorizontal,
+  TrendingUp,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
@@ -26,6 +27,7 @@ const navigationItems = [
   { key: 'home', href: '/home', icon: Home },
   { key: 'alerts', href: '/alerts', icon: AlertTriangle },
   { key: 'cases', href: '/cases', icon: FileText },
+  { key: 'trending', href: '/trending', icon: TrendingUp },
   { key: 'uploads', href: '/uploads', icon: Upload },
   { key: 'inbox', href: '/inbox', icon: Inbox },
   { key: 'search', href: '/search', icon: Search },

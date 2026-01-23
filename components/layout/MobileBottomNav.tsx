@@ -15,6 +15,7 @@ import {
   Upload,
   Settings,
   BarChart3,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
@@ -30,6 +31,7 @@ const bottomNavItems = [
 // Menu items for the "More" sheet
 const menuItems = [
   { key: 'cases', href: '/cases', icon: FileText },
+  { key: 'trending', href: '/trending', icon: TrendingUp },
   { key: 'uploads', href: '/uploads', icon: Upload },
   { key: 'analytics', href: '/analytics', icon: BarChart3 },
   { key: 'settings', href: '/settings', icon: Settings },
