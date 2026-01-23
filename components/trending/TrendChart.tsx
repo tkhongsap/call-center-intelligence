@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useLocale } from 'next-intl';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -65,6 +66,7 @@ export function TrendChart({
   color = 'blue',
   className,
 }: TrendChartProps) {
+  const locale = useLocale();
   const colors = colorConfig[color];
   const padding = { top: 20, right: 20, bottom: 30, left: 40 };
   const chartWidth = width - padding.left - padding.right;
@@ -136,9 +138,9 @@ export function TrendChart({
 
   // X-axis label positions (first, middle, last)
   const xLabels = [
-    { index: 0, label: data[0]?.date ? formatDateLabel(data[0].date) : '' },
-    { index: Math.floor(data.length / 2), label: data[Math.floor(data.length / 2)]?.date ? formatDateLabel(data[Math.floor(data.length / 2)].date) : '' },
-    { index: data.length - 1, label: data[data.length - 1]?.date ? formatDateLabel(data[data.length - 1].date) : '' },
+    { index: 0, label: data[0]?.date ? formatDateLabel(data[0].date, locale) : '' },
+    { index: Math.floor(data.length / 2), label: data[Math.floor(data.length / 2)]?.date ? formatDateLabel(data[Math.floor(data.length / 2)].date, locale) : '' },
+    { index: data.length - 1, label: data[data.length - 1]?.date ? formatDateLabel(data[data.length - 1].date, locale) : '' },
   ];
 
   return (
@@ -291,9 +293,10 @@ export function TrendChart({
   );
 }
 
-function formatDateLabel(dateString: string): string {
+function formatDateLabel(dateString: string, locale: string = 'en'): string {
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const date = new Date(dateString);
-  const month = date.toLocaleString('en-US', { month: 'short' });
+  const month = date.toLocaleString(localeCode, { month: 'short' });
   const day = date.getDate();
   return `${month} ${day}`;
 }

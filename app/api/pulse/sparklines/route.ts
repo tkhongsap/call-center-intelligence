@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { cases } from '@/lib/db/schema';
 import { and, gte, sql, or, eq } from 'drizzle-orm';
@@ -8,7 +8,14 @@ interface DayData {
   value: number;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Get locale from query param or Accept-Language header
+  const { searchParams } = new URL(request.url);
+  const locale = searchParams.get('locale') ||
+    request.headers.get('x-locale') ||
+    'en';
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
+
   // Generate 7-day trend data
   const now = new Date();
   const days: { start: Date; end: Date; label: string }[] = [];
@@ -21,7 +28,7 @@ export async function GET() {
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(23, 59, 59, 999);
 
-    const dayLabel = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : dayStart.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayLabel = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : dayStart.toLocaleDateString(localeCode, { weekday: 'short' });
 
     days.push({ start: dayStart, end: dayEnd, label: dayLabel });
   }

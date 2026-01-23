@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export interface Message {
@@ -13,8 +14,9 @@ interface ChatMessageProps {
   message: Message;
 }
 
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('en-US', {
+function formatTime(date: Date, locale: string = 'en') {
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
+  return date.toLocaleTimeString(localeCode, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -135,6 +137,7 @@ function parseInline(text: string): React.ReactNode {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
+  const locale = useLocale();
   const isUser = message.role === 'user';
 
   return (
@@ -161,7 +164,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         )}
       </div>
       <span className="text-xs text-slate-400 mt-1 px-1">
-        {formatTime(message.timestamp)}
+        {formatTime(message.timestamp, locale)}
       </span>
     </div>
   );

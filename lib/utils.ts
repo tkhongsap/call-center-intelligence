@@ -85,16 +85,29 @@ export function batchUpdates<T>(
   };
 }
 
-export function formatDate(date: string | Date) {
-  return new Date(date).toLocaleDateString('en-US', {
+/**
+ * Maps locale codes to full locale identifiers for Intl APIs
+ */
+function getLocaleCode(locale: string = 'en'): string {
+  const localeCodeMap: Record<string, string> = {
+    'en': 'en-US',
+    'th': 'th-TH',
+  };
+  return localeCodeMap[locale] || 'en-US';
+}
+
+export function formatDate(date: string | Date, locale: string = 'en') {
+  const localeCode = getLocaleCode(locale);
+  return new Date(date).toLocaleDateString(localeCode, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 }
 
-export function formatDateTime(date: string | Date) {
-  return new Date(date).toLocaleString('en-US', {
+export function formatDateTime(date: string | Date, locale: string = 'en') {
+  const localeCode = getLocaleCode(locale);
+  return new Date(date).toLocaleString(localeCode, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -103,7 +116,7 @@ export function formatDateTime(date: string | Date) {
   });
 }
 
-export function formatRelativeTime(date: string | Date) {
+export function formatRelativeTime(date: string | Date, locale: string = 'en') {
   const now = new Date();
   const then = new Date(date);
   const diffMs = now.getTime() - then.getTime();
@@ -115,5 +128,5 @@ export function formatRelativeTime(date: string | Date) {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return formatDate(date);
+  return formatDate(date, locale);
 }

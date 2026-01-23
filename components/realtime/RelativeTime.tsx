@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 interface RelativeTimeProps {
@@ -10,7 +11,8 @@ interface RelativeTimeProps {
   showIcon?: boolean;
 }
 
-function formatRelativeTimeSeconds(date: Date): string {
+function formatRelativeTimeSeconds(date: Date, locale: string = 'en'): string {
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSecs = Math.floor(diffMs / 1000);
@@ -24,7 +26,7 @@ function formatRelativeTimeSeconds(date: Date): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(localeCode, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -37,6 +39,7 @@ export function RelativeTime({
   prefix = 'Updated',
   showIcon = true,
 }: RelativeTimeProps) {
+  const locale = useLocale();
   const [formattedTime, setFormattedTime] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
@@ -46,8 +49,8 @@ export function RelativeTime({
       return;
     }
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    setFormattedTime(formatRelativeTimeSeconds(date));
-  }, [timestamp]);
+    setFormattedTime(formatRelativeTimeSeconds(date, locale));
+  }, [timestamp, locale]);
 
   // Initial mount
   useLayoutEffect(() => {

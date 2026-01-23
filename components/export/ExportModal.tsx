@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { X, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 
 export type ExportFormat = 'csv' | 'xlsx';
@@ -14,6 +15,8 @@ interface ExportModalProps {
 }
 
 export function ExportModal({ isOpen, onClose, onExport, totalCount, hasFilters }: ExportModalProps) {
+  const locale = useLocale();
+  const localeCode = locale === 'th' ? 'th-TH' : 'en-US';
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('csv');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -66,14 +69,14 @@ export function ExportModal({ isOpen, onClose, onExport, totalCount, hasFilters 
           <div className="mb-6 p-4 bg-slate-50 rounded-lg">
             <p className="text-sm text-slate-600">
               {hasFilters ? (
-                <>Exporting <span className="font-medium text-slate-900">{totalCount.toLocaleString()}</span> filtered cases</>
+                <>Exporting <span className="font-medium text-slate-900">{totalCount.toLocaleString(localeCode)}</span> filtered cases</>
               ) : (
-                <>Exporting <span className="font-medium text-slate-900">{totalCount.toLocaleString()}</span> cases</>
+                <>Exporting <span className="font-medium text-slate-900">{totalCount.toLocaleString(localeCode)}</span> cases</>
               )}
             </p>
             {willBeTruncated && (
               <p className="text-sm text-amber-600 mt-2">
-                Export limited to {maxExportRows.toLocaleString()} rows. Apply filters to reduce the dataset.
+                Export limited to {maxExportRows.toLocaleString(localeCode)} rows. Apply filters to reduce the dataset.
               </p>
             )}
           </div>
