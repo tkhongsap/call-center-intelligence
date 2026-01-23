@@ -1,7 +1,8 @@
 {
-  "numStartups": 1,
+  "numStartups": 2,
   "tipsHistory": {
-    "new-user-warmup": 1
+    "new-user-warmup": 1,
+    "plan-mode-for-complex-tasks": 1
   },
   "cachedGrowthBookFeatures": {
     "tengu_1p_event_batch_config": {
@@ -9,7 +10,7 @@
       "maxExportBatchSize": 200,
       "maxQueueSize": 8192
     },
-    "tengu_mcp_tool_search": false,
+    "tengu_mcp_tool_search": true,
     "tengu_scratch": false,
     "tengu_brass_pebble": false,
     "tengu_disable_bypass_permissions_mode": false,
@@ -125,5 +126,7 @@
     }
   },
   "officialMarketplaceAutoInstallAttempted": true,
-  "officialMarketplaceAutoInstalled": true
+  "officialMarketplaceAutoInstalled": true,
+  "passesUpsellSeenCount": 2,
+  "passesLastSeenCampaign": "claude_code_guest_pass"
 }
