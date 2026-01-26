@@ -18,7 +18,7 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 
 # CORS and middleware
-python-cors==1.7.0
+# CORS is handled by FastAPI's built-in CORSMiddleware
 
 # WebSocket support
 websockets==12.0

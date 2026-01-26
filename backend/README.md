@@ -18,38 +18,75 @@ FastAPI backend for the call center management system. This backend replaces the
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- pip or poetry for package management
+- Python 3.12 or higher
+- Conda package manager (recommended for Windows)
+- Git for version control
 
-### Installation
+### Installation (Windows with Conda)
 
-1. Create and activate a virtual environment:
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+#### Option 1: Automated Setup (Recommended)
+
+Run the setup script for your shell:
+
+**Command Prompt:**
+
+```cmd
+setup_conda_env.bat
+```
+
+**PowerShell:**
+
+```powershell
+.\setup_conda_env.ps1
+```
+
+#### Option 2: Manual Setup
+
+1. Create and activate a conda environment:
+
+```cmd
+conda create -n fastapi-backend python=3.12 -y
+conda activate fastapi-backend
 ```
 
 2. Install dependencies:
-```bash
+
+```cmd
 pip install -r requirements.txt
 ```
 
 3. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
+
+```cmd
+copy .env.example .env
+# Edit .env with your configuration using notepad or your preferred editor
+notepad .env
 ```
 
 4. Run the development server:
-```bash
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+```cmd
+python start_server.py
 ```
 
 The API will be available at:
+
 - API: http://localhost:8000
 - Documentation: http://localhost:8000/docs
 - Alternative docs: http://localhost:8000/redoc
+- WebSocket: ws://localhost:8000/api/ws
+
+### Alternative Installation (Virtual Environment)
+
+If you prefer using virtual environments instead of conda:
+
+```cmd
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python start_server.py
+```
 
 ## Project Structure
 
@@ -96,38 +133,63 @@ The backend implements all endpoints from the original Next.js API:
 
 ### Running Tests
 
-```bash
+```cmd
+# Activate environment first
+conda activate fastapi-backend
+
 # Run all tests
-pytest
+python -m pytest tests/ -v
 
 # Run with coverage
-pytest --cov=app
+python -m pytest tests/ --cov=app --cov-report=html
 
 # Run specific test types
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests only
-pytest -m property      # Property-based tests only
+python -m pytest tests/ -m unit          # Unit tests only
+python -m pytest tests/ -m integration   # Integration tests only
+python -m pytest tests/ -m property      # Property-based tests only
+
+# Run property-based tests with verbose output
+python -m pytest tests/test_property_*.py -v -s
 ```
 
 ### Code Quality
 
-```bash
+```cmd
+# Activate environment first
+conda activate fastapi-backend
+
 # Format code
-black app/ tests/
+python -m black app\ tests\
 
 # Sort imports
-isort app/ tests/
+python -m isort app\ tests\
 
 # Type checking
-mypy app/
+python -m mypy app\
 
 # Linting
-flake8 app/ tests/
+python -m flake8 app\ tests\
 ```
 
 ### Database
 
 The backend connects to the existing SQLite database (`call-center.db`) without requiring data migration. The SQLAlchemy models are designed to match the existing Drizzle schema exactly.
+
+### Development Server
+
+Start the development server with hot reload:
+
+```cmd
+conda activate fastapi-backend
+python start_server.py
+```
+
+Or use uvicorn directly:
+
+```cmd
+conda activate fastapi-backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
 ## Configuration
 
@@ -143,12 +205,15 @@ Environment variables can be set in the `.env` file:
 
 ### Docker
 
-```bash
+```cmd
 # Build image
 docker build -t call-center-backend .
 
 # Run container
 docker run -p 8000:8000 call-center-backend
+
+# Using docker-compose
+docker-compose up -d
 ```
 
 ### Production
@@ -160,6 +225,21 @@ For production deployment:
 3. Configure proper logging and monitoring
 4. Set up reverse proxy (nginx, etc.)
 5. Use environment-specific configuration
+
+### Health Check
+
+Check if the API is running:
+
+```cmd
+# Using curl (if available)
+curl http://localhost:8000/health
+
+# Using PowerShell
+Invoke-RestMethod -Uri http://localhost:8000/health
+
+# Or open in browser
+start http://localhost:8000/health
+```
 
 ## Migration from Next.js
 

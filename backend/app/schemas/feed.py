@@ -29,8 +29,10 @@ from app.schemas.serializers import (
 # Feed Item Schemas
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class FeedItemBase(BaseModel):
     """Base feed item schema."""
+
     type: FeedItemType = Field(..., description="Feed item type")
     title: str = Field(..., min_length=1, max_length=200, description="Feed item title")
     content: str = Field(..., min_length=1, description="Feed item content")
@@ -41,15 +43,24 @@ class FeedItemBase(BaseModel):
 
 class FeedItemCreate(FeedItemBase):
     """Schema for creating feed items."""
+
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
     expires_at: Optional[str] = Field(None, description="Expiration timestamp")
 
 
-class FeedItemResponse(FeedItemBase, TimestampSerializerMixin, NumberSerializerMixin, 
-                      JSONFieldSerializerMixin, EnumSerializerMixin):
+class FeedItemResponse(
+    FeedItemBase,
+    TimestampSerializerMixin,
+    NumberSerializerMixin,
+    JSONFieldSerializerMixin,
+    EnumSerializerMixin,
+):
     """Complete feed item response schema with enhanced serialization."""
+
     id: str = Field(..., description="Feed item ID")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    item_metadata: Optional[Dict[str, Any]] = Field(
+        None, alias="metadata", description="Additional metadata"
+    )
     created_at: str = Field(..., description="Creation timestamp")
     expires_at: Optional[str] = Field(None, description="Expiration timestamp")
 
@@ -67,12 +78,12 @@ class FeedItemResponse(FeedItemBase, TimestampSerializerMixin, NumberSerializerM
                 "metadata": {
                     "businessUnit": "Business Unit A",
                     "alertId": "alert-456",
-                    "severity": "high"
+                    "severity": "high",
                 },
                 "created_at": "2024-01-15T10:30:00Z",
-                "expires_at": None
+                "expires_at": None,
             }
-        }
+        },
     )
 
 
@@ -80,15 +91,17 @@ class FeedItemResponse(FeedItemBase, TimestampSerializerMixin, NumberSerializerM
 # Feed Query Parameters
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class FeedListParams(PaginationParams, BusinessUnitFilter, ChannelFilter):
     """Query parameters for listing feed items."""
+
     type: Optional[FeedItemType] = Field(None, description="Filter by feed item type")
     date_range: str = Field("today", description="Date range filter")
 
-    @field_validator('date_range')
+    @field_validator("date_range")
     @classmethod
     def validate_date_range(cls, v):
-        allowed_ranges = ['today', '7d', '30d']
+        allowed_ranges = ["today", "7d", "30d"]
         if v not in allowed_ranges:
             raise ValueError(f'date_range must be one of: {", ".join(allowed_ranges)}')
         return v
@@ -98,10 +111,14 @@ class FeedListParams(PaginationParams, BusinessUnitFilter, ChannelFilter):
 # Feed List Response
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class FeedListResponse(BaseModel):
     """Response schema for feed list endpoint with enhanced pagination."""
+
     items: List[FeedItemResponse] = Field(..., description="List of feed items")
-    pagination: EnhancedPaginationInfo = Field(..., description="Enhanced pagination information")
+    pagination: EnhancedPaginationInfo = Field(
+        ..., description="Enhanced pagination information"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -118,10 +135,10 @@ class FeedListResponse(BaseModel):
                         "metadata": {
                             "businessUnit": "Business Unit A",
                             "alertId": "alert-456",
-                            "severity": "high"
+                            "severity": "high",
                         },
                         "created_at": "2024-01-15T10:30:00Z",
-                        "expires_at": None
+                        "expires_at": None,
                     },
                     {
                         "id": "feed-124",
@@ -135,18 +152,13 @@ class FeedListResponse(BaseModel):
                             "batchId": "upload-789",
                             "fileName": "cases_batch_2024.csv",
                             "caseCount": 25,
-                            "status": "completed"
+                            "status": "completed",
                         },
                         "created_at": "2024-01-15T09:15:00Z",
-                        "expires_at": None
-                    }
+                        "expires_at": None,
+                    },
                 ],
-                "pagination": {
-                    "page": 1,
-                    "limit": 10,
-                    "total": 2,
-                    "total_pages": 1
-                }
+                "pagination": {"page": 1, "limit": 10, "total": 2, "total_pages": 1},
             }
         }
     )
@@ -156,8 +168,10 @@ class FeedListResponse(BaseModel):
 # Feed Item Types and Metadata Schemas
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class AlertFeedMetadata(BaseModel):
     """Metadata for alert feed items."""
+
     business_unit: Optional[str] = Field(None, alias="businessUnit")
     alert_id: str = Field(..., alias="alertId")
     severity: str = Field(..., description="Alert severity")
@@ -166,6 +180,7 @@ class AlertFeedMetadata(BaseModel):
 
 class TrendingFeedMetadata(BaseModel):
     """Metadata for trending feed items."""
+
     business_unit: Optional[str] = Field(None, alias="businessUnit")
     topic: str = Field(..., description="Trending topic")
     case_count: int = Field(..., alias="caseCount")
@@ -175,6 +190,7 @@ class TrendingFeedMetadata(BaseModel):
 
 class UploadFeedMetadata(BaseModel):
     """Metadata for upload feed items."""
+
     batch_id: str = Field(..., alias="batchId")
     file_name: str = Field(..., alias="fileName")
     case_count: int = Field(..., alias="caseCount")
@@ -184,6 +200,7 @@ class UploadFeedMetadata(BaseModel):
 
 class HighlightFeedMetadata(BaseModel):
     """Metadata for highlight feed items."""
+
     business_unit: Optional[str] = Field(None, alias="businessUnit")
     category: Optional[str] = Field(None, description="Highlight category")
     metric_name: Optional[str] = Field(None, alias="metricName")
@@ -194,8 +211,10 @@ class HighlightFeedMetadata(BaseModel):
 # Feed Statistics
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class FeedStatsResponse(BaseModel):
     """Response schema for feed statistics."""
+
     total_items: int = Field(..., description="Total number of feed items")
     by_type: Dict[str, int] = Field(..., description="Count by feed item type")
     by_priority: Dict[str, int] = Field(..., description="Count by priority level")
@@ -205,18 +224,9 @@ class FeedStatsResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "total_items": 45,
-                "by_type": {
-                    "alert": 12,
-                    "trending": 8,
-                    "highlight": 15,
-                    "upload": 10
-                },
-                "by_priority": {
-                    "high": 8,
-                    "medium": 25,
-                    "low": 12
-                },
-                "active_items": 42
+                "by_type": {"alert": 12, "trending": 8, "highlight": 15, "upload": 10},
+                "by_priority": {"high": 8, "medium": 25, "low": 12},
+                "active_items": 42,
             }
         }
     )
