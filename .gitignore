@@ -1,0 +1,112 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build outputs
+.next/
+out/
+build/
+dist/
+
+# Production
+.vercel
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage/
+.nyc_output/
+
+# Python (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend_venv/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Database (SQLite)
+*.sqlite
+*.sqlite3
+*.db
+/data/
+call-center.db
+test.db
+
+# Drizzle ORM
+/drizzle/
+
+# IDE / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.vim
+.project
+.classpath
+.settings/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Secrets / Keys
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.json
+
+# Misc
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Claude Code local config
+.claude-user/
+
+# Kiro specs (optional - uncomment if you want to ignore specs)
+# .kiro/specs/
+
+# Ralph workflow files
+.ralph-state.json
+progress.txt
