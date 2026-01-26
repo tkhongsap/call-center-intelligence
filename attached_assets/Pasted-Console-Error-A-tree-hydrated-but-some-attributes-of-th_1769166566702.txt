@@ -1,0 +1,111 @@
+Console Error
+
+
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
+
+
+  ...
+    <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+      <LoadingBoundary name="home/" loading={[...]}>
+        <Suspense name="home/" fallback={<Fragment>}>
+          <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+            <RedirectBoundary>
+              <RedirectErrorBoundary router={{...}}>
+                <InnerLayoutRouter url="/home" tree={[...]} params={{locale:"en"}} cacheNode={{rsc:<Fragment>, ...}} ...>
+                  <SegmentViewNode type="page" pagePath="[locale]/h...">
+                    <SegmentTrieNode>
+                    <HomePage>
+                      <HomePage>
+                        <Header title="Home">
+                          <header className="sticky top...">
+                            <div>
+                            <div className="flex items...">
+                              <div className="hidden sm:...">
+                                <RoleSwitcher>
+                                  <div className="relative" ref={{current:null}}>
+                                    <button
+                                      onClick={function RoleSwitcher[<button>.onClick]}
+                                      className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text-[#657786] hov..."
+                                      aria-label="Switch role"
+                                      aria-expanded={false}
+                                      aria-haspopup="listbox"
+-                                     fdprocessedid="b7m2b6"
+                                    >
+                              <div className="hidden sm:...">
+                                <SSEToggle compact={true}>
+                                  <button
+                                    onClick={function _temp2}
+                                    className="relative flex items-center justify-center w-8 h-8 rounded-lg transition..."
+                                    title="SSE Mode - Click for Polling"
+                                    aria-label="Switch to Polling"
+-                                   fdprocessedid="eck6ce"
+                                  >
+                              <div className="hidden sm:...">
+                                <DemoModeToggle compact={true}>
+                                  <button
+                                    onClick={function toggle}
+                                    disabled={false}
+                                    className="relative flex items-center justify-center w-8 h-8 rounded-lg transition..."
+                                    title="Start Demo Mode"
+                                    aria-label="Start Demo Mode"
+-                                   fdprocessedid="3jb4t"
+                                  >
+                              <SearchBar className="w-32 sm:w-...">
+                                <div ref={{current:null}} className="relative w...">
+                                  <form onSubmit={function SearchBar[handleSubmit]} className="relative">
+                                    <Search>
+                                    <input
+                                      ref={{current:null}}
+                                      type="text"
+                                      value=""
+                                      onChange={function SearchBar[<input>.onChange]}
+                                      onFocus={function SearchBar[handleFocus]}
+                                      onBlur={function SearchBar[handleBlur]}
+                                      placeholder="Search cases, alerts..."
+                                      className="w-full h-9 pl-9 pr-20 rounded-lg bg-slate-100 text-sm text-slate-900 ..."
+-                                     fdprocessedid="oqpunq"
+                                    >
+                                    ...
+                              <LinkComponent>
+                              <LinkComponent>
+                              <button
+                                className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1D..."
+-                               fdprocessedid="o2omr"
+                              >
+                              ...
+                      ...
+                  ...
+                ...
+components/layout/RoleSwitcher.tsx (71:7) @ RoleSwitcher
+
+
+  69 |   return (
+  70 |     <div className="relative" ref={dropdownRef}>
+> 71 |       <button
+     |       ^
+  72 |         onClick={() => setIsOpen(!isOpen)}
+  73 |         className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring text-sm"
+  74 |         aria-label="Switch role"
+Call Stack
+27
+
+Show 23 ignore-listed frame(s)
+button
+<anonymous>
+RoleSwitcher
+components/layout/RoleSwitcher.tsx (71:7)
+Header
+components/layout/Header.tsx (117:11)
+HomePage
+app/[locale]/home/page.tsx (10:7)
+1
+2
