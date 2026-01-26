@@ -1,0 +1,57 @@
+Fix Uploads PRD gaps: Verify feed item creation and alert recomputation after upload.
+
+## Tasks (complete in sequence):
+
+### 1. Investigate Current Upload Flow
+- Read `app/api/uploads/route.ts` to understand POST handler
+- Read `app/api/feed/route.ts` to understand feed item structure
+- Read `lib/scripts/compute-alerts.ts` to understand alert computation
+- Check `lib/db/schema.ts` for feedItems and uploads table structure
+- Document findings before making changes
+
+### 2. Add Feed Item Creation to Upload Handler
+- In POST handler of `app/api/uploads/route.ts`:
+  - After successful upload record creation, insert a feed item
+  - Feed item type should be 'upload'
+  - Include upload metadata (filename, status, record counts)
+  - Set appropriate timestamp
+- Verify feed items table has necessary columns for upload type
+- File: app/api/uploads/route.ts
+
+### 3. Verify Alert Recomputation Trigger
+- Check if uploads route triggers compute-alerts
+- If not, add async call to trigger alert recomputation:
+  - Option A: Call compute-alerts script via child_process
+  - Option B: Create API endpoint `/api/alerts/recompute` and call it
+  - Option C: Import compute function directly if exported
+- Alert recomputation should be non-blocking (fire and forget)
+- Add error handling that logs but doesn't fail the upload
+- Files: app/api/uploads/route.ts, potentially app/api/alerts/recompute/route.ts (new)
+
+### 4. Test the Integration
+- After changes, verify:
+  - Upload creates a record in uploads table
+  - Feed item appears in feed API response
+  - Alert computation runs (check logs or alerts table)
+- Add console.log statements temporarily if needed for verification
+
+## Technical Requirements:
+- Non-blocking async operations for feed item and alert computation
+- Proper error handling (don't fail upload if secondary operations fail)
+- TypeScript strict mode required
+- Follow existing patterns in codebase
+
+## Quality Checks Before Each Commit:
+- npm run typecheck (must pass)
+- npm run lint (must pass)
+
+## Completion Criteria:
+- Uploads create corresponding feed items
+- Alert recomputation is triggered after upload
+- No regression to existing upload functionality
+- All quality checks pass
+
+Output <promise>UPLOADS GAPS COMPLETE</promise> when ALL tasks are done and quality checks pass.
+
+---
+OPTIONS: --completion-promise "UPLOADS GAPS COMPLETE" --max-iterations 8

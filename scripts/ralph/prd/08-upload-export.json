@@ -1,0 +1,26 @@
+{
+  "name": "Upload & Export",
+  "priority": 8,
+  "taskFile": "tasks/tasks-08-upload-export.md",
+  "githubIssue": "8",
+  "dependencies": ["01-project-setup", "02-cases-module", "03-alerts-module", "04-live-feed"],
+  "description": "CSV upload for new cases and export functionality",
+  "functionalRequirements": ["FR46", "FR47", "FR48", "FR49", "FR50"],
+  "acceptance": [
+    "CSV upload accepts valid files",
+    "Invalid rows show detailed errors",
+    "Error report includes row, column, reason, fix",
+    "Successful upload creates feed item",
+    "Alerts/trending recompute after upload",
+    "Export produces valid CSV file",
+    "Export produces valid XLSX file",
+    "Export respects current filters"
+  ],
+  "verification": {
+    "commands": [
+      "npm run typecheck",
+      "curl -s http://localhost:3000/api/uploads | jq '.uploads | length'",
+      "curl -s 'http://localhost:3000/api/export?format=csv' -o /tmp/export.csv && wc -l /tmp/export.csv"
+    ]
+  }
+}

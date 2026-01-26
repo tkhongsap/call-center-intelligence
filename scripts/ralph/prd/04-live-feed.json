@@ -1,0 +1,26 @@
+{
+  "name": "Live Feed",
+  "priority": 4,
+  "taskFile": "tasks/tasks-04-live-feed.md",
+  "githubIssue": "4",
+  "dependencies": ["01-project-setup", "02-cases-module", "03-alerts-module"],
+  "description": "Home page with Today Feed showing alerts, trending, highlights plus Pulse sidebar",
+  "functionalRequirements": ["FR1", "FR2", "FR3", "FR4", "FR5", "FR6", "FR7", "FR8", "FR9", "FR10"],
+  "acceptance": [
+    "Home page shows Today Feed with mixed card types",
+    "At least 2 alert cards appear in feed",
+    "At least 2 trending cards appear in feed",
+    "Highlight cards show meaningful summaries",
+    "Pulse sidebar displays all KPIs",
+    "Quick filters update feed instantly",
+    "Clicking cards navigates to correct drilldown",
+    "Feed is deterministic with seed data"
+  ],
+  "verification": {
+    "commands": [
+      "npm run typecheck",
+      "curl -s http://localhost:3000/api/feed | jq '.items | length'",
+      "curl -s http://localhost:3000/api/pulse | jq '.kpis'"
+    ]
+  }
+}
