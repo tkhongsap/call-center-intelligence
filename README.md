@@ -1,4 +1,4 @@
-# Call Center Intelligence Control Tower
+# Call Center Intelligence
 
 A **world-class Call Center Intelligence Control Tower** that unifies cases from multiple channels into a single system, then surfaces **what's happening now** via a social-media style feed, trending topics, smart alerts, semantic search, and one-click sharing/escalation to management.
 
@@ -40,7 +40,3 @@ call_center_intelligence/
 ## Getting Started
 
 *Documentation and setup instructions coming soon.*
-
-## License
-
-MIT
