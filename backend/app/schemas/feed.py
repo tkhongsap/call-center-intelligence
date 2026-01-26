@@ -66,6 +66,10 @@ class FeedItemResponse(
 
     model_config = ConfigDict(
         from_attributes=True,
+        # Fix field mapping to use the correct SQLAlchemy attribute name
+        populate_by_name=True,
+        # Use alias for serialization
+        by_alias=True,
         json_schema_extra={
             "example": {
                 "id": "feed-123",
@@ -85,6 +89,31 @@ class FeedItemResponse(
             }
         },
     )
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        """
+        Custom validation to handle SQLAlchemy object field mapping.
+
+        This fixes the issue where Pydantic looks for 'metadata' attribute
+        due to the alias, but finds SQLAlchemy's Base.metadata instead of
+        the intended item_metadata field.
+        """
+        if hasattr(obj, "item_metadata") and hasattr(obj, "metadata"):
+            # If this is a SQLAlchemy object with both attributes,
+            # create a dict with the correct mapping
+            obj_dict = {}
+            for field_name, field_info in cls.model_fields.items():
+                if field_name == "item_metadata":
+                    # Use the SQLAlchemy attribute name
+                    obj_dict["item_metadata"] = getattr(obj, "item_metadata", None)
+                else:
+                    # Use the regular attribute name
+                    obj_dict[field_name] = getattr(obj, field_name, None)
+            return super().model_validate(obj_dict, **kwargs)
+        else:
+            # For regular objects or dicts, use default validation
+            return super().model_validate(obj, **kwargs)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,211 @@
+Console Error
+
+
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
+
+
+  ...
+    <RenderFromTemplateContext>
+      <ScrollAndFocusHandler segmentPath={[...]}>
+        <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
+          <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+            <LoadingBoundary name="/" loading={null}>
+              <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
+                <HTTPAccessFallbackErrorBoundary pathname="/th/search" notFound={<SegmentViewNode>} forbidden={undefined} ...>
+                  <RedirectBoundary>
+                    <RedirectErrorBoundary router={{...}}>
+                      <InnerLayoutRouter url="/th/search" tree={[...]} params={{locale:"th"}} cacheNode={{...}} ...>
+                        <SegmentViewNode type="layout" pagePath="[locale]/l...">
+                          <SegmentTrieNode>
+                          <link>
+                          <script>
+                          <script>
+                          <script>
+                          <script>
+                          <LocaleLayout>
+                            <html lang="th" suppressHydrationWarning={true}>
+                              <body
+                                className="geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG_..."
+-                               data-new-gr-c-s-check-loaded="14.1270.0"
+-                               data-gr-ext-installed=""
+                              >
+                                ...
+                                  <div className="flex min-h...">
+                                    <MobileNav>
+                                    <Sidebar>
+                                      <aside className="hidden lg:...">
+                                        <div>
+                                        <nav className="flex-1 px-...">
+                                          <ul>
+                                          <div>
+                                          <ul>
+                                          <div className="mt-4 px-2">
+                                            <button
+                                              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[v..."
+-                                             fdprocessedid="hox2b8"
+                                            >
+                                        <div className="px-4 py-2 ...">
+                                          <LanguageSwitcher upwards={true}>
+                                            <div className="relative" ref={{current:null}}>
+                                              <button
+                                                onClick={function LanguageSwitcher[<button>.onClick]}
+                                                className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[#E..."
+                                                aria-label="เปลี่ยนภาษา"
+                                                title="เปลี่ยนภาษา"
+-                                               fdprocessedid="jlaxvr"
+                                              >
+                                        <div className="px-2 py-3 ...">
+                                          <button
+                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-full hover:bg-..."
+-                                           fdprocessedid="vjfb5"
+                                          >
+                                    ...
+                                      <Header title="ค้นหา">
+                                        <header className="sticky top...">
+                                          <div>
+                                          <div className="flex items...">
+                                            <div className="hidden sm:...">
+                                              <RoleSwitcher>
+                                                <div className="relative" ref={{current:null}}>
+                                                  <button
+                                                    onClick={function RoleSwitcher[<button>.onClick]}
+                                                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text..."
+                                                    aria-label="Switch role"
+                                                    aria-expanded={false}
+                                                    aria-haspopup="listbox"
+-                                                   fdprocessedid="pn64ml"
+                                                  >
+                                            <div className="hidden sm:...">
+                                              <SSEToggle compact={true}>
+                                                <button
+                                                  onClick={function _temp2}
+                                                  className="relative flex items-center justify-center w-8 h-8 rounded..."
+                                                  title="SSE Mode - Click for Polling"
+                                                  aria-label="Switch to Polling"
+-                                                 fdprocessedid="vcnfn"
+                                                >
+                                            <div className="hidden sm:...">
+                                              <DemoModeToggle compact={true}>
+                                                <button
+                                                  onClick={function toggle}
+                                                  disabled={false}
+                                                  className="relative flex items-center justify-center w-8 h-8 rounded..."
+                                                  title="Start Demo Mode"
+                                                  aria-label="Start Demo Mode"
+-                                                 fdprocessedid="283i8g"
+                                                >
+                                            <SearchBar className="w-32 sm:w-...">
+                                              <div ref={{current:null}} className="relative w...">
+                                                <form onSubmit={function SearchBar[handleSubmit]} className="relative">
+                                                  <Search>
+                                                  <input
+                                                    ref={{current:null}}
+                                                    type="text"
+                                                    value=""
+                                                    onChange={function SearchBar[<input>.onChange]}
+                                                    onFocus={function SearchBar[handleFocus]}
+                                                    onBlur={function SearchBar[handleBlur]}
+                                                    placeholder="Search cases, alerts..."
+                                                    className="w-full h-9 pl-9 pr-20 rounded-lg bg-slate-100 text-sm t..."
+-                                                   fdprocessedid="2ydvyg"
+                                                  >
+                                                  ...
+                                            <LinkComponent>
+                                            <LinkComponent>
+                                            <button
+                                              className="relative p-2 rounded-full text-[#657786] hover:text-[#1DA1F2]..."
+-                                             fdprocessedid="bm1tse"
+                                            >
+                                            ...
+                                    <ChatDrawer>
+                                      <button
+                                        onClick={function onClick}
+                                        className="fixed right-4 sm:right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 bg-blue-600..."
+                                        aria-label="เปิดแชท"
+-                                       fdprocessedid="hhp9ib"
+                                      >
+                                      <div className="fixed z-50...">
+                                        <div className="flex items...">
+                                          <div>
+                                          <div className="flex items...">
+                                            <button
+                                              onClick={function onClick}
+                                              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                                              aria-label="Minimize chat"
+-                                             fdprocessedid="iwpj45"
+                                            >
+                                            <button
+                                              onClick={function onClick}
+                                              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                                              aria-label="ปิดแชท"
+-                                             fdprocessedid="zvr5l4"
+                                            >
+                                        ...
+                                          <div className="flex flex-...">
+                                            <div>
+                                            <h4>
+                                            <p>
+                                            <div className="space-y-2 ...">
+                                              <p>
+                                              <button
+                                                onClick={function QuickActions[QUICK_ACTIONS.map() > <button>.onClick]}
+                                                className="w-full px-4 py-2.5 text-sm text-left text-slate-700 bg-slat..."
+-                                               fdprocessedid="4v7mvp"
+                                              >
+                                              <button
+                                                onClick={function QuickActions[QUICK_ACTIONS.map() > <button>.onClick]}
+                                                className="w-full px-4 py-2.5 text-sm text-left text-slate-700 bg-slat..."
+-                                               fdprocessedid="x3a2us"
+                                              >
+                                              <button
+                                                onClick={function QuickActions[QUICK_ACTIONS.map() > <button>.onClick]}
+                                                className="w-full px-4 py-2.5 text-sm text-left text-slate-700 bg-slat..."
+-                                               fdprocessedid="b8lygj"
+                                              >
+                                        <ChatInput onSend={function handleSend} disabled={false} autoFocus={false}>
+                                          <div className="p-4 border...">
+                                            <div className="flex items...">
+                                              <input
+                                                ref={{current:null}}
+                                                type="text"
+                                                value=""
+                                                onChange={function ChatInput[<input>.onChange]}
+                                                onKeyDown={function ChatInput[handleKeyDown]}
+                                                placeholder="Type your message..."
+                                                disabled={false}
+                                                className="flex-1 h-10 px-4 bg-slate-50 border border-slate-200 rounde..."
+-                                               fdprocessedid="549n05"
+                                              >
+                                              ...
+                                    ...
+                      ...
+          ...
+components/layout/Sidebar.tsx (120:11) @ Sidebar
+
+
+  118 |         {/* New Alert Button - Twitter Compose Style */}
+  119 |         <div className="mt-4 px-2">
+> 120 |           <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[var(--twitter-blue)] hover:bg-[var(--twitter-blue-hover)] text-white font-bold rounded-full transition-colors shadow-md twitter-focus-ring-light">
+      |           ^
+  121 |             <Bell className="w-5 h-5" />
+  122 |             <span>{tHeader('newAlert')}</span>
+  123 |           </button>
+Call Stack
+20
+
+Show 17 ignore-listed frame(s)
+button
+<anonymous>
+Sidebar
+components/layout/Sidebar.tsx (120:11)
+LocaleLayout
+app/[locale]/layout.tsx (74:21)
