@@ -717,12 +717,12 @@ async function main() {
   console.log('─'.repeat(50));
 
   // Setup database
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+  // const dataDir = path.join(process.cwd(), 'data');
+  // if (!fs.existsSync(dataDir)) {
+  //   fs.mkdirSync(dataDir, { recursive: true });
+  // }
 
-  const dbPath = path.join(dataDir, 'call-center.db');
+  const dbPath = path.join(process.cwd(), 'call-center.db');
 
   // Remove existing database
   if (fs.existsSync(dbPath)) {

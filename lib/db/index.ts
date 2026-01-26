@@ -2,7 +2,9 @@ import Database from 'better-sqlite3';
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
 
-const defaultDbPath = '/home/runner/workspace/data/call-center.db';
+import path from 'path';
+
+const defaultDbPath = path.join(process.cwd(), 'call-center.db');
 
 function getSqliteDbPath(): string {
   const envUrl = process.env.DATABASE_URL;

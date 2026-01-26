@@ -1,7 +1,7 @@
 import { defineConfig } from 'drizzle-kit';
 import path from 'path';
 
-const defaultDbPath = '/home/runner/workspace/data/call-center.db';
+const defaultDbPath = './call-center.db';
 
 function getSqliteDbPath(): string {
   const envUrl = process.env.DATABASE_URL;
