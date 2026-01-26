@@ -1,8 +1,0 @@
-{
-  "currentIteration": 0,
-  "maxIterations": 10,
-  "status": "idle",
-  "startedAt": null,
-  "lastStoryCompleted": null,
-  "notes": "This file tracks Ralph loop state. Delete or reset to start fresh."
-}
