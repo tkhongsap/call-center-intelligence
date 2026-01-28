@@ -10,7 +10,7 @@ This implementation plan converts the Next.js full-stack application backend to 
   - Create conda environment: `conda create -n fastapi-backend python=3.12 -y`
   - Activate environment and install dependencies: `conda activate fastapi-backend & pip install -r requirements.txt`
   - Set up project directory structure with proper module organization
-  - Configure development environment with hot reload and debugging: `conda activate fastapi-backend & python start_server.py`
+  - Configure development environment with hot reload and debugging: `conda activate fastapi-backend & python main.py`
   - _Requirements: 11.1, 11.3_
 
 - [x] 2. Implement database layer and SQLAlchemy models
@@ -149,7 +149,7 @@ This implementation plan converts the Next.js full-stack application backend to 
 
 - [x] 10. Checkpoint - Ensure all API endpoints are functional
   - Run integration tests: `conda activate fastapi-backend & python -m pytest tests/test_integration.py -v`
-  - Test API endpoints manually: `conda activate fastapi-backend & python start_server.py`
+  - Test API endpoints manually: `conda activate fastapi-backend & python main.py`
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 11. Implement configuration and environment management
@@ -253,5 +253,5 @@ cmd /c "conda activate fastapi-backend && [your command here]"
 Examples:
 
 - Run tests: `cmd /c "conda activate fastapi-backend && python -m pytest tests/ -v"`
-- Start server: `cmd /c "conda activate fastapi-backend && python start_server.py"`
+- Start server: `cmd /c "conda activate fastapi-backend && python main.py"`
 - Install packages: `cmd /c "conda activate fastapi-backend && pip install -r requirements.txt"`

@@ -319,7 +319,7 @@ conda create -n fastapi-backend python=3.12 -y
 conda activate fastapi-backend & pip install -r requirements.txt
 
 REM Start development server
-conda activate fastapi-backend & python start_server.py
+conda activate fastapi-backend & python main.py
 
 REM Run tests
 conda activate fastapi-backend & python -m pytest tests/ -v

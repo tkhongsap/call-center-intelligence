@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 import json
 import re
 
-from app.main import create_app
+from main import create_app
 from app.core.database import get_db
 from app.models import Case, SearchAnalytic
 from app.models.base import Channel, CaseStatus, Sentiment, Severity

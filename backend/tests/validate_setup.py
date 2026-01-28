@@ -56,7 +56,7 @@ def test_app_creation():
     print("\nTesting app creation...")
     
     try:
-        from app.main import create_app
+        from main import create_app
         app = create_app()
         print("✓ FastAPI app created successfully")
         return True
@@ -151,7 +151,7 @@ def main():
         print("🎉 All tests passed! FastAPI backend is ready for development.")
         print("\nNext steps:")
         print("1. Start the development server:")
-        print("   python -m uvicorn app.main:app --reload")
+        print("   python -m uvicorn main:app --reload")
         print("2. Open http://localhost:8000/docs to view API documentation")
         print("3. Begin implementing the database models and API endpoints")
         return True

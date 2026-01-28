@@ -9,7 +9,7 @@ import pytest
 from httpx import AsyncClient
 from unittest.mock import AsyncMock, patch
 
-from app.main import create_app
+from main import create_app
 from app.core.database import get_db
 from app.schemas.search import SearchResponse, SearchAnalyticsResponse
 
