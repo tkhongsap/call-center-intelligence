@@ -12,7 +12,6 @@ import json
 import logging
 from typing import Dict, List, Set, Optional, Any
 from datetime import datetime, timezone
-import structlog
 
 try:
     from fastapi import WebSocket, WebSocketDisconnect
@@ -26,7 +25,7 @@ except ImportError:
 from app.core.auth import verify_token, AuthenticationError
 from app.models.user import UserRole
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:

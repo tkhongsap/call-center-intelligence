@@ -27,9 +27,9 @@ from app.schemas.search import (
 )
 from app.schemas.base import ParsedQuery, SuggestedFilter, SearchFlags
 from app.core.exceptions import ValidationError
-import structlog
+import logging
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class SearchService:

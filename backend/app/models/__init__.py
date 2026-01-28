@@ -37,6 +37,7 @@ from app.models.feed_item import FeedItem
 from app.models.share import Share
 from app.models.search_analytic import SearchAnalytic
 from app.models.upload import Upload
+from app.models.embedding import Embedding
 
 # Export all models for easy importing
 __all__ = [
@@ -70,4 +71,5 @@ __all__ = [
     "Share",
     "SearchAnalytic",
     "Upload",
+    "Embedding",
 ]

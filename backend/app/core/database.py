@@ -11,12 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.exc import SQLAlchemyError, DisconnectionError, OperationalError
 from sqlalchemy import text
-import structlog
+import logging
 
 from app.core.config import get_settings
 from app.core.exceptions import DatabaseError
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Global variables for database engine and session maker
 engine = None

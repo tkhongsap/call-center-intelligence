@@ -23,6 +23,7 @@ from app.api.routes import (
     debug,
     websocket,
     auth,
+    rag,
 )
 
 # Create main API router
@@ -45,6 +46,7 @@ api_router.include_router(
 )
 api_router.include_router(pulse.router, prefix="/pulse", tags=["pulse"])
 api_router.include_router(shares.router, prefix="/shares", tags=["shares"])
+api_router.include_router(rag.router, prefix="/rag", tags=["rag"])
 
 # Include upload route (separate from uploads for file handling)
 api_router.include_router(uploads.upload_router, prefix="/upload", tags=["upload"])

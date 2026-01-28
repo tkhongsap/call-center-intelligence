@@ -47,6 +47,8 @@ setup_conda_env.bat
 ```cmd
 conda create -n fastapi-backend python=3.12 -y
 conda activate fastapi-backend
+
+source venv/bin/activate
 ```
 
 2. Install dependencies:

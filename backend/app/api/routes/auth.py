@@ -7,7 +7,7 @@ user information, and authentication status checks.
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
-import structlog
+import logging
 
 from app.core.auth import (
     get_current_user,
@@ -16,7 +16,7 @@ from app.core.auth import (
     security,
 )
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
