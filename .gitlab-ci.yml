@@ -4,7 +4,7 @@ unit-test-job:
   # variables:
   #   COVERAGE_FILE: "/tmp/.coverage"
   before_script:
-    - pip install -r requirements.txt
+    - pip install -r backend/requirements.txt
   script:
     - pytest backend/tests
     # - pytest --cov=. --cov-report=term-missing --cov-config=/dev/null test/
