@@ -1,123 +1,127 @@
 """
-RAG (Retrieval-Augmented Generation) Service
+RAG Service - Business Logic for RAG Operations
 
-Handles RAG document management, file processing, and retrieval operations.
+แยก business logic ออกจาก routes
 """
 
+from typing import List, Dict, Any
 from pathlib import Path
-from fastapi import UploadFile, HTTPException
-from app.services.llama_index_service import (
-    initialize_settings,
-    index_file,
-    index_parsed_documents,
-    query_index,
-    get_index_stats,
-)
-from app.services.excel_parser import excel_parser
+import logging
 
-# Allowed file extensions for RAG upload
-# Excel files (.xlsx, .csv) use custom parser
-# Other files use LlamaIndex SimpleDirectoryReader
-ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx", ".csv", ".md", ".json", ".xlsx"}
-EXCEL_EXTENSIONS = {".xlsx", ".csv"}
+from app.services.embedding_service import embed_texts
+from app.services.excel_parser import ExcelParser
 
-# Initialize LlamaIndex settings on module load
-initialize_settings()
+logger = logging.getLogger(__name__)
+
+ALLOWED_EXTENSIONS = {".xlsx", ".csv"}
 
 
 def validate_file_extension(filename: str) -> str:
-    """Validate file extension and return it."""
+    """
+    Validate file extension.
+    
+    Args:
+        filename: Name of the file
+        
+    Returns:
+        File extension (lowercase)
+        
+    Raises:
+        ValueError: If extension not supported
+    """
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File type '{ext}' is not supported. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
-        )
+        raise ValueError(f"Only .xlsx and .csv files are supported. Got: {ext}")
     return ext
 
 
-async def get_all_documents():
-    """Get all RAG documents/index statistics."""
-    stats = get_index_stats()
+def embed_file_rows(file_bytes: bytes, filename: str) -> Dict[str, Any]:
+    """
+    Parse file and embed each row.
+    
+    Args:
+        file_bytes: Raw file content
+        filename: Name of the file
+        
+    Returns:
+        Dictionary with embeddings and metadata
+    """
+    # Validate
+    validate_file_extension(filename)
+    
+    # Parse Excel/CSV
+    parser = ExcelParser()
+    parsed_docs = parser.parse(file_bytes, filename)
+    
+    if not parsed_docs:
+        return {
+            "success": True,
+            "filename": filename,
+            "total_rows": 0,
+            "embedding_dim": 0,
+            "results": [],
+        }
+    
+    # Get text content from each row
+    texts = [doc.content for doc in parsed_docs]
+    
+    logger.info(f"Embedding {len(texts)} rows from {filename}")
+    
+    # Embed all texts
+    embeddings = embed_texts(texts)
+    
+    # Build results with metadata
+    results = []
+    for i, (doc, emb) in enumerate(zip(parsed_docs, embeddings)):
+        results.append({
+            "row_index": i,
+            "text": doc.content,
+            "metadata": doc.metadata,
+            "embedding": emb,
+            "embedding_dim": len(emb),
+        })
+    
     return {
-        "message": "RAG index statistics",
-        "stats": stats,
+        "success": True,
+        "filename": filename,
+        "total_rows": len(results),
+        "embedding_dim": len(embeddings[0]) if embeddings else 0,
+        "results": results,
     }
 
 
-async def get_document_by_id(document_id: str):
-    """Get a specific RAG document by ID."""
-    # TODO: Implement single document retrieval from index
-    return {"message": f"Get document {document_id} - to be implemented"}
-
-
-async def create_document():
-    """Create a new RAG document manually."""
-    # TODO: Implement manual document creation
-    return {"message": "Create document - to be implemented"}
-
-
-async def upload_document(file: UploadFile) -> dict:
+def embed_text_list(texts: List[str]) -> Dict[str, Any]:
     """
-    Upload and index a file for RAG.
-    
-    Flow:
-    1. Validate file extension
-    2. Read file bytes
-    3. Parse with appropriate parser (Excel or LlamaIndex)
-    4. Index documents
-    5. Return result
+    Embed a list of texts.
     
     Args:
-        file: Uploaded file from FastAPI
+        texts: List of texts to embed
         
     Returns:
-        Indexing result
-    """
-    # 1. Get file info and validate
-    filename = file.filename or "unknown"
-    ext = validate_file_extension(filename)
-    
-    # 2. Read file bytes
-    file_bytes = await file.read()
-    
-    # 3. Parse and index based on file type
-    if ext in EXCEL_EXTENSIONS:
-        # Use custom Excel parser
-        try:
-            parsed_docs = excel_parser.parse(file_bytes, filename)
-            result = index_parsed_documents(parsed_docs)
-            result["filename"] = filename
-            result["parser"] = "excel_parser"
-        except Exception as e:
-            return {
-                "success": False,
-                "filename": filename,
-                "error": str(e),
-            }
-    else:
-        # Use LlamaIndex SimpleDirectoryReader for other file types
-        result = index_file(file_bytes, filename)
-    
-    return result
-
-
-async def search_documents(query: str, top_k: int = 5) -> dict:
-    """
-    Search/query the RAG index.
-    
-    Args:
-        query: User question
-        top_k: Number of results to return
+        Dictionary with embeddings
         
-    Returns:
-        Query response with answer and sources
+    Raises:
+        ValueError: If texts list is empty
     """
-    result = query_index(query, top_k=top_k)
-    return result
-
-
-async def delete_document(document_id: str):
-    """Delete a RAG document by ID."""
-    # TODO: Implement document deletion from index
-    return {"message": f"Delete document {document_id} - to be implemented"}
+    if not texts:
+        raise ValueError("texts list cannot be empty")
+    
+    logger.info(f"Embedding {len(texts)} texts")
+    
+    embeddings = embed_texts(texts)
+    
+    results = []
+    for i, (text, emb) in enumerate(zip(texts, embeddings)):
+        results.append({
+            "index": i,
+            "text": text,
+            "embedding": emb,
+            "embedding_dim": len(emb),
+        })
+    
+    return {
+        "success": True,
+        "count": len(results),
+        "embedding_dim": len(embeddings[0]) if embeddings else 0,
+        "results": results,
+    }

@@ -102,12 +102,12 @@ class BaseParser(ABC):
     
     def _log_parse_start(self, filename: str):
         """Log parsing start."""
-        logger.info("Starting document parsing", filename=filename, parser=self.__class__.__name__)
+        logger.info(f"Starting document parsing: {filename} (parser={self.__class__.__name__})")
     
     def _log_parse_complete(self, filename: str, doc_count: int):
         """Log parsing completion."""
-        logger.info("Document parsing complete", filename=filename, doc_count=doc_count)
+        logger.info(f"Document parsing complete: {filename} (doc_count={doc_count})")
     
     def _log_parse_error(self, filename: str, error: str):
         """Log parsing error."""
-        logger.error("Document parsing failed", filename=filename, error=error)
+        logger.error(f"Document parsing failed: {filename} (error={error})")

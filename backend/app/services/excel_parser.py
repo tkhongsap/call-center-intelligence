@@ -158,17 +158,30 @@ class ExcelParser(BaseParser):
         return documents
     
     def _parse_csv(self, file_bytes: bytes, filename: str) -> List[ParsedDocument]:
-        """Parse CSV file."""
+        """Parse CSV file - creates one document per row."""
         documents = []
         
-        # Try different encodings
-        for encoding in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
+        # Try different encodings (including Thai encodings)
+        encodings = [
+            "utf-8", 
+            "utf-8-sig",  # UTF-8 with BOM
+            "tis-620",    # Thai Industrial Standard
+            "cp874",      # Windows Thai
+            "iso-8859-11", # Latin/Thai
+            "latin-1", 
+            "cp1252",
+        ]
+        
+        text_content = None
+        for encoding in encodings:
             try:
                 text_content = file_bytes.decode(encoding)
+                logger.info(f"CSV decoded successfully with encoding: {encoding}")
                 break
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, LookupError):
                 continue
-        else:
+        
+        if text_content is None:
             raise ValueError("Could not decode CSV file with supported encodings")
         
         # Parse CSV
@@ -181,30 +194,40 @@ class ExcelParser(BaseParser):
         headers = rows[0] if self.include_headers else []
         data_rows = rows[1:] if self.include_headers else rows
         
-        # Build content
-        content_parts = []
-        if headers and self.include_headers:
-            content_parts.append(f"Headers: {self.cell_separator.join(headers)}")
-        
-        for row in data_rows:
-            if any(cell.strip() for cell in row):
-                content_parts.append(self.cell_separator.join(row))
-        
-        content = self.row_separator.join(content_parts)
-        
-        if content.strip():
-            doc = ParsedDocument.create(
-                content=content,
-                source="csv",
-                filename=filename,
-                metadata={
-                    "row_count": len(data_rows),
-                    "column_count": len(headers) if headers else (len(rows[0]) if rows else 0),
-                    "headers": headers,
-                    "file_type": "csv",
-                },
-            )
-            documents.append(doc)
+        # Create one document per row (for embedding)
+        for row_idx, row in enumerate(data_rows):
+            if not any(cell.strip() for cell in row):
+                continue  # Skip empty rows
+            
+            # Build row content with headers as keys (only non-empty cells)
+            row_parts = []
+            for i, cell in enumerate(row):
+                if cell.strip():
+                    if i < len(headers) and headers[i].strip():
+                        row_parts.append(f"{headers[i]}: {cell}")
+                    else:
+                        row_parts.append(cell)
+            
+            row_text = self.cell_separator.join(row_parts)
+            
+            # Create metadata with header-value pairs (only non-empty values)
+            row_metadata = {}
+            for i, cell in enumerate(row):
+                if not cell.strip():
+                    continue  # Skip empty cells
+                if i < len(headers) and headers[i].strip():
+                    row_metadata[headers[i]] = cell
+                else:
+                    row_metadata[f"column_{i+1}"] = cell
+            
+            if row_text.strip():
+                doc = ParsedDocument.create(
+                    content=row_text,
+                    source="csv",
+                    filename=filename,
+                    metadata=row_metadata,
+                )
+                documents.append(doc)
         
         return documents
 
