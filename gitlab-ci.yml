@@ -1,0 +1,24 @@
+image: python:3.12
+unit-test-job:
+  stage: unit-test
+  # variables:
+  #   COVERAGE_FILE: "/tmp/.coverage"
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - pytest backend/tests
+    # - pytest --cov=. --cov-report=term-missing --cov-config=/dev/null test/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  # artifacts:
+  #   paths:
+  #     - htmlcov/
+# pages:
+#   stage: deploy
+#   dependencies:
+#     - test
+#   script:
+#     - mv htmlcov/ public/
+#   artifacts:
+#     paths:
+#       - public/
