@@ -31,6 +31,7 @@ class User(Base, CreatedAtMixin):
     # Optional fields
     business_unit: Mapped[Optional[str]] = mapped_column(String, name="business_unit")
     avatar_url: Mapped[Optional[str]] = mapped_column(String, name="avatar_url")
+    password_hash: Mapped[Optional[str]] = mapped_column(String, name="password_hash")
     
     # Relationships
     sent_shares: Mapped[List["Share"]] = relationship(

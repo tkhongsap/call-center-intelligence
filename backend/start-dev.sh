@@ -34,10 +34,10 @@ async def wait_for_db():
 asyncio.run(wait_for_db())
 "
 
-# Initialize database schema
-echo "🔧 Initializing database schema..."
-python init_db_schema.py
-echo "✅ Database schema initialized"
+# Run Alembic migrations
+echo "🔧 Running database migrations..."
+alembic upgrade head
+echo "✅ Database migrations applied"
 
 # Run database seeding if SEED_DATABASE is true
 if [ "${SEED_DATABASE:-true}" = "true" ]; then

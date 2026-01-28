@@ -35,12 +35,22 @@ settings = get_settings()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    # Bcrypt has a 72-byte password limit - truncate if necessary
+    # First encode to bytes, then truncate to 72 bytes
+    password_bytes = plain_password.encode('utf-8')[:72]
+    # Decode back, handling any incomplete multi-byte sequences at the boundary
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(truncated_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Generate password hash."""
-    return pwd_context.hash(password)
+    # Bcrypt has a 72-byte password limit - truncate if necessary
+    # First encode to bytes, then truncate to 72 bytes
+    password_bytes = password.encode('utf-8')[:72]
+    # Decode back, handling any incomplete multi-byte sequences at the boundary
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(truncated_password)
 
 
 def create_access_token(
@@ -71,7 +81,7 @@ def verify_token(token: str) -> Dict[str, Any]:
         )
         return payload
     except JWTError as e:
-        logger.warning("JWT token verification failed", error=str(e))
+        logger.warning(f"JWT token verification failed: {str(e)}")
         raise AuthenticationError("Invalid token")
 
 
@@ -178,13 +188,11 @@ async def require_authentication(
     """Dependency that requires user authentication."""
     user = await get_current_user(request, credentials)
     if not user:
-        logger.warning(
-            "Authentication required but no valid user found", path=request.url.path
-        )
+        logger.warning(f"Authentication required but no valid user found at path: {request.url.path}")
         raise AuthenticationError("Authentication required")
 
     user_id = user.get("id") or user.get("sub")  # Handle both id and sub fields
-    logger.info("User authenticated", user_id=user_id, path=request.url.path)
+    logger.info(f"User authenticated - User ID: {user_id}, Path: {request.url.path}")
     return user
 
 
@@ -197,12 +205,7 @@ def require_role(allowed_roles: List[UserRole]):
         user_role = user.get("role")
         if not user_role or user_role not in [role.value for role in allowed_roles]:
             user_id = user.get("id") or user.get("sub")  # Handle both id and sub fields
-            logger.warning(
-                "Access denied - insufficient role",
-                user_id=user_id,
-                user_role=user_role,
-                required_roles=[role.value for role in allowed_roles],
-            )
+            logger.warning(f"Access denied - insufficient role User_Id: {user_id} User_Role: {user_role} Required_Roles: {[role.value for role in allowed_roles]}")
             raise AuthorizationError(
                 f"Access denied. Required roles: {[role.value for role in allowed_roles]}"
             )
@@ -262,12 +265,7 @@ async def require_business_unit_access(
     """Dependency that requires access to a specific business unit."""
     if not check_business_unit_access(user, business_unit):
         user_id = user.get("id") or user.get("sub")  # Handle both id and sub fields
-        logger.warning(
-            "Access denied - business unit mismatch",
-            user_id=user_id,
-            user_bu=user.get("business_unit"),
-            required_bu=business_unit,
-        )
+        logger.warning(f"Access denied - business unit mismatch User_Id: {user_id} User_Bu: {user.get('business_unit')} Required_Bu: {business_unit}")
         raise AuthorizationError(f"Access denied to business unit: {business_unit}")
 
     return user

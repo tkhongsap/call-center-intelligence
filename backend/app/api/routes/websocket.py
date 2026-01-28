@@ -54,11 +54,7 @@ if router:
                 try:
                     # Receive message from client
                     data = await websocket.receive_text()
-                    logger.debug(
-                        "Received WebSocket message",
-                        connection_id=connection_id,
-                        data=data,
-                    )
+                    logger.debug(f"Received WebSocket message Connection_Id: {connection_id} Data: {data}")
 
                     # Echo message back (for testing)
                     # In a real implementation, you would parse and handle different message types
@@ -71,16 +67,10 @@ if router:
                     )
 
                 except WebSocketDisconnect:
-                    logger.info(
-                        "WebSocket client disconnected", connection_id=connection_id
-                    )
+                    logger.info(f"WebSocket client disconnected Connection_Id: {connection_id}")
                     break
                 except Exception as e:
-                    logger.error(
-                        "Error handling WebSocket message",
-                        connection_id=connection_id,
-                        error=str(e),
-                    )
+                    logger.error(f"Error handling WebSocket message Connection_Id: {connection_id} Error: {str(e)}")
                     error_message = create_message(
                         MessageType.CONNECTION_ERROR,
                         {"error": "Failed to process message", "details": str(e)},
@@ -90,7 +80,7 @@ if router:
                     )
 
         except Exception as e:
-            logger.error("WebSocket connection error", error=str(e))
+            logger.error(f"WebSocket connection error Error: {str(e)}")
 
         finally:
             # Clean up connection

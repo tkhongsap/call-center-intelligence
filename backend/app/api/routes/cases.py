@@ -171,13 +171,7 @@ async def get_cases(
             page=params.page, limit=params.limit, total=total, total_pages=total_pages
         )
 
-        logger.info(
-            "Retrieved cases",
-            count=len(cases),
-            total=total,
-            page=params.page,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved cases Count: {len(cases)} Total: {total} Page: {params.page} User_Id: {current_user.get('id') if current_user else None}")
 
         return CaseListResponse(
             cases=[CaseResponse.model_validate(case) for case in cases],
@@ -185,7 +179,7 @@ async def get_cases(
         )
 
     except Exception as e:
-        logger.error("Error retrieving cases", error=str(e))
+        logger.error(f"Error retrieving cases Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve cases: {str(e)}")
 
 
@@ -295,12 +289,7 @@ async def get_cases_stats(
             "needs_review_flag": needs_review_flag_count,
         }
 
-        logger.info(
-            "Retrieved case statistics",
-            total=total,
-            business_unit=business_unit,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved case statistics Total: {total} Business_Unit: {business_unit} User_Id: {current_user.get('id') if current_user else None}")
 
         return CaseStatsResponse(
             total=total,
@@ -311,7 +300,7 @@ async def get_cases_stats(
         )
 
     except Exception as e:
-        logger.error("Error retrieving case statistics", error=str(e))
+        logger.error(f"Error retrieving case statistics Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve case statistics: {str(e)}")
 
 
@@ -345,19 +334,14 @@ async def get_case(
         if not case:
             raise NotFoundError(f"Case {case_id} not found or access denied")
 
-        logger.info(
-            "Retrieved case details",
-            case_id=case_id,
-            case_number=case.case_number,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved case details Case_Id: {case_id} Case_Number: {case.case_number} User_Id: {current_user.get('id') if current_user else None}")
 
         return CaseResponse.model_validate(case)
 
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error("Error retrieving case details", case_id=case_id, error=str(e))
+        logger.error(f"Error retrieving case details Case_Id: {case_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve case details: {str(e)}")
 
 
@@ -426,21 +410,13 @@ async def create_case(
         await db.commit()
         await db.refresh(case)
 
-        logger.info(
-            "Created new case",
-            case_id=case_id,
-            case_number=case_number,
-            channel=case_data.channel.value,
-            severity=case_data.severity.value,
-            business_unit=case_data.business_unit,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Created new case Case_Id: {case_id} Case_Number: {case_number} Channel: {case_data.channel.value} Severity: {case_data.severity.value} Business_Unit: {case_data.business_unit} User_Id: {current_user.get('id')}")
 
         return CaseResponse.model_validate(case)
 
     except Exception as e:
         await db.rollback()
-        logger.error("Error creating case", error=str(e))
+        logger.error(f"Error creating case Error: {str(e)}")
         raise DatabaseError(f"Failed to create case: {str(e)}")
 
 
@@ -493,13 +469,7 @@ async def update_case(
         await db.commit()
         await db.refresh(case)
 
-        logger.info(
-            "Updated case",
-            case_id=case_id,
-            case_number=case.case_number,
-            updated_fields=list(update_data.keys()),
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Updated case Case_Id: {case_id} Case_Number: {case.case_number} Updated_Fields: {list(update_data.keys())} User_Id: {current_user.get('id')}")
 
         return CaseResponse.model_validate(case)
 
@@ -507,7 +477,7 @@ async def update_case(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error updating case", case_id=case_id, error=str(e))
+        logger.error(f"Error updating case Case_Id: {case_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to update case: {str(e)}")
 
 
@@ -546,12 +516,7 @@ async def delete_case(
         await db.delete(case)
         await db.commit()
 
-        logger.info(
-            "Deleted case",
-            case_id=case_id,
-            case_number=case_number,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Deleted case Case_Id: {case_id} Case_Number: {case_number} User_Id: {current_user.get('id')}")
 
         return {"message": f"Case {case_id} deleted successfully"}
 
@@ -559,7 +524,7 @@ async def delete_case(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error deleting case", case_id=case_id, error=str(e))
+        logger.error(f"Error deleting case Case_Id: {case_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to delete case: {str(e)}")
 
 
@@ -601,14 +566,7 @@ async def assign_case(
         await db.commit()
         await db.refresh(case)
 
-        logger.info(
-            "Assigned case",
-            case_id=case_id,
-            case_number=case.case_number,
-            assigned_to=assignment_data.assigned_to,
-            agent_id=assignment_data.agent_id,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Assigned case Case_Id: {case_id} Case_Number: {case.case_number} Assigned_To: {assignment_data.assigned_to} Agent_Id: {assignment_data.agent_id} User_Id: {current_user.get('id')}")
 
         return CaseResponse.model_validate(case)
 
@@ -616,7 +574,7 @@ async def assign_case(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error assigning case", case_id=case_id, error=str(e))
+        logger.error(f"Error assigning case Case_Id: {case_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to assign case: {str(e)}")
 
 
@@ -663,14 +621,7 @@ async def update_case_status(
         await db.commit()
         await db.refresh(case)
 
-        logger.info(
-            "Updated case status",
-            case_id=case_id,
-            case_number=case.case_number,
-            new_status=status_update.status.value,
-            resolved_at=case.resolved_at,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Updated case status Case_Id: {case_id} Case_Number: {case.case_number} New_Status: {status_update.status.value} Resolved_At: {case.resolved_at} User_Id: {current_user.get('id')}")
 
         return CaseResponse.model_validate(case)
 
@@ -678,5 +629,5 @@ async def update_case_status(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error updating case status", case_id=case_id, error=str(e))
+        logger.error(f"Error updating case status Case_Id: {case_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to update case status: {str(e)}")

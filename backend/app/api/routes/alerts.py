@@ -141,13 +141,7 @@ async def get_alerts(
             page=params.page, limit=params.limit, total=total, total_pages=total_pages
         )
 
-        logger.info(
-            "Retrieved alerts",
-            count=len(alerts),
-            total=total,
-            page=params.page,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved alerts Count: {len(alerts)} Total: {total} Page: {params.page} User_Id: {current_user.get('id') if current_user else None}")
 
         return AlertListResponse(
             alerts=[AlertResponse.model_validate(alert) for alert in alerts],
@@ -155,7 +149,7 @@ async def get_alerts(
         )
 
     except Exception as e:
-        logger.error("Error retrieving alerts", error=str(e))
+        logger.error(f"Error retrieving alerts Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve alerts: {str(e)}")
 
 
@@ -240,12 +234,8 @@ async def get_alerts_count(
             critical=severity_counts.get("critical", 0),
         )
 
-        logger.info(
-            "Retrieved alert counts",
-            total=total,
-            business_unit=business_unit,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved alert counts Total: {total} Business_Unit: {business_unit} User_Id: {current_user.get('id') if current_user else None}")
+        
 
         return AlertCountResponse(
             total=total,
@@ -255,7 +245,7 @@ async def get_alerts_count(
         )
 
     except Exception as e:
-        logger.error("Error retrieving alert counts", error=str(e))
+        logger.error(f"Error retrieving alert counts Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve alert counts: {str(e)}")
 
 
@@ -336,12 +326,7 @@ async def get_alert(
                 "error",
             ]
 
-        logger.info(
-            "Retrieved alert details",
-            alert_id=alert_id,
-            sample_cases_count=len(sample_cases),
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved alert details Alert_Id: {alert_id} Sample_Cases_Count: {len(sample_cases)} User_Id: {current_user.get('id') if current_user else None}")
 
         return AlertDetailResponse(
             alert=AlertResponse.model_validate(alert),
@@ -353,7 +338,7 @@ async def get_alert(
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error("Error retrieving alert details", alert_id=alert_id, error=str(e))
+        logger.error(f"Error retrieving alert details Alert_Id: {alert_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve alert details: {str(e)}")
 
 
@@ -398,19 +383,13 @@ async def create_alert(
         await db.commit()
         await db.refresh(alert)
 
-        logger.info(
-            "Created new alert",
-            alert_id=alert_id,
-            type=alert_data.type.value,
-            severity=alert_data.severity.value,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Created new alert Alert_Id: {alert_id} Type: {alert_data.type.value} Severity: {alert_data.severity.value} User_Id: {current_user.get('id')}")
 
         return AlertResponse.model_validate(alert)
 
     except Exception as e:
         await db.rollback()
-        logger.error("Error creating alert", error=str(e))
+        logger.error(f"Error creating alert Error: {str(e)}")
         raise DatabaseError(f"Failed to create alert: {str(e)}")
 
 
@@ -462,13 +441,7 @@ async def update_alert(
         await db.commit()
         await db.refresh(alert)
 
-        logger.info(
-            "Updated alert",
-            alert_id=alert_id,
-            new_status=alert_update.status.value,
-            acknowledged_by=alert_update.acknowledged_by,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Updated alert Alert_Id: {alert_id} New_Status: {alert_update.status.value} Acknowledged_By: {alert_update.acknowledged_by} User_Id: {current_user.get('id')}")
 
         return AlertResponse.model_validate(alert)
 
@@ -476,8 +449,7 @@ async def update_alert(
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error updating alert", alert_id=alert_id, error=str(e))
-        raise DatabaseError(f"Failed to update alert: {str(e)}")
+        logger.error(f"Error updating alert Alert_Id: {alert_id} Error: {str(e)}")
 
 
 @router.delete("/{alert_id}")
@@ -512,15 +484,14 @@ async def delete_alert(
         await db.delete(alert)
         await db.commit()
 
-        logger.info("Deleted alert", alert_id=alert_id, user_id=current_user.get("id"))
-
+        logger.info(f"Deleted alert Alert_Id: {alert_id} User_Id: {current_user.get('id')}")
         return {"message": f"Alert {alert_id} deleted successfully"}
 
     except NotFoundError:
         raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error deleting alert", alert_id=alert_id, error=str(e))
+        logger.error(f"Error deleting alert Alert_Id: {alert_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to delete alert: {str(e)}")
 
 
@@ -562,15 +533,7 @@ async def escalate_alert(
         # 3. Update alert status if needed
 
         # For now, we'll just log the escalation
-        logger.info(
-            "Alert escalated",
-            alert_id=alert_id,
-            escalation_id=escalation_id,
-            recipient_id=escalation_data.recipient_id,
-            channel=escalation_data.channel,
-            user_id=current_user.get("id"),
-        )
-
+        logger.info(f"Alert escalated Alert_Id: {alert_id} Escalation_Id: {escalation_id} Recipient_Id: {escalation_data.recipient_id} Channel: {escalation_data.channel} User_Id: {current_user.get('id')}")
         return AlertEscalationResponse(
             id=escalation_id, message="Alert successfully escalated"
         )
@@ -578,5 +541,5 @@ async def escalate_alert(
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error("Error escalating alert", alert_id=alert_id, error=str(e))
+        logger.error(f"Error escalating alert Alert_Id: {alert_id} Error: {str(e)}")
         raise DatabaseError(f"Failed to escalate alert: {str(e)}")

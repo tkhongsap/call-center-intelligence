@@ -68,15 +68,9 @@ class ConnectionManager:
                     "role": payload.get("role"),
                     "business_unit": payload.get("business_unit"),
                 }
-                logger.info(
-                    "WebSocket user authenticated",
-                    user_id=user_info["id"],
-                    connection_id=connection_id,
-                )
+                logger.info(f"WebSocket user authenticated User_Id: {user_info['id']} Connection_Id: {connection_id}")
             except AuthenticationError:
-                logger.warning(
-                    "WebSocket authentication failed", connection_id=connection_id
-                )
+                logger.warning(f"WebSocket authentication failed Connection_Id: {connection_id}")
                 user_info = None
 
         # Store connection
@@ -104,11 +98,7 @@ class ConnectionManager:
                     self.role_connections[role] = set()
                 self.role_connections[role].add(connection_id)
 
-        logger.info(
-            "WebSocket connection established",
-            connection_id=connection_id,
-            total_connections=len(self.active_connections),
-        )
+        logger.info(f"WebSocket connection established Connection_Id: {connection_id} Total_Connections: {len(self.active_connections)}")
         return connection_id
 
     def disconnect(self, connection_id: str):
@@ -144,11 +134,7 @@ class ConnectionManager:
             if not self.role_connections[role]:
                 del self.role_connections[role]
 
-        logger.info(
-            "WebSocket connection closed",
-            connection_id=connection_id,
-            total_connections=len(self.active_connections),
-        )
+        logger.info(f"WebSocket connection closed Connection_Id: {connection_id} Total_Connections: {len(self.active_connections)}")
 
     async def send_personal_message(self, message: Dict[str, Any], connection_id: str):
         """Send a message to a specific connection."""
@@ -156,17 +142,9 @@ class ConnectionManager:
             websocket = self.active_connections[connection_id]
             try:
                 await websocket.send_text(json.dumps(message))
-                logger.debug(
-                    "Message sent to connection",
-                    connection_id=connection_id,
-                    message_type=message.get("type"),
-                )
+                logger.debug(f"Message sent to connection Connection_Id: {connection_id} Message_Type: {message.get('type')}")
             except Exception as e:
-                logger.error(
-                    "Failed to send message to connection",
-                    connection_id=connection_id,
-                    error=str(e),
-                )
+                logger.error(f"Failed to send message to connection Connection_Id: {connection_id} Error: {str(e)}")
                 self.disconnect(connection_id)
 
     async def send_to_user(self, message: Dict[str, Any], user_id: str):
@@ -203,11 +181,7 @@ class ConnectionManager:
         for connection_id in connection_ids:
             await self.send_personal_message(message, connection_id)
 
-        logger.info(
-            "Message broadcast to all connections",
-            message_type=message.get("type"),
-            connection_count=len(connection_ids),
-        )
+        logger.info(f"Message broadcast to all connections Message_Type: {message.get('type')} Connection_Count: {len(connection_ids)}")
 
     async def broadcast_to_admins(self, message: Dict[str, Any]):
         """Broadcast a message to all admin users."""

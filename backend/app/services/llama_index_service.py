@@ -56,7 +56,7 @@ def initialize_settings(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
-    logger.info("LlamaIndex settings initialized", model=model, embedding_model=embedding_model)
+    logger.info(f"LlamaIndex settings initialized Model: {model} Embedding_Model: {embedding_model}")
 
 
 def get_chroma_client() -> chromadb.PersistentClient:
@@ -104,11 +104,11 @@ def get_or_create_index() -> Optional[VectorStoreIndex]:
             storage_context=storage_context,
         )
         
-        logger.info("Loaded existing index from ChromaDB", num_docs=collection.count())
+        logger.info(f"Loaded existing index from ChromaDB Num_Docs: {collection.count}")
         return index
         
     except Exception as e:
-        logger.warning("Failed to load index from ChromaDB", error=str(e))
+        logger.warning(f"Failed to load index from ChromaDB Error: {str(e)}")
         return None
 
 
@@ -137,7 +137,7 @@ def index_documents(documents: List[Document]) -> VectorStoreIndex:
         storage_context=storage_context,
     )
     
-    logger.info("Indexed documents in ChromaDB", num_docs=len(documents), total=collection.count())
+    logger.info(f"Indexed documents in ChromaDB Num_Docs: {len(documents)}")
     
     return index
 
@@ -183,7 +183,7 @@ def index_file(file_bytes: bytes, filename: str) -> Dict[str, Any]:
         }
     
     except Exception as e:
-        logger.error("Failed to index file", filename=filename, error=str(e))
+        logger.error(f"Failed to index file Filename: {filename} Error: {str(e)}")
         return {
             "success": False,
             "filename": filename,
@@ -244,7 +244,7 @@ def index_parsed_documents(parsed_docs: List[Any]) -> Dict[str, Any]:
         }
     
     except Exception as e:
-        logger.error("Failed to index parsed documents", error=str(e))
+        logger.error(f"Failed to index parsed documents Error: {str(e)}")
         return {
             "success": False,
             "error": str(e),
@@ -310,7 +310,7 @@ def query_index(query: str, top_k: int = 5) -> Dict[str, Any]:
         }
     
     except Exception as e:
-        logger.error("Query failed", query=query, error=str(e))
+        logger.error(f"Query failed Query: {query} Error: {str(e)}")
         return {
             "success": False,
             "query": query,
@@ -346,7 +346,7 @@ def get_index_stats() -> Dict[str, Any]:
         }
     
     except Exception as e:
-        logger.error("Failed to get index stats", error=str(e))
+        logger.error(f"Failed to get index stats Error: {str(e)}")
         return {
             "exists": False,
             "error": str(e),
@@ -363,13 +363,13 @@ def delete_collection() -> Dict[str, Any]:
     try:
         client = get_chroma_client()
         client.delete_collection(COLLECTION_NAME)
-        logger.info("Deleted collection", collection=COLLECTION_NAME)
+        logger.info(f"Deleted collection Collection: {COLLECTION_NAME}")
         return {
             "success": True,
             "message": f"Deleted collection {COLLECTION_NAME}",
         }
     except Exception as e:
-        logger.error("Failed to delete collection", error=str(e))
+        logger.error(f"Failed to delete collection Error: {str(e)}")
         return {
             "success": False,
             "error": str(e),

@@ -67,18 +67,12 @@ async def search_cases(
         search_service = SearchService(db)
         results = await search_service.search_cases(search_params, user_id)
 
-        logger.info(
-            "Search completed",
-            query=q,
-            result_count=results.total_count,
-            execution_time_ms=results.execution_time_ms,
-            user_id=user_id,
-        )
+        logger.info(f"Search completed Query: {q} Result_Count: {results.total_count} Execution_Time_Ms: {results.execution_time_ms} User_Id: {user_id}")
 
         return results
 
     except Exception as e:
-        logger.error("Search failed", error=str(e), query=q)
+        logger.error(f"Search failed - Query: {q}, Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
@@ -109,19 +103,12 @@ async def advanced_search_cases(
         search_service = SearchService(db)
         results = await search_service.advanced_search_cases(search_params, user_id)
 
-        logger.info(
-            "Advanced search completed",
-            query=search_params.q,
-            result_count=results.total_count,
-            execution_time_ms=results.execution_time_ms,
-            user_id=user_id,
-            filters_applied=search_params.filters is not None,
-        )
+        logger.info(f"Advanced search completed Query: {search_params.q} Result_Count: {results.total_count} Execution_Time_Ms: {results.execution_time_ms} User_Id: {user_id} Filters_Applied: {search_params.filters is not None}")
 
         return results
 
     except Exception as e:
-        logger.error("Advanced search failed", error=str(e), query=search_params.q)
+        logger.error(f"Advanced search failed - Query: {search_params.q}, Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Advanced search failed: {str(e)}")
 
 
@@ -150,18 +137,13 @@ async def get_search_analytics(
         search_service = SearchService(db)
         analytics = await search_service.get_search_analytics(analytics_params)
 
-        logger.info(
-            "Search analytics retrieved",
-            days=days,
-            popular_queries_count=len(analytics.popular_queries),
-            total_searches=analytics.total_searches,
-            user_id=current_user.id if current_user else None,
-        )
+        logger.info(f"Search analytics retrieved Days: {days} Popular_Queries_Count: {len(analytics.popular_queries)} Total_Searches: {analytics.total_searches} User_Id: {current_user.id if current_user else None}")
+        
 
         return analytics
 
     except Exception as e:
-        logger.error("Failed to get search analytics", error=str(e))
+        logger.error(f"Failed to get search analytics Error: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Analytics retrieval failed: {str(e)}"
         )
@@ -205,5 +187,5 @@ async def get_search_suggestions(
         return {"suggestions": suggestions, "query": q}
 
     except Exception as e:
-        logger.error("Failed to get search suggestions", error=str(e), query=q)
+        logger.error(f"Failed to get search suggestions - Query: {q}, Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Suggestions failed: {str(e)}")

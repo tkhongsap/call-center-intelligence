@@ -44,12 +44,20 @@ async def seed_database():
                 )
             )
 
-            # Sample users
+            # Sample users with hashed passwords
+            from app.core.auth import get_password_hash
+            
+            # Pre-hash passwords to ensure they're truncated before bcrypt processes them
+            admin_password = "admin123"
+            agent_password = "agent123"
+            manager_password = "manager123"
+            
             users_data = [
                 (
                     "user-admin-001",
                     "Admin User",
                     "admin@thaibev.com",
+                    get_password_hash(admin_password),
                     "admin",
                     "ThaiBev",
                 ),
@@ -57,6 +65,7 @@ async def seed_database():
                     "user-agent-001",
                     "Agent Smith",
                     "agent1@thaibev.com",
+                    get_password_hash(agent_password),
                     "supervisor",
                     "ThaiBev",
                 ),
@@ -64,23 +73,25 @@ async def seed_database():
                     "user-manager-001",
                     "Manager Johnson",
                     "manager@thaibev.com",
+                    get_password_hash(manager_password),
                     "bu_manager",
                     "Sermsuk",
                 ),
             ]
 
-            for user_id, name, email, role, business_unit in users_data:
+            for user_id, name, email, password_hash, role, business_unit in users_data:
                 await session.execute(
                     text(
                         """
-                    INSERT INTO users (id, name, email, role, business_unit, created_at)
-                    VALUES (:id, :name, :email, :role, :business_unit, :created_at)
+                    INSERT INTO users (id, name, email, password_hash, role, business_unit, created_at)
+                    VALUES (:id, :name, :email, :password_hash, :role, :business_unit, :created_at)
                 """
                     ),
                     {
                         "id": user_id,
                         "name": name,
                         "email": email,
+                        "password_hash": password_hash,
                         "role": role,
                         "business_unit": business_unit,
                         "created_at": datetime.now().isoformat(),

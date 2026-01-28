@@ -113,7 +113,7 @@ class SearchService:
             )
 
         except Exception as e:
-            logger.error("Search operation failed", error=str(e), query=params.q)
+            logger.error(f"Search operation failed Error: {str(e)}")
             raise ValidationError(f"Search failed: {str(e)}")
 
     async def advanced_search_cases(
@@ -202,9 +202,7 @@ class SearchService:
             )
 
         except Exception as e:
-            logger.error(
-                "Advanced search operation failed", error=str(e), query=params.q
-            )
+            logger.error(f"Advanced search operation failed Error: {str(e)}")
             raise ValidationError(f"Advanced search failed: {str(e)}")
 
     async def get_search_analytics(
@@ -269,7 +267,7 @@ class SearchService:
             )
 
         except Exception as e:
-            logger.error("Failed to get search analytics", error=str(e))
+            logger.error(f"Failed to get search analytics Error: {str(e)}")
             raise ValidationError(f"Analytics retrieval failed: {str(e)}")
 
     def _parse_query(self, query: str) -> ParsedQuery:
@@ -431,9 +429,7 @@ class SearchService:
                     )
                     conditions.append(Case.created_at >= date_obj.isoformat())
             except ValueError:
-                logger.warning(
-                    "Invalid time range format", time_range=parsed_query.time_range
-                )
+                logger.warning(f"Invalid time range format Time_Range: {parsed_query.time_range}")
 
         # Apply all conditions
         if conditions:
@@ -632,7 +628,7 @@ class SearchService:
                 )
 
         except Exception as e:
-            logger.warning("Failed to generate suggested filters", error=str(e))
+            logger.warning(f"Failed to generate suggested filters Error: {str(e)}")
 
         return suggestions
 
@@ -709,7 +705,7 @@ class SearchService:
             await self.db.commit()
 
         except Exception as e:
-            logger.warning("Failed to track search analytics", error=str(e))
+            logger.warning(f"Failed to track search analytics Error: {str(e)}")
             # Don't fail the search if analytics tracking fails
             await self.db.rollback()
 

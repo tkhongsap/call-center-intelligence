@@ -142,15 +142,7 @@ async def get_feed(
             page=params.page, limit=params.limit, total=total, total_pages=total_pages
         )
 
-        logger.info(
-            "Retrieved feed items",
-            count=len(feed_items),
-            total=total,
-            page=params.page,
-            type_filter=params.type.value if params.type else None,
-            date_range=params.date_range,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved feed items Count: {len(feed_items)} Total: {total} Page: {params.page} Type_Filter: {params.type.value if params.type else None} Date_Range: {params.date_range} User_Id: {current_user.get('id') if current_user else None}")
 
         return FeedListResponse(
             items=[FeedItemResponse.model_validate(item) for item in feed_items],
@@ -158,7 +150,7 @@ async def get_feed(
         )
 
     except Exception as e:
-        logger.error("Error retrieving feed items", error=str(e))
+        logger.error(f"Error retrieving feed items Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve feed items: {str(e)}")
 
 
@@ -200,19 +192,13 @@ async def create_feed_item(
         await db.commit()
         await db.refresh(feed_item)
 
-        logger.info(
-            "Created new feed item",
-            feed_id=feed_id,
-            type=feed_data.type.value,
-            priority=feed_data.priority,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Created new feed item Feed_Id: {feed_id} Type: {feed_data.type.value} Priority: {feed_data.priority} User_Id: {current_user.get('id')}")
 
         return FeedItemResponse.model_validate(feed_item)
 
     except Exception as e:
         await db.rollback()
-        logger.error("Error creating feed item", error=str(e))
+        logger.error(f"Error creating feed item Error: {str(e)}")
         raise DatabaseError(f"Failed to create feed item: {str(e)}")
 
 
@@ -273,12 +259,7 @@ async def get_feed_stats(
         # Count active (non-expired) items
         active_items = total  # Since we already filtered out expired items
 
-        logger.info(
-            "Retrieved feed statistics",
-            total=total,
-            active_items=active_items,
-            user_id=current_user.get("id") if current_user else None,
-        )
+        logger.info(f"Retrieved feed statistics Total: {total} Active_Items: {active_items} User_Id: {current_user.get('id') if current_user else None}")
 
         return FeedStatsResponse(
             total_items=total,
@@ -288,7 +269,7 @@ async def get_feed_stats(
         )
 
     except Exception as e:
-        logger.error("Error retrieving feed statistics", error=str(e))
+        logger.error(f"Error retrieving feed statistics Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve feed statistics: {str(e)}")
 
 
@@ -322,11 +303,7 @@ async def cleanup_expired_feed_items(
 
         deleted_count = len(expired_items)
 
-        logger.info(
-            "Cleaned up expired feed items",
-            deleted_count=deleted_count,
-            user_id=current_user.get("id"),
-        )
+        logger.info(f"Cleaned up expired feed items Deleted_Count: {deleted_count} User_Id: {current_user.get('id')}")
 
         return {
             "message": f"Successfully cleaned up {deleted_count} expired feed items",
@@ -335,5 +312,5 @@ async def cleanup_expired_feed_items(
 
     except Exception as e:
         await db.rollback()
-        logger.error("Error cleaning up expired feed items", error=str(e))
+        logger.error(f"Error cleaning up expired feed items Error: {str(e)}")
         raise DatabaseError(f"Failed to cleanup expired feed items: {str(e)}")
