@@ -1,0 +1,50 @@
+services:
+  # Production overrides for Backend
+  backend:
+    environment:
+      - DEBUG=false
+      - RELOAD=false
+      - LOG_LEVEL=${LOG_LEVEL:-warning}
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT:-5432}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - REDIS_URL=${REDIS_URL}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - ALLOWED_FILE_TYPES=${ALLOWED_FILE_TYPES:-.csv,.xlsx,.xls}
+      - CACHE_TTL=${CACHE_TTL:-300}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      - AZURE_EMBEDDING_DEPLOYMENT=${AZURE_EMBEDDING_DEPLOYMENT:-text-embedding-3-large}
+      - SEED_DATABASE=false
+    volumes:
+      # Remove source code mount in production
+      - ./logs:/app/logs
+    command: ["python", "main.py"]
+    restart: always
+
+  # Production overrides for Frontend
+  frontend:
+    build:
+      context: ./call_center_intelligence_frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - INTERNAL_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
+    volumes: []
+    # Uses standalone output: node server.js (from Dockerfile CMD)
+    restart: always
+
+  # Enable nginx by default in production
+  nginx:
+    profiles: [] # Remove profiles to enable by default
+    restart: always
