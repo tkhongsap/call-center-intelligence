@@ -5,7 +5,7 @@ Handles WebSocket connections for real-time features.
 """
 
 from typing import Optional
-import structlog
+import logging
 
 try:
     from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
@@ -18,7 +18,7 @@ except ImportError:
 
 from app.core.websocket import connection_manager, create_message, MessageType
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = APIRouter() if APIRouter else None
 

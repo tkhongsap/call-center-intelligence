@@ -38,9 +38,9 @@ from app.schemas.alert import (
 )
 from app.schemas.base import PaginationInfo
 from app.schemas.serializers import EnhancedPaginationInfo
-import structlog
+import logging
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

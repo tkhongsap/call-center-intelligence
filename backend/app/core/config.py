@@ -68,6 +68,24 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     LOG_FORMAT: str = Field(default="json", description="Log format (json or text)")
 
+    # Azure OpenAI Configuration
+    AZURE_OPENAI_ENDPOINT: str = Field(
+        default="https://ai-totrakoolk6076ai346198185670.openai.azure.com/",
+        description="Azure OpenAI endpoint URL",
+    )
+    AZURE_OPENAI_API_KEY: str = Field(
+        default="",
+        description="Azure OpenAI API key",
+    )
+    AZURE_OPENAI_API_VERSION: str = Field(
+        default="2024-12-01-preview",
+        description="Azure OpenAI API version",
+    )
+    AZURE_EMBEDDING_DEPLOYMENT: str = Field(
+        default="text-embedding-3-large",
+        description="Azure OpenAI embedding model deployment name",
+    )
+
     # File Upload Configuration
     MAX_FILE_SIZE: int = Field(
         default=10485760, description="Maximum file upload size in bytes"  # 10MB

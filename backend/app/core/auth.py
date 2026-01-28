@@ -7,7 +7,7 @@ compatible with the existing Next.js frontend authentication system.
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
-import structlog
+import logging
 
 try:
     from fastapi import HTTPException, Request, Depends
@@ -22,7 +22,7 @@ from app.core.config import get_settings
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.models.user import UserRole
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

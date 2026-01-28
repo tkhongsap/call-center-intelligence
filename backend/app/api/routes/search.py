@@ -20,9 +20,9 @@ from app.schemas.search import (
     AdvancedSearchFilters,
 )
 from app.schemas.user import CurrentUserResponse
-import structlog
+import logging
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

@@ -11,12 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.exc import SQLAlchemyError, DisconnectionError, OperationalError
 from sqlalchemy import text
-import structlog
+import logging
 
 from app.core.config import get_settings
 from app.core.exceptions import DatabaseError
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Global variables for database engine and session maker
 engine = None
@@ -88,23 +88,18 @@ async def init_db() -> None:
             await check_connection()
 
             logger.info(
-                "Database engine initialized successfully",
-                database_url=(database_url if settings.is_sqlite else database_url),
-                attempt=attempt + 1,
+                f"Database engine initialized successfully (database_url={database_url}, attempt={attempt + 1})"
             )
             return
 
         except Exception as e:
             logger.warning(
-                "Failed to initialize database",
-                error=str(e),
-                attempt=attempt + 1,
-                max_retries=max_retries,
+                f"Failed to initialize database (error={str(e)}, attempt={attempt + 1}, max_retries={max_retries})"
             )
 
             if attempt == max_retries - 1:
                 logger.error(
-                    "All database initialization attempts failed", error=str(e)
+                    f"All database initialization attempts failed (error={str(e)})"
                 )
                 raise DatabaseError(
                     f"Failed to initialize database after {max_retries} attempts: {str(e)}"
@@ -127,7 +122,7 @@ async def check_connection() -> None:
             result.fetchone()
         logger.debug("Database connection test successful")
     except Exception as e:
-        logger.error("Database connection test failed", error=str(e))
+        logger.error(f"Database connection test failed (error={str(e)})")
         raise DatabaseError(f"Database connection test failed: {str(e)}")
 
 
@@ -140,7 +135,7 @@ async def close_db() -> None:
             await engine.dispose()
             logger.info("Database connections closed successfully")
         except Exception as e:
-            logger.error("Error closing database connections", error=str(e))
+            logger.error(f"Error closing database connections (error={str(e)})")
             # Don't raise exception during shutdown
         finally:
             engine = None
@@ -166,25 +161,25 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
     except DisconnectionError as e:
-        logger.error("Database disconnection error", error=str(e))
+        logger.error(f"Database disconnection error (error={str(e)})")
         if session:
             await session.rollback()
         raise DatabaseError(f"Database connection lost: {str(e)}")
 
     except OperationalError as e:
-        logger.error("Database operational error", error=str(e))
+        logger.error(f"Database operational error (error={str(e)})")
         if session:
             await session.rollback()
         raise DatabaseError(f"Database operational error: {str(e)}")
 
     except SQLAlchemyError as e:
-        logger.error("SQLAlchemy error", error=str(e))
+        logger.error(f"SQLAlchemy error (error={str(e)})")
         if session:
             await session.rollback()
         raise DatabaseError(f"Database error: {str(e)}")
 
     except Exception as e:
-        logger.error("Unexpected database session error", error=str(e))
+        logger.error(f"Unexpected database session error (error={str(e)})")
         if session:
             await session.rollback()
         raise DatabaseError(f"Unexpected database session error: {str(e)}")
@@ -194,7 +189,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             try:
                 await session.close()
             except Exception as e:
-                logger.error("Error closing database session", error=str(e))
+                logger.error(f"Error closing database session (error={str(e)})")
 
 
 async def get_engine():
@@ -239,10 +234,7 @@ async def execute_with_retry(
         except (DisconnectionError, OperationalError) as e:
             last_exception = e
             logger.warning(
-                "Database operation failed, retrying",
-                error=str(e),
-                attempt=attempt + 1,
-                max_retries=max_retries,
+                f"Database operation failed, retrying (error={str(e)}, attempt={attempt + 1}, max_retries={max_retries})"
             )
 
             if attempt < max_retries - 1:
@@ -259,14 +251,12 @@ async def execute_with_retry(
 
         except Exception as e:
             # Non-retryable errors
-            logger.error("Non-retryable database error", error=str(e))
+            logger.error(f"Non-retryable database error (error={str(e)})")
             raise DatabaseError(f"Database operation failed: {str(e)}")
 
     # All retries exhausted
     logger.error(
-        "Database operation failed after all retries",
-        error=str(last_exception),
-        max_retries=max_retries,
+        f"Database operation failed after all retries (error={str(last_exception)}, max_retries={max_retries})"
     )
     raise DatabaseError(
         f"Database operation failed after {max_retries} retries: {str(last_exception)}"
@@ -299,11 +289,11 @@ async def health_check() -> dict:
                     "overflow": pool.overflow(),
                 }
         except Exception as e:
-            logger.debug("Could not get pool status", error=str(e))
+            logger.debug(f"Could not get pool status (error={str(e)})")
             pool_status = {"error": "Pool status unavailable"}
 
         return {"status": "healthy", "pool": pool_status, "engine_echo": engine.echo}
 
     except Exception as e:
-        logger.error("Database health check failed", error=str(e))
+        logger.error(f"Database health check failed (error={str(e)})")
         return {"status": "unhealthy", "error": str(e)}
