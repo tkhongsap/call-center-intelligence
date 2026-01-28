@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
-import { getTranslations } from 'next-intl/server';
-import { Header } from '@/components/layout/Header';
-import { CaseFilters } from '@/components/cases/CaseFilters';
-import { CaseList } from '@/components/cases/CaseList';
-import type { Case } from '@/lib/db/schema';
+import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
+import { Header } from "@/components/layout/Header";
+import { CaseFilters } from "@/components/cases/CaseFilters";
+import { CaseList } from "@/components/cases/CaseList";
+import type { Case } from "@/lib/types";
 
 interface SearchParams {
   page?: string;
@@ -37,13 +37,13 @@ async function getCases(searchParams: SearchParams): Promise<CasesResponse> {
     if (value) params.set(key, value);
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/cases?${params.toString()}`, {
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch cases');
+    throw new Error("Failed to fetch cases");
   }
 
   return response.json();
@@ -77,11 +77,11 @@ export default async function CasesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const t = await getTranslations('pages.cases');
+  const t = await getTranslations("pages.cases");
 
   return (
     <>
-      <Header title={t('title')} />
+      <Header title={t("title")} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Suspense fallback={<CasesLoading />}>
           <CasesContent searchParams={params} />

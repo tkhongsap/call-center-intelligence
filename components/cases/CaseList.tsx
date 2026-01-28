@@ -1,12 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
-import { ChevronLeft, ChevronRight, ArrowUpDown, ChevronRightIcon } from 'lucide-react';
-import { Badge, SeverityBadge, StatusBadge } from '@/components/ui/Badge';
-import { formatDate } from '@/lib/utils';
-import type { Case } from '@/lib/db/schema';
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "next-intl";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  ChevronRightIcon,
+} from "lucide-react";
+import { Badge, SeverityBadge, StatusBadge } from "@/components/ui/Badge";
+import { formatDate } from "@/lib/utils";
+import type { Case } from "@/lib/types";
 
 interface CaseListProps {
   cases: Case[];
@@ -25,7 +30,12 @@ interface SortHeaderProps {
   onSort: (column: string) => void;
 }
 
-function SortHeader({ column, children, currentSortBy, onSort }: SortHeaderProps) {
+function SortHeader({
+  column,
+  children,
+  currentSortBy,
+  onSort,
+}: SortHeaderProps) {
   return (
     <th
       onClick={() => onSort(column)}
@@ -33,13 +43,23 @@ function SortHeader({ column, children, currentSortBy, onSort }: SortHeaderProps
     >
       <div className="flex items-center gap-1">
         {children}
-        <ArrowUpDown className={`w-3 h-3 ${currentSortBy === column ? 'text-blue-500' : 'text-slate-400'}`} />
+        <ArrowUpDown
+          className={`w-3 h-3 ${currentSortBy === column ? "text-blue-500" : "text-slate-400"}`}
+        />
       </div>
     </th>
   );
 }
 
-function CaseCard({ caseItem, onClick, locale }: { caseItem: Case; onClick: () => void; locale: string }) {
+function CaseCard({
+  caseItem,
+  onClick,
+  locale,
+}: {
+  caseItem: Case;
+  onClick: () => void;
+  locale: string;
+}) {
   return (
     <div
       onClick={onClick}
@@ -54,7 +74,9 @@ function CaseCard({ caseItem, onClick, locale }: { caseItem: Case; onClick: () =
           >
             {caseItem.caseNumber}
           </Link>
-          <p className="text-xs text-slate-500 mt-0.5">{formatDate(caseItem.createdAt, locale)}</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {formatDate(caseItem.createdAt, locale)}
+          </p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <SeverityBadge severity={caseItem.severity} />
@@ -65,7 +87,9 @@ function CaseCard({ caseItem, onClick, locale }: { caseItem: Case; onClick: () =
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-500 min-w-[60px]">BU:</span>
-          <span className="text-slate-700 font-medium">{caseItem.businessUnit}</span>
+          <span className="text-slate-700 font-medium">
+            {caseItem.businessUnit}
+          </span>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-500 min-w-[60px]">Channel:</span>
@@ -80,9 +104,7 @@ function CaseCard({ caseItem, onClick, locale }: { caseItem: Case; onClick: () =
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
         <StatusBadge status={caseItem.status} />
         <div className="flex gap-1">
-          {caseItem.riskFlag && (
-            <Badge variant="urgent">Urgent</Badge>
-          )}
+          {caseItem.riskFlag && <Badge variant="urgent">Urgent</Badge>}
           {caseItem.needsReviewFlag && (
             <Badge variant="needsReview">Review</Badge>
           )}
@@ -97,23 +119,23 @@ export function CaseList({ cases, pagination }: CaseListProps) {
   const searchParams = useSearchParams();
   const locale = useLocale();
 
-  const currentSortBy = searchParams.get('sortBy') || 'createdAt';
-  const currentSortOrder = searchParams.get('sortOrder') || 'desc';
+  const currentSortBy = searchParams.get("sortBy") || "createdAt";
+  const currentSortOrder = searchParams.get("sortOrder") || "desc";
 
   const handleSort = (column: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (currentSortBy === column) {
-      params.set('sortOrder', currentSortOrder === 'asc' ? 'desc' : 'asc');
+      params.set("sortOrder", currentSortOrder === "asc" ? "desc" : "asc");
     } else {
-      params.set('sortBy', column);
-      params.set('sortOrder', 'desc');
+      params.set("sortBy", column);
+      params.set("sortOrder", "desc");
     }
     router.push(`/cases?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', newPage.toString());
+    params.set("page", newPage.toString());
     router.push(`/cases?${params.toString()}`);
   };
 
@@ -136,14 +158,46 @@ export function CaseList({ cases, pagination }: CaseListProps) {
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <SortHeader column="createdAt" currentSortBy={currentSortBy} onSort={handleSort}>Date</SortHeader>
-              <SortHeader column="caseNumber" currentSortBy={currentSortBy} onSort={handleSort}>Case #</SortHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">BU</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Channel</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
-              <SortHeader column="severity" currentSortBy={currentSortBy} onSort={handleSort}>Severity</SortHeader>
-              <SortHeader column="status" currentSortBy={currentSortBy} onSort={handleSort}>Status</SortHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Flags</th>
+              <SortHeader
+                column="createdAt"
+                currentSortBy={currentSortBy}
+                onSort={handleSort}
+              >
+                Date
+              </SortHeader>
+              <SortHeader
+                column="caseNumber"
+                currentSortBy={currentSortBy}
+                onSort={handleSort}
+              >
+                Case #
+              </SortHeader>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                BU
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Channel
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Category
+              </th>
+              <SortHeader
+                column="severity"
+                currentSortBy={currentSortBy}
+                onSort={handleSort}
+              >
+                Severity
+              </SortHeader>
+              <SortHeader
+                column="status"
+                currentSortBy={currentSortBy}
+                onSort={handleSort}
+              >
+                Status
+              </SortHeader>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Flags
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -199,8 +253,8 @@ export function CaseList({ cases, pagination }: CaseListProps) {
       {/* Pagination - responsive layout */}
       <div className="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="text-sm text-slate-600 text-center sm:text-left">
-          Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-          {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+          Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+          {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
           {pagination.total} cases
         </div>
         <div className="flex items-center gap-2">

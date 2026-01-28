@@ -37,11 +37,34 @@ next-env.d.ts
 coverage/
 .nyc_output/
 
+# Python (Backend)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend_venv/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
 # Database (SQLite)
 *.sqlite
 *.sqlite3
 *.db
 /data/
+call-center.db
+test.db
 
 # Drizzle ORM
 /drizzle/
@@ -80,3 +103,22 @@ secrets.json
 
 # Claude Code local config
 .claude-user/
+
+# Kiro specs (optional - uncomment if you want to ignore specs)
+# .kiro/specs/
+
+# Ralph workflow files
+.ralph-state.json
+progress.txt
+
+# Backend test files (temporary)
+backend/reproduce_validation_error.py
+backend/debug_metadata_issue.py
+backend/test_metadata_validation_fix.py
+backend/test_null_metadata_handling.py
+backend/test_integration_fix.py
+backend/test_comprehensive_validation_fix.py
+backend/validation_error_analysis.md
+
+# Alembic migration files (if using auto-generated)
+# backend/alembic/versions/*.py

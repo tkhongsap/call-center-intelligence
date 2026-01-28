@@ -1,7 +1,4 @@
-import { NextRequest } from 'next/server';
-import { db } from '@/lib/db';
-import { feedItems, alerts } from '@/lib/db/schema';
-import { desc, gt, sql } from 'drizzle-orm';
+import { NextRequest } from "next/server";
 
 /**
  * SSE (Server-Sent Events) endpoint for real-time feed updates
@@ -20,7 +17,7 @@ const POLL_INTERVAL = 5000; // 5 seconds - internal poll for new events
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const lastEventIdParam = searchParams.get('lastEventId');
+  const lastEventIdParam = searchParams.get("lastEventId");
 
   // Track last seen event timestamp
   let lastEventTime = lastEventIdParam
@@ -41,39 +38,40 @@ export async function GET(request: NextRequest) {
 
       // Helper to send heartbeat
       const sendHeartbeat = () => {
-        sendEvent('heartbeat', { timestamp: new Date().toISOString() });
+        sendEvent("heartbeat", { timestamp: new Date().toISOString() });
       };
 
-      // Check for new feed items and alert count
+      // Check for new feed items and alert count via backend
       const checkForUpdates = async () => {
         try {
-          // Get new feed items since last check
-          const newItems = await db
-            .select()
-            .from(feedItems)
-            .where(gt(feedItems.createdAt, lastEventTime.toISOString()))
-            .orderBy(desc(feedItems.createdAt))
-            .limit(20);
+          const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
 
-          if (newItems.length > 0) {
-            // Update last event time to newest item
-            lastEventTime = new Date(newItems[0].createdAt);
-            sendEvent('new_feed_items', { items: newItems });
+          // Get new feed items since last check
+          const feedResponse = await fetch(
+            `${backendUrl}/api/events/feed?since=${lastEventTime.toISOString()}`,
+          );
+
+          if (feedResponse.ok) {
+            const feedData = await feedResponse.json();
+            if (feedData.items && feedData.items.length > 0) {
+              // Update last event time to newest item
+              lastEventTime = new Date(feedData.items[0].createdAt);
+              sendEvent("new_feed_items", { items: feedData.items });
+            }
           }
 
           // Get active alert count
-          const [alertCount] = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(alerts)
-            .where(sql`${alerts.status} = 'active'`);
-
-          sendEvent('alert_count', {
-            count: alertCount?.count ?? 0,
-            timestamp: new Date().toISOString()
-          });
+          const alertResponse = await fetch(`${backendUrl}/api/alerts/count`);
+          if (alertResponse.ok) {
+            const alertData = await alertResponse.json();
+            sendEvent("alert_count", {
+              count: alertData.count ?? 0,
+              timestamp: new Date().toISOString(),
+            });
+          }
         } catch (error) {
-          console.error('[SSE] Error checking for updates:', error);
-          sendEvent('error', { message: 'Failed to check for updates' });
+          console.error("[SSE] Error checking for updates:", error);
+          sendEvent("error", { message: "Failed to check for updates" });
         }
       };
 
@@ -87,7 +85,7 @@ export async function GET(request: NextRequest) {
       const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
       // Handle client disconnect
-      request.signal.addEventListener('abort', () => {
+      request.signal.addEventListener("abort", () => {
         clearInterval(pollInterval);
         clearInterval(heartbeatInterval);
         controller.close();
@@ -97,10 +95,10 @@ export async function GET(request: NextRequest) {
 
   return new Response(stream, {
     headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no", // Disable nginx buffering
     },
   });
 }

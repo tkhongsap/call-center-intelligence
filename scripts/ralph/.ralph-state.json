@@ -1,8 +1,0 @@
-{
-  "currentIteration": 0,
-  "maxIterations": 50,
-  "status": "idle",
-  "startedAt": null,
-  "lastStoryCompleted": null,
-  "notes": "State file for Ralph loop. Tracks iteration progress across all 9 PRDs."
-}

@@ -1,11 +1,11 @@
-import { notFound } from 'next/navigation';
-import { Header } from '@/components/layout/Header';
-import { CaseDetail } from '@/components/cases/CaseDetail';
-import type { Case } from '@/lib/db/schema';
+import { notFound } from "next/navigation";
+import { Header } from "@/components/layout/Header";
+import { CaseDetail } from "@/components/cases/CaseDetail";
+import type { Case } from "@/lib/types";
 
 interface TimelineEvent {
   id: string;
-  type: 'created' | 'assigned' | 'contact' | 'resolved';
+  type: "created" | "assigned" | "contact" | "resolved";
   title: string;
   description: string;
   timestamp: string;
@@ -23,16 +23,16 @@ interface CaseWithExtras extends Case {
 }
 
 async function getCase(id: string): Promise<CaseWithExtras | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/cases/${id}`, {
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   if (!response.ok) {
     if (response.status === 404) {
       return null;
     }
-    throw new Error('Failed to fetch case');
+    throw new Error("Failed to fetch case");
   }
 
   return response.json();

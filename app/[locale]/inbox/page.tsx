@@ -1,8 +1,8 @@
-import { Suspense } from 'react';
-import { getTranslations } from 'next-intl/server';
-import { Header } from '@/components/layout/Header';
-import { InboxList } from '@/components/inbox/InboxList';
-import type { InboxItemData } from '@/components/inbox/InboxItem';
+import { Suspense } from "react";
+import { getTranslations } from "next-intl/server";
+import { Header } from "@/components/layout/Header";
+import { InboxList } from "@/components/inbox/InboxList";
+import type { InboxItemData } from "@/components/inbox/InboxItem";
 
 interface SearchParams {
   page?: string;
@@ -22,20 +22,22 @@ interface InboxResponse {
   };
 }
 
-async function getInboxItems(searchParams: SearchParams): Promise<InboxResponse> {
+async function getInboxItems(
+  searchParams: SearchParams,
+): Promise<InboxResponse> {
   const params = new URLSearchParams();
 
   Object.entries(searchParams).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/inbox?${params.toString()}`, {
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch inbox');
+    throw new Error("Failed to fetch inbox");
   }
 
   return response.json();
@@ -62,7 +64,14 @@ function InboxLoading() {
 
 async function InboxContent({ searchParams }: { searchParams: SearchParams }) {
   const data = await getInboxItems(searchParams);
-  return <InboxList items={data.items} pagination={data.pagination} />;
+  return (
+    <InboxList
+      items={data?.items || []}
+      pagination={
+        data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 }
+      }
+    />
+  );
 }
 
 export default async function InboxPage({
@@ -71,16 +80,16 @@ export default async function InboxPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const t = await getTranslations('pages.inbox');
+  const t = await getTranslations("pages.inbox");
 
   return (
     <>
-      <Header title={t('title')} />
+      <Header title={t("title")} />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-slate-800">{t('title')}</h2>
+          <h2 className="text-lg font-semibold text-slate-800">{t("title")}</h2>
           <p className="text-sm text-slate-500 mt-1">
-            {t('sharedWith')} & {t('escalatedTo')}
+            {t("sharedWith")} & {t("escalatedTo")}
           </p>
         </div>
 

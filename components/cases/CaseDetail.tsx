@@ -1,19 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useLocale } from 'next-intl';
-import { ChevronRight, Share2, AlertTriangle, Calendar, User, Phone, Tag, Building2 } from 'lucide-react';
-import { Badge, SeverityBadge, StatusBadge } from '@/components/ui/Badge';
-import { ShareModal } from '@/components/ui/ShareModal';
-import { CaseTimeline } from './CaseTimeline';
-import { AISummary } from './AISummary';
-import { formatDateTime } from '@/lib/utils';
-import type { Case } from '@/lib/db/schema';
+import { useState } from "react";
+import Link from "next/link";
+import { useLocale } from "next-intl";
+import {
+  ChevronRight,
+  Share2,
+  AlertTriangle,
+  Calendar,
+  User,
+  Phone,
+  Tag,
+  Building2,
+} from "lucide-react";
+import { Badge, SeverityBadge, StatusBadge } from "@/components/ui/Badge";
+import { ShareModal } from "@/components/ui/ShareModal";
+import { CaseTimeline } from "./CaseTimeline";
+import { AISummary } from "./AISummary";
+import { formatDateTime } from "@/lib/utils";
+import type { Case } from "@/lib/types";
 
 interface TimelineEvent {
   id: string;
-  type: 'created' | 'assigned' | 'contact' | 'resolved';
+  type: "created" | "assigned" | "contact" | "resolved";
   title: string;
   description: string;
   timestamp: string;
@@ -32,7 +41,7 @@ interface CaseDetailProps {
   };
 }
 
-const CURRENT_USER_ID = 'user-admin-1'; // Mock current user
+const CURRENT_USER_ID = "user-admin-1"; // Mock current user
 
 export function CaseDetail({ caseData }: CaseDetailProps) {
   const locale = useLocale();
@@ -40,12 +49,12 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
 
   const handleShare = async (recipientId: string, message: string) => {
-    const response = await fetch('/api/shares', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/shares", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        type: 'share',
-        sourceType: 'case',
+        type: "share",
+        sourceType: "case",
         sourceId: caseData.id,
         senderId: CURRENT_USER_ID,
         recipientId,
@@ -54,17 +63,17 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
     });
 
     if (!response.ok) {
-      throw new Error('Share failed');
+      throw new Error("Share failed");
     }
   };
 
   const handleEscalate = async (recipientId: string, message: string) => {
-    const response = await fetch('/api/shares', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/shares", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        type: 'escalation',
-        sourceType: 'case',
+        type: "escalation",
+        sourceType: "case",
         sourceId: caseData.id,
         senderId: CURRENT_USER_ID,
         recipientId,
@@ -73,7 +82,7 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
     });
 
     if (!response.ok) {
-      throw new Error('Escalation failed');
+      throw new Error("Escalation failed");
     }
 
     // Refresh the page to show updated status
@@ -84,9 +93,13 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
     <div className="space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500">
-        <Link href="/cases" className="hover:text-slate-700">Cases</Link>
+        <Link href="/cases" className="hover:text-slate-700">
+          Cases
+        </Link>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-slate-900 font-medium">{caseData.caseNumber}</span>
+        <span className="text-slate-900 font-medium">
+          {caseData.caseNumber}
+        </span>
       </nav>
 
       {/* Header */}
@@ -94,11 +107,15 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-slate-900">{caseData.caseNumber}</h1>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {caseData.caseNumber}
+              </h1>
               <SeverityBadge severity={caseData.severity} />
               <StatusBadge status={caseData.status} />
               {caseData.riskFlag && <Badge variant="urgent">Urgent</Badge>}
-              {caseData.needsReviewFlag && <Badge variant="needsReview">Needs Review</Badge>}
+              {caseData.needsReviewFlag && (
+                <Badge variant="needsReview">Needs Review</Badge>
+              )}
             </div>
             <p className="text-slate-600">{caseData.summary}</p>
           </div>
@@ -137,13 +154,12 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
           <InfoItem
             icon={Phone}
             label="Channel"
-            value={caseData.channel.charAt(0).toUpperCase() + caseData.channel.slice(1)}
+            value={
+              caseData.channel.charAt(0).toUpperCase() +
+              caseData.channel.slice(1)
+            }
           />
-          <InfoItem
-            icon={Tag}
-            label="Category"
-            value={caseData.category}
-          />
+          <InfoItem icon={Tag} label="Category" value={caseData.category} />
           {caseData.subcategory && (
             <InfoItem
               icon={Tag}
@@ -161,7 +177,10 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
           <InfoItem
             icon={User}
             label="Sentiment"
-            value={caseData.sentiment.charAt(0).toUpperCase() + caseData.sentiment.slice(1)}
+            value={
+              caseData.sentiment.charAt(0).toUpperCase() +
+              caseData.sentiment.slice(1)
+            }
           />
           {caseData.assignedTo && (
             <InfoItem

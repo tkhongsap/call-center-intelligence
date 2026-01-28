@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
-import { Header } from '@/components/layout/Header';
-import { AlertDetail } from '@/components/alerts/AlertDetail';
-import type { Alert } from '@/lib/db/schema';
+import { notFound } from "next/navigation";
+import { Header } from "@/components/layout/Header";
+import { AlertDetail } from "@/components/alerts/AlertDetail";
+import type { Alert } from "@/lib/types";
 
 interface SampleCase {
   id: string;
@@ -22,16 +22,16 @@ interface AlertDetailResponse {
 }
 
 async function getAlert(id: string): Promise<AlertDetailResponse | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/alerts/${id}`, {
-    cache: 'no-store',
+    cache: "no-store",
   });
 
   if (!response.ok) {
     if (response.status === 404) {
       return null;
     }
-    throw new Error('Failed to fetch alert');
+    throw new Error("Failed to fetch alert");
   }
 
   return response.json();

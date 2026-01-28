@@ -1,42 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { uploads } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const page = searchParams.get("page") || "1";
+    const limit = searchParams.get("limit") || "10";
 
-    // Get total count
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(uploads);
-    const total = countResult[0]?.count || 0;
+    // Forward request to the backend
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+    const backendResponse = await fetch(
+      `${backendUrl}/api/uploads?page=${page}&limit=${limit}`,
+    );
 
-    // Get uploads
-    const uploadList = await db
-      .select()
-      .from(uploads)
-      .orderBy(desc(uploads.createdAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
+    if (!backendResponse.ok) {
+      throw new Error(`Backend API error: ${backendResponse.status}`);
+    }
 
-    return NextResponse.json({
-      uploads: uploadList,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    const data = await backendResponse.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Failed to fetch uploads:', error);
+    console.error("Error fetching uploads:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch uploads' },
-      { status: 500 }
+      { error: "Failed to fetch uploads" },
+      { status: 500 },
     );
   }
 }

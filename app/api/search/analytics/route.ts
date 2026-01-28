@@ -1,52 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { searchAnalytics } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/search/analytics - Get popular searches
  */
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
-  const days = parseInt(searchParams.get('days') || '30', 10);
-
   try {
-    // Calculate the date threshold
-    const threshold = new Date();
-    threshold.setDate(threshold.getDate() - days);
-    const thresholdISO = threshold.toISOString();
+    const searchParams = request.nextUrl.searchParams;
+    const limit = searchParams.get("limit") || "10";
+    const days = searchParams.get("days") || "30";
 
-    // Get popular searches grouped by normalized query
-    const popularSearches = await db
-      .select({
-        query: searchAnalytics.normalizedQuery,
-        searchCount: sql<number>`count(*)`.as('search_count'),
-        avgResultCount: sql<number>`avg(${searchAnalytics.resultCount})`.as('avg_result_count'),
-        avgExecutionTimeMs: sql<number>`avg(${searchAnalytics.executionTimeMs})`.as('avg_execution_time_ms'),
-        lastSearched: sql<string>`max(${searchAnalytics.createdAt})`.as('last_searched'),
-      })
-      .from(searchAnalytics)
-      .where(sql`${searchAnalytics.createdAt} >= ${thresholdISO}`)
-      .groupBy(searchAnalytics.normalizedQuery)
-      .orderBy(desc(sql`count(*)`))
-      .limit(limit);
+    // Forward request to the backend
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+    const backendResponse = await fetch(
+      `${backendUrl}/api/search/analytics?limit=${limit}&days=${days}`,
+    );
 
-    return NextResponse.json({
-      popularSearches: popularSearches.map((s) => ({
-        query: s.query,
-        searchCount: s.searchCount,
-        avgResultCount: Math.round(s.avgResultCount || 0),
-        avgExecutionTimeMs: Math.round(s.avgExecutionTimeMs || 0),
-        lastSearched: s.lastSearched,
-      })),
-      period: `${days} days`,
-    });
+    if (!backendResponse.ok) {
+      throw new Error(`Backend API error: ${backendResponse.status}`);
+    }
+
+    const data = await backendResponse.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Search analytics error:', error);
+    console.error("Error fetching search analytics:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch search analytics' },
-      { status: 500 }
+      { error: "Failed to fetch search analytics" },
+      { status: 500 },
     );
   }
 }
@@ -57,37 +36,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, resultCount, executionTimeMs, userId } = body;
 
-    if (!query || typeof query !== 'string') {
-      return NextResponse.json(
-        { error: 'Query is required' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedQuery = query.toLowerCase().trim();
-
-    // Don't log very short or empty queries
-    if (normalizedQuery.length < 2) {
-      return NextResponse.json({ success: true, logged: false });
-    }
-
-    const id = `search_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    await db.insert(searchAnalytics).values({
-      id,
-      query: query.trim(),
-      normalizedQuery,
-      resultCount: resultCount || 0,
-      executionTimeMs: executionTimeMs || null,
-      userId: userId || null,
-      createdAt: new Date().toISOString(),
+    // Forward request to the backend
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+    const backendResponse = await fetch(`${backendUrl}/api/search/analytics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    return NextResponse.json({ success: true, logged: true });
+    if (!backendResponse.ok) {
+      throw new Error(`Backend API error: ${backendResponse.status}`);
+    }
+
+    const data = await backendResponse.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Search analytics log error:', error);
+    console.error("Error logging search analytics:", error);
     // Don't fail the response - analytics logging shouldn't break the user experience
     return NextResponse.json({ success: true, logged: false });
   }
