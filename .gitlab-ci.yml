@@ -1,6 +1,6 @@
 image: python:3.12
 unit-test-job:
-  stage: unit-test
+  stage: test
   # variables:
   #   COVERAGE_FILE: "/tmp/.coverage"
   before_script:
