@@ -13,7 +13,7 @@ import pytest
 from hypothesis import given, strategies as st, settings
 from fastapi.testclient import TestClient
 
-from app.main import create_app
+from main import create_app
 from app.core.config import get_settings
 
 

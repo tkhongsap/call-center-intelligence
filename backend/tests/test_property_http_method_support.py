@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from typing import Dict, List, Tuple, Set
 from unittest.mock import Mock, patch
 
-from app.main import create_app
+from main import create_app
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

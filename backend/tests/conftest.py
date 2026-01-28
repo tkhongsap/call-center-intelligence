@@ -11,7 +11,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import create_app
+from main import create_app
 from app.core.database import get_db, Base
 from app.core.config import get_settings
 

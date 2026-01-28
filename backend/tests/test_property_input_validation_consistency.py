@@ -18,7 +18,7 @@ from typing import Dict, Any, List, Optional
 import json
 from datetime import datetime, timedelta
 
-from app.main import app
+from main import app
 from app.models.base import (
     Channel, CaseStatus, Sentiment, Severity, AlertType, AlertStatus,
     UserRole, FeedItemType, ShareType, ShareChannel, UploadStatus

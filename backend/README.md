@@ -14,7 +14,146 @@ FastAPI backend for the call center management system. This backend replaces the
 - **Structured Logging**: JSON-formatted logging with structured data
 - **Environment Configuration**: Environment-specific settings management
 
-## Quick Start
+## Docker Deployment
+
+### Quick Start with Docker
+
+The easiest way to run the backend is using Docker with environment variables. **Note: PostgreSQL and Redis must be running separately.**
+
+```bash
+# Copy and configure environment variables
+cp .env.example .env
+# Edit .env with your configuration (especially DB_HOST and REDIS_URL)
+
+# Build and start the development environment
+make dev
+
+# Or manually:
+docker-compose up --build -d
+```
+
+The API will be available at:
+- API: http://localhost:8000
+- Documentation: http://localhost:8000/docs
+
+**Prerequisites:**
+- PostgreSQL running (configure DB_HOST, DB_PORT, etc. in .env)
+- Redis running (configure REDIS_URL in .env)
+
+**Important for Docker:** 
+- Use `host.docker.internal` as DB_HOST to connect to services on your host machine
+- Make sure your PostgreSQL accepts connections from Docker containers
+- Development mode automatically seeds the database with sample data
+
+### Docker Commands
+
+```bash
+# Development
+make build          # Build the Docker image
+make up            # Start development environment (with seeding)
+make down          # Stop development environment
+make logs          # View logs
+make shell         # Open shell in backend container
+make test          # Run tests in container
+make seed          # Run database seeding manually
+
+# Production
+make prod-up       # Start production environment (no seeding)
+make prod-down     # Stop production environment
+
+# Cleanup
+make clean         # Clean up Docker resources
+```
+
+### Manual Docker Commands
+
+```bash
+# Build the image
+docker-compose build
+
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop services
+docker-compose down
+
+# Run tests
+docker-compose exec backend python -m pytest tests/ -v
+```
+
+### Database Operations
+
+Since PostgreSQL is running separately, use your existing database management tools:
+
+```bash
+# Connect to your PostgreSQL instance directly
+psql -h localhost -U postgres -d call_center
+
+# Or use your preferred database client
+# Make sure the connection details match your .env file
+```
+
+### Database Seeding
+
+The development environment automatically seeds the database with sample data:
+
+```bash
+# Start with automatic seeding (default)
+make dev
+
+# Start without seeding
+SEED_DATABASE=false make up
+
+# Run seeding manually
+make seed
+
+# Check seeding status in logs
+make logs
+```
+
+**Sample Data Includes:**
+- 3 users (admin, agent, manager)
+- 50 sample cases with various statuses
+- 20 alerts with different severities
+- 5 trending topics
+- 15 feed items
+
+**Production Note:** Seeding is automatically disabled in production mode.
+
+### Access Points
+
+- **API**: http://localhost:8000
+- **Documentation**: http://localhost:8000/docs
+- **Health check**: http://localhost:8000/health
+
+**External Services (configure in .env):**
+- **PostgreSQL**: Your existing PostgreSQL instance
+- **Redis**: Your existing Redis instance
+
+# Access backend shell
+docker-compose exec backend /bin/bash
+```
+
+### Production Deployment
+
+For production deployment with Docker:
+
+```bash
+# Create production environment file
+cp .env.example .env.prod
+# Edit .env.prod with production values
+
+# Start production environment
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# With nginx reverse proxy
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile production up -d
+```
+
+## Local Development
 
 ### Prerequisites
 
@@ -68,7 +207,7 @@ notepad .env
 4. Run the development server:
 
 ```cmd
-python start_server.py
+python main.py
 ```
 
 The API will be available at:
@@ -87,7 +226,7 @@ cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-python start_server.py
+python main.py
 ```
 
 ## Project Structure
@@ -183,42 +322,96 @@ Start the development server with hot reload:
 
 ```cmd
 conda activate fastapi-backend
-python start_server.py
+python main.py
 ```
 
 Or use uvicorn directly:
 
 ```cmd
 conda activate fastapi-backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ## Configuration
 
-Environment variables can be set in the `.env` file:
+All configuration is now handled through environment variables. Copy the example file and customize:
 
-- `DATABASE_URL`: Database connection string
-- `DEBUG`: Enable debug mode
+```bash
+# Copy example environment file
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+**Required Environment Variables:**
+- `DB_HOST`: PostgreSQL host
+- `DB_USER`: PostgreSQL username  
+- `DB_PASSWORD`: PostgreSQL password
+- `DB_PORT`: PostgreSQL port
+- `DB_NAME`: PostgreSQL database name
+- `SECRET_KEY`: Secret key for JWT tokens (generate secure key for production)
+
+**Optional Environment Variables:**
+- `DEBUG`: Enable debug mode (default: true)
+- `HOST`: Server host (default: 0.0.0.0)
+- `PORT`: Server port (default: 8000)
+- `RELOAD`: Enable auto-reload in development (default: true)
+- `LOG_LEVEL`: Logging level (default: INFO)
+- `LOG_FORMAT`: Log format - json or text (default: json)
 - `CORS_ORIGINS`: Allowed CORS origins (comma-separated)
-- `SECRET_KEY`: Secret key for JWT tokens
-- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
+- `ALGORITHM`: JWT algorithm (default: HS256)
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration (default: 30)
+- `MAX_FILE_SIZE`: Maximum upload size in bytes (default: 10485760)
+- `ALLOWED_FILE_TYPES`: Allowed file extensions (default: .csv,.xlsx,.xls)
+- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379/0)
+- `CACHE_TTL`: Cache TTL in seconds (default: 300)
+- `SERVER_NAME`: Server name for nginx (default: localhost)
+- `ALLOWED_HOSTS`: Allowed hosts for security (default: localhost,127.0.0.1,0.0.0.0)
+- `SEED_DATABASE`: Enable database seeding in development (default: true)
 
-## Deployment
+**Azure OpenAI Configuration:**
+- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI endpoint URL
+- `AZURE_OPENAI_API_KEY`: Azure OpenAI API key
+- `AZURE_OPENAI_API_VERSION`: Azure OpenAI API version (default: 2024-12-01-preview)
+- `AZURE_EMBEDDING_DEPLOYMENT`: Azure OpenAI embedding model deployment name (default: text-embedding-3-large)
 
-### Docker
+### Docker Environment Variables
 
-```cmd
-# Build image
-docker build -t call-center-backend .
+All configuration is now handled through environment variables. The Docker setup automatically reads from your `.env` file:
 
-# Run container
-docker run -p 8000:8000 call-center-backend
+```bash
+# Copy example environment file
+cp .env.example .env
+# Edit .env with your configuration
 
-# Using docker-compose
+# Start with your custom configuration
 docker-compose up -d
 ```
 
-### Production
+**Important Environment Variables for Docker:**
+- `PORT`: Backend port (affects both container and nginx)
+- `DB_*`: PostgreSQL configuration (automatically used by postgres service)
+- `SECRET_KEY`: Must be set for production
+- `DEBUG`: Set to false for production
+- `CORS_ORIGINS`: Configure allowed origins for your frontend
+
+## Deployment
+
+### Docker Production Deployment
+
+```bash
+# Build production image
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
+
+# Start production services
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# With nginx reverse proxy
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile production up -d
+```
+
+### Traditional Deployment
+
+For traditional deployment without Docker:
 
 For production deployment:
 
@@ -253,3 +446,72 @@ This backend is designed to be a drop-in replacement for the Next.js API routes.
 4. Remove the Next.js API routes once migration is complete
 
 All API contracts are maintained to ensure zero-downtime migration.
+
+## Troubleshooting
+
+### Connection Refused Error
+
+If you see `ConnectionRefusedError: [Errno 111] Connection refused`, the backend container can't connect to your PostgreSQL/Redis instances:
+
+**Solution 1: Use host.docker.internal (Recommended)**
+```bash
+# In your .env file:
+DB_HOST=host.docker.internal
+REDIS_URL=redis://host.docker.internal:6379/0
+```
+
+**Solution 2: Use your machine's IP address**
+```bash
+# Find your machine's IP
+ifconfig | grep "inet " | grep -v 127.0.0.1
+
+# In your .env file:
+DB_HOST=192.168.1.100  # Replace with your actual IP
+REDIS_URL=redis://192.168.1.100:6379/0
+```
+
+**Solution 3: Use network mode host (Linux only)**
+```bash
+# Add to docker-compose.yml under backend service:
+network_mode: host
+```
+
+### PostgreSQL Connection Issues
+
+Make sure your PostgreSQL configuration allows connections:
+
+1. **Check postgresql.conf:**
+   ```
+   listen_addresses = '*'  # or 'localhost,host.docker.internal'
+   ```
+
+2. **Check pg_hba.conf:**
+   ```
+   host    all             all             172.17.0.0/16           md5
+   ```
+
+3. **Restart PostgreSQL after changes**
+
+### Database Name Mismatch
+
+Make sure your database name in .env matches your actual database:
+```bash
+# Check your existing database name
+psql -h localhost -U postgres -l
+
+# Update .env accordingly
+DB_NAME=your_actual_database_name
+```
+
+### Quick Test
+
+Test the connection from your host machine first:
+```bash
+# Test PostgreSQL connection
+psql -h localhost -U postgres -d call_center
+
+# Test Redis connection  
+redis-cli ping
+```
+
+If these work from your host but Docker still fails, the issue is Docker networking.

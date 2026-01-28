@@ -99,8 +99,13 @@ def create_app() -> FastAPI:
 
     # Add trusted host middleware for security
     if not settings.DEBUG:
+        # Get allowed hosts from settings
+        allowed_hosts = settings.ALLOWED_HOSTS
+        if isinstance(allowed_hosts, str):
+            allowed_hosts = [host.strip() for host in allowed_hosts.split(',')]
+        
         app.add_middleware(
-            TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"]
+            TrustedHostMiddleware, allowed_hosts=allowed_hosts
         )
 
     # Include API routes
@@ -228,7 +233,7 @@ app = create_app()
 if __name__ == "__main__":
     settings = get_settings()
     uvicorn.run(
-        "app.main:app",
+        "main:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.RELOAD,

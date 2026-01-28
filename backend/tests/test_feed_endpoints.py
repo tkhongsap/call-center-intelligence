@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timezone
-from app.main import create_app
+from main import create_app
 from app.models.feed_item import FeedItem
 from app.models.base import FeedItemType
 from app.core.database import get_db
