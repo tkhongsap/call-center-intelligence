@@ -18,6 +18,7 @@ RUN apt-get update \
         curl \
         libpq-dev \
         postgresql-client \
+        dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -29,6 +30,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy application code
 COPY . .
+
+# Fix line endings for Windows compatibility and make scripts executable
+RUN dos2unix start-dev.sh setup-env.sh \
+    && chmod +x start-dev.sh setup-env.sh
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' --uid 1000 appuser \

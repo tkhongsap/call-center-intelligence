@@ -36,7 +36,7 @@ services:
       - .:/app
       # Mount logs directory
       - ./logs:/app/logs
-    command: ./start-dev.sh
+    command: ["python", "/app/start_dev.py"]
     restart: unless-stopped
     networks:
       - app-network
