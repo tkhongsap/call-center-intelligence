@@ -23,6 +23,7 @@ from app.models import (
     share,
     upload,
     search_analytic,
+    embedding,
 )
 
 # this is the Alembic Config object, which provides

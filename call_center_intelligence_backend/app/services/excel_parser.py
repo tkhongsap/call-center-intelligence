@@ -3,6 +3,7 @@ Excel Parser Module
 
 Parses Excel (.xlsx) and CSV (.csv) files for RAG ingestion.
 Extracts text content with metadata including sheet names, cell positions, and headers.
+Supports Thai language and Unicode text with automatic encoding detection.
 """
 
 import csv
@@ -17,6 +18,12 @@ try:
     OPENPYXL_AVAILABLE = True
 except ImportError:
     OPENPYXL_AVAILABLE = False
+
+try:
+    import chardet
+    CHARDET_AVAILABLE = True
+except ImportError:
+    CHARDET_AVAILABLE = False
 
 from app.services.base_parser import BaseParser, ParsedDocument
 
@@ -158,31 +165,70 @@ class ExcelParser(BaseParser):
         return documents
     
     def _parse_csv(self, file_bytes: bytes, filename: str) -> List[ParsedDocument]:
-        """Parse CSV file - creates one document per row."""
+        """Parse CSV file with automatic encoding detection for Thai text."""
         documents = []
         
-        # Try different encodings (including Thai encodings)
+        # First, try to detect encoding automatically
+        detected_encoding = None
+        if CHARDET_AVAILABLE:
+            detection = chardet.detect(file_bytes)
+            detected_encoding = detection.get('encoding')
+            confidence = detection.get('confidence', 0)
+            
+            # Check for non-ASCII bytes first (Thai characters are > 127)
+            has_thai_indicators = any(b > 127 for b in file_bytes[:1000])
+            is_ascii = detected_encoding and detected_encoding.lower() in ['ascii', 'us-ascii']
+            
+            logger.info(f"Detected encoding: {detected_encoding} (confidence: {confidence}), has_non_ascii: {has_thai_indicators}")
+            
+            # If ASCII is detected but file contains non-ASCII bytes, skip to Thai encodings
+            if is_ascii and has_thai_indicators:
+                logger.warning("ASCII detected but file contains non-ASCII bytes - skipping to Thai encodings")
+            # If confidence is high and it's not ASCII (or it's ASCII without Thai characters)
+            elif confidence > 0.7 and detected_encoding:
+                try:
+                    text_content = file_bytes.decode(detected_encoding)
+                    logger.info(f"Successfully decoded with detected encoding: {detected_encoding}")
+                    return self._parse_csv_content(text_content, filename)
+                except (UnicodeDecodeError, LookupError, AttributeError):
+                    logger.warning(f"Failed to decode with detected encoding: {detected_encoding}")
+        
+        # Fallback: Try different encodings manually
+        # Prioritize Thai encodings
         encodings = [
             "utf-8", 
             "utf-8-sig",  # UTF-8 with BOM
-            "tis-620",    # Thai Industrial Standard
-            "cp874",      # Windows Thai
+            "tis-620",    # Thai Industrial Standard (most common for Thai Excel exports)
+            "cp874",      # Windows Thai (common for Windows Excel)
+            "windows-874", # Another name for cp874
             "iso-8859-11", # Latin/Thai
-            "latin-1", 
-            "cp1252",
+            "gb18030",    # Chinese encoding that sometimes works with Thai
+            "latin-1",    # Fallback
+            "cp1252",     # Windows Latin
         ]
         
         text_content = None
+        successful_encoding = None
+        
         for encoding in encodings:
             try:
                 text_content = file_bytes.decode(encoding)
+                successful_encoding = encoding
                 logger.info(f"CSV decoded successfully with encoding: {encoding}")
                 break
-            except (UnicodeDecodeError, LookupError):
+            except (UnicodeDecodeError, LookupError, AttributeError):
                 continue
         
         if text_content is None:
-            raise ValueError("Could not decode CSV file with supported encodings")
+            # Last resort: decode with errors='replace' to avoid crashing
+            text_content = file_bytes.decode('utf-8', errors='replace')
+            logger.warning("Could not decode CSV with any encoding, using UTF-8 with error replacement")
+        
+        return self._parse_csv_content(text_content, filename)
+    
+    def _parse_csv_content(self, text_content: str, filename: str) -> List[ParsedDocument]:
+        """Parse CSV text content into documents."""
+        documents = []
         
         # Parse CSV
         reader = csv.reader(io.StringIO(text_content))

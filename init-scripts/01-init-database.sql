@@ -7,6 +7,7 @@
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "vector";  -- pgvector for embedding similarity search
 
 -- Create a read-only user for reporting (optional)
 -- CREATE USER readonly_user WITH PASSWORD 'readonly_password';
