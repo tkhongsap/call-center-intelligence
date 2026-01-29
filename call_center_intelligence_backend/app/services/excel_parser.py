@@ -4,11 +4,14 @@ Excel Parser Module
 Parses Excel (.xlsx) and CSV (.csv) files for RAG ingestion.
 Extracts text content with metadata including sheet names, cell positions, and headers.
 Supports Thai language and Unicode text with automatic encoding detection.
+
+รองรับภาษาไทย - ตรวจจับ encoding อัตโนมัติ (UTF-8, TIS-620, Windows-874)
 """
 
 import csv
 import io
-from typing import List, Dict, Any, Optional
+import re
+from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 import logging
 
@@ -30,6 +33,48 @@ from app.services.base_parser import BaseParser, ParsedDocument
 logger = logging.getLogger(__name__)
 
 
+def check_corrupted_thai_text(file_bytes: bytes) -> Dict[str, Any]:
+    """
+    Check if the file contains corrupted Thai text (question marks instead of Thai).
+    
+    ตรวจสอบว่าไฟล์มีข้อความภาษาไทยที่เสียหาย (เครื่องหมาย ? แทนที่ตัวอักษรไทย)
+    
+    Returns:
+        Dict with 'corrupted' boolean and details
+    """
+    try:
+        # Decode as ASCII to check for question mark patterns
+        content = file_bytes.decode('ascii', errors='ignore')
+        
+        # Pattern: 3 or more consecutive question marks (indicates corrupted Thai)
+        corrupted_patterns = re.findall(r'\?{3,}', content)
+        
+        if corrupted_patterns:
+            total_question_marks = sum(len(p) for p in corrupted_patterns)
+            return {
+                "corrupted": True,
+                "patterns_found": len(corrupted_patterns),
+                "total_question_marks": total_question_marks,
+                "message_th": (
+                    "ไฟล์ CSV มีข้อความภาษาไทยเสียหาย (แสดงเป็นเครื่องหมาย ???) "
+                    "กรุณา export ไฟล์ใหม่โดยใช้ encoding UTF-8"
+                ),
+                "message_en": (
+                    "CSV file contains corrupted Thai text (shown as ??? marks). "
+                    "Please re-export the file using UTF-8 encoding. "
+                    "In Excel: Save As -> 'CSV UTF-8 (Comma delimited) (*.csv)'"
+                ),
+            }
+        return {"corrupted": False}
+    except Exception:
+        return {"corrupted": False}
+
+
+def count_thai_characters(text: str) -> int:
+    """Count Thai characters in text (Unicode range U+0E00 to U+0E7F)."""
+    return sum(1 for c in text if '\u0E00' <= c <= '\u0E7F')
+
+
 class ExcelParser(BaseParser):
     """
     Parser for Excel (.xlsx) and CSV (.csv) files.
@@ -39,6 +84,7 @@ class ExcelParser(BaseParser):
     - Header row detection
     - Cell-level metadata
     - Configurable content formatting
+    - Thai language support with auto encoding detection
     """
     
     def __init__(

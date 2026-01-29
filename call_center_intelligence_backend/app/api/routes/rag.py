@@ -12,10 +12,15 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.services.rag_service import embed_file_rows, embed_text_list, validate_file_extension
+from app.services.rag_service import (
+    validate_file_extension,
+    validate_thai_file,
+    validate_file_encoding,
+    embed_file_with_thai_check,
+    embed_text_list,
+)
 from app.services.vector_store_service import (
     store_embeddings_batch,
-    embed_and_store_texts,
     similarity_search,
     list_documents,
     delete_document_embeddings,
@@ -46,40 +51,26 @@ async def embed_file(
     save_to_db: bool = True,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Upload Excel/CSV file, embed all rows, and optionally save to database.
-    
-    - รองรับไฟล์ .xlsx และ .csv
-    - รองรับภาษาไทยและ Unicode
-    - Embedding dimension: 3072 (text-embedding-3-large)
-    
-    Args:
-        file: Excel or CSV file
-        save_to_db: Whether to save embeddings to PostgreSQL (default: True)
-        
-    Returns:
-        Embeddings with metadata, and document_id if saved to database
-    """
+    """Upload Excel/CSV file, embed all rows, and save to database."""
     filename = file.filename or "unknown"
     
-    # Validate extension
     try:
         validate_file_extension(filename)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    # Read file
     file_bytes = await file.read()
     
+    # Check for corrupted Thai text
+    validation = validate_thai_file(file_bytes)
+    if not validation["is_valid"]:
+        raise HTTPException(status_code=400, detail=validation["error_detail"])
+    
     try:
-        # Embed file rows
-        result = embed_file_rows(file_bytes, filename)
+        result, thai_chars = embed_file_with_thai_check(file_bytes, filename)
         
-        # Save to database if requested
         if save_to_db and result.get("results"):
             document_id = str(uuid.uuid4())
-            
-            # Prepare chunks for batch insert
             chunks = [
                 {
                     "content": r["text"],
@@ -89,12 +80,13 @@ async def embed_file(
                 for r in result["results"]
             ]
             
-            # Store in PostgreSQL with pgvector
             await store_embeddings_batch(db, document_id, chunks, filename)
             
             result["document_id"] = document_id
             result["saved_to_db"] = True
             result["message"] = f"Saved {len(chunks)} embeddings to database"
+            if thai_chars > 0:
+                result["message"] += f" - พบภาษาไทย {thai_chars} ตัวอักษร"
         else:
             result["saved_to_db"] = False
         
@@ -109,31 +101,15 @@ async def embed_texts_endpoint(
     request: EmbedTextsRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Embed a list of texts and optionally save to database.
-    
-    - รองรับภาษาไทยและ Unicode
-    - Embedding dimension: 3072
-    
-    Example request:
-    ```json
-    {
-        "texts": ["ข้อความภาษาไทย", "English text"],
-        "save_to_db": true
-    }
-    ```
-    """
+    """Embed a list of texts and optionally save to database."""
     try:
         if not request.texts:
             raise HTTPException(status_code=400, detail="texts list cannot be empty")
         
-        # Embed texts
         result = embed_text_list(request.texts)
         
-        # Save to database if requested
         if request.save_to_db:
             document_id = request.document_id or str(uuid.uuid4())
-            
             chunks = [
                 {
                     "content": r["text"],
@@ -163,20 +139,7 @@ async def search_similar(
     request: SearchRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Search for similar content using cosine similarity.
-    
-    - รองรับ query ภาษาไทย
-    - ใช้ pgvector สำหรับ similarity search
-    
-    Example request:
-    ```json
-    {
-        "query": "ค้นหาข้อมูลลูกค้า",
-        "limit": 5
-    }
-    ```
-    """
+    """Search for similar content using cosine similarity."""
     try:
         results = await similarity_search(
             db=db,
@@ -199,11 +162,7 @@ async def search_similar(
 
 @router.get("/documents")
 async def get_documents(db: AsyncSession = Depends(get_db)):
-    """
-    List all documents with their embedding counts.
-    
-    Returns list of documents stored in the database.
-    """
+    """List all documents with their embedding counts."""
     try:
         documents = await list_documents(db)
         total_embeddings = await get_embedding_count(db)
@@ -224,12 +183,7 @@ async def delete_document(
     document_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Delete all embeddings for a document.
-    
-    Args:
-        document_id: The document ID to delete
-    """
+    """Delete all embeddings for a document."""
     try:
         deleted_count = await delete_document_embeddings(db, document_id)
         
@@ -241,3 +195,13 @@ async def delete_document(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/validate/file")
+async def validate_file(file: UploadFile = File(...)):
+    """Validate CSV/Excel file encoding without saving to database."""
+    filename = file.filename or "unknown"
+    file_bytes = await file.read()
+    
+    return validate_file_encoding(file_bytes, filename)
+
