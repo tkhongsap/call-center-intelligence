@@ -1,0 +1,74 @@
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    environment:
+      - DEBUG=${DEBUG:-true}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-8000}
+      - RELOAD=${RELOAD:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-call_center}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      - ALLOWED_FILE_TYPES=${ALLOWED_FILE_TYPES:-.csv,.xlsx,.xls}
+      - CACHE_TTL=${CACHE_TTL:-300}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      - AZURE_EMBEDDING_DEPLOYMENT=${AZURE_EMBEDDING_DEPLOYMENT:-text-embedding-3-large}
+      - SEED_DATABASE=${SEED_DATABASE:-true}
+    volumes:
+      # Mount source code for development (remove in production)
+      - .:/app
+      # Mount logs directory
+      - ./logs:/app/logs
+    command: ["python", "/app/start_dev.py"]
+    restart: unless-stopped
+    networks:
+      - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - PORT=${PORT:-8000}
+      - SERVER_NAME=${SERVER_NAME:-localhost}
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  app-network:
+    driver: bridge
