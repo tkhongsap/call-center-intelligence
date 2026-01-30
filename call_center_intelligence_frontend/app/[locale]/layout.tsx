@@ -60,19 +60,19 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning className="overflow-x-hidden">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             <FilterProvider>
               <DemoModeProvider>
                 <RealtimeProvider>
-                  <div className="flex min-h-screen bg-surface">
+                  <div className="flex min-h-screen bg-surface overflow-x-hidden">
                     <MobileNav />
                     <Sidebar />
-                    <main className="flex-1 flex flex-col lg:ml-0 pb-16 lg:pb-0">
+                    <main className="flex-1 flex flex-col lg:ml-64 pb-16 lg:pb-0 overflow-x-hidden">
                       {children}
                     </main>
                     <ChatDrawer />

@@ -1,12 +1,14 @@
 'use client';
 
 import { useLayoutEffect, useState, useCallback, useRef } from 'react';
-import { Bell, MessageSquare, ArrowLeft, Settings, Inbox } from 'lucide-react';
+import { Bell, MessageSquare, ArrowLeft, Settings, Inbox, Sun, Moon } from 'lucide-react';
 import { SearchBar } from '@/components/search/SearchBar';
 import { DemoModeToggle } from '@/components/realtime/DemoModeToggle';
 import { SSEToggle } from '@/components/realtime/SSEToggle';
 import { RoleSwitcher } from '@/components/layout/RoleSwitcher';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import { usePolling, POLLING_INTERVALS } from '@/hooks/usePolling';
+import { useTheme } from '@/contexts/ThemeContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
@@ -31,6 +33,7 @@ export function Header({ title, showBackButton }: HeaderProps) {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('common');
+  const { resolvedTheme, toggleTheme, mounted } = useTheme();
   const [alertCount, setAlertCount] = useState<AlertCount>({ total: 0, critical: 0, high: 0 });
   const [inboxCount, setInboxCount] = useState<InboxCount>({ count: 0, hasEscalations: false });
   const [isAnimating, setIsAnimating] = useState(false);
@@ -129,6 +132,24 @@ export function Header({ title, showBackButton }: HeaderProps) {
 
         {/* Search - responsive width */}
         <SearchBar className="w-32 sm:w-40 md:w-64" />
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
+        {/* Theme Toggle */}
+        {mounted && (
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-[#657786] hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 transition-colors twitter-focus-ring"
+            aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {resolvedTheme === 'dark' ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+          </button>
+        )}
 
         {/* Settings */}
         <Link

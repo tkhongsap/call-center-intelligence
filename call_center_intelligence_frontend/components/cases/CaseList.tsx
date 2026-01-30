@@ -72,10 +72,10 @@ function CaseCard({
             className="text-sm font-semibold text-blue-600 hover:text-blue-800"
             onClick={(e) => e.stopPropagation()}
           >
-            {caseItem.caseNumber}
+            {caseItem.case_number}
           </Link>
           <p className="text-xs text-slate-500 mt-0.5">
-            {formatDate(caseItem.createdAt, locale)}
+            {formatDate(caseItem.created_at, locale)}
           </p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -88,7 +88,7 @@ function CaseCard({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-500 min-w-[60px]">BU:</span>
           <span className="text-slate-700 font-medium">
-            {caseItem.businessUnit}
+            {caseItem.business_unit}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -104,8 +104,8 @@ function CaseCard({
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
         <StatusBadge status={caseItem.status} />
         <div className="flex gap-1">
-          {caseItem.riskFlag && <Badge variant="urgent">Urgent</Badge>}
-          {caseItem.needsReviewFlag && (
+          {caseItem.risk_flag && <Badge variant="urgent">Urgent</Badge>}
+          {caseItem.needs_review_flag && (
             <Badge variant="needsReview">Review</Badge>
           )}
         </div>
@@ -119,7 +119,7 @@ export function CaseList({ cases, pagination }: CaseListProps) {
   const searchParams = useSearchParams();
   const locale = useLocale();
 
-  const currentSortBy = searchParams.get("sortBy") || "createdAt";
+  const currentSortBy = searchParams.get("sortBy") || "created_at";
   const currentSortOrder = searchParams.get("sortOrder") || "desc";
 
   const handleSort = (column: string) => {
@@ -159,14 +159,14 @@ export function CaseList({ cases, pagination }: CaseListProps) {
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <SortHeader
-                column="createdAt"
+                column="created_at"
                 currentSortBy={currentSortBy}
                 onSort={handleSort}
               >
                 Date
               </SortHeader>
               <SortHeader
-                column="caseNumber"
+                column="case_number"
                 currentSortBy={currentSortBy}
                 onSort={handleSort}
               >
@@ -208,7 +208,7 @@ export function CaseList({ cases, pagination }: CaseListProps) {
                 onClick={() => router.push(`/cases/${caseItem.id}`)}
               >
                 <td className="px-4 py-3 text-sm text-slate-600">
-                  {formatDate(caseItem.createdAt, locale)}
+                  {formatDate(caseItem.created_at, locale)}
                 </td>
                 <td className="px-4 py-3">
                   <Link
@@ -216,11 +216,11 @@ export function CaseList({ cases, pagination }: CaseListProps) {
                     className="text-sm font-medium text-blue-600 hover:text-blue-800"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {caseItem.caseNumber}
+                    {caseItem.case_number}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600">
-                  {caseItem.businessUnit}
+                  {caseItem.business_unit}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-600 capitalize">
                   {caseItem.channel}
@@ -236,10 +236,10 @@ export function CaseList({ cases, pagination }: CaseListProps) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
-                    {caseItem.riskFlag && (
+                    {caseItem.risk_flag && (
                       <Badge variant="urgent">Urgent</Badge>
                     )}
-                    {caseItem.needsReviewFlag && (
+                    {caseItem.needs_review_flag && (
                       <Badge variant="needsReview">Needs Review</Badge>
                     )}
                   </div>

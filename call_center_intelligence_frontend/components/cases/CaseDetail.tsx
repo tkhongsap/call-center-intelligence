@@ -98,7 +98,7 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
         </Link>
         <ChevronRight className="w-4 h-4" />
         <span className="text-slate-900 font-medium">
-          {caseData.caseNumber}
+          {caseData.case_number}
         </span>
       </nav>
 
@@ -108,12 +108,12 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-bold text-slate-900">
-                {caseData.caseNumber}
+                {caseData.case_number}
               </h1>
               <SeverityBadge severity={caseData.severity} />
               <StatusBadge status={caseData.status} />
-              {caseData.riskFlag && <Badge variant="urgent">Urgent</Badge>}
-              {caseData.needsReviewFlag && (
+              {caseData.risk_flag && <Badge variant="urgent">Urgent</Badge>}
+              {caseData.needs_review_flag && (
                 <Badge variant="needsReview">Needs Review</Badge>
               )}
             </div>
@@ -144,12 +144,12 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
           <InfoItem
             icon={Calendar}
             label="Created"
-            value={formatDateTime(caseData.createdAt, locale)}
+            value={formatDateTime(caseData.created_at, locale)}
           />
           <InfoItem
             icon={Building2}
             label="Business Unit"
-            value={caseData.businessUnit}
+            value={caseData.business_unit}
           />
           <InfoItem
             icon={Phone}
@@ -167,11 +167,11 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
               value={caseData.subcategory}
             />
           )}
-          {caseData.customerName && (
+          {caseData.customer_name && (
             <InfoItem
               icon={User}
               label="Customer"
-              value={caseData.customerName}
+              value={caseData.customer_name}
             />
           )}
           <InfoItem
@@ -182,11 +182,11 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
               caseData.sentiment.slice(1)
             }
           />
-          {caseData.assignedTo && (
+          {caseData.assigned_to && (
             <InfoItem
               icon={User}
               label="Assigned To"
-              value={caseData.assignedTo}
+              value={caseData.assigned_to}
             />
           )}
         </div>

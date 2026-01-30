@@ -1,107 +1,84 @@
 import { getTranslations } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
-import { BarChart3, TrendingUp, Users, MessageSquare, Clock, Target, ArrowUp, ArrowDown } from 'lucide-react';
+import { MetricsCarousel, type Metric } from '@/components/analytics/MetricsCarousel';
+import { ChartsCarousel, type Chart } from '@/components/analytics/ChartsCarousel';
 
 export default async function AnalyticsPage() {
   const t = await getTranslations('pages.analytics');
 
-  const metrics = [
+  const metrics: Metric[] = [
     {
       label: 'Total Cases',
       value: '2,847',
       change: '+12.5%',
-      trend: 'up',
-      icon: MessageSquare,
+      trend: 'up' as const,
+      icon: 'MessageSquare',
     },
     {
       label: 'Avg. Resolution Time',
       value: '4.2h',
       change: '-8.3%',
-      trend: 'down',
-      icon: Clock,
+      trend: 'down' as const,
+      icon: 'Clock',
     },
     {
       label: 'Customer Satisfaction',
       value: '94.2%',
       change: '+2.1%',
-      trend: 'up',
-      icon: Target,
+      trend: 'up' as const,
+      icon: 'Target',
     },
     {
       label: 'Active Agents',
       value: '127',
       change: '+5',
-      trend: 'up',
-      icon: Users,
+      trend: 'up' as const,
+      icon: 'Users',
     },
+    {
+      label: 'Response Rate',
+      value: '98.5%',
+      change: '+3.2%',
+      trend: 'up' as const,
+      icon: 'TrendingUp',
+    },
+    {
+      label: 'System Uptime',
+      value: '99.9%',
+      change: '+0.1%',
+      trend: 'up' as const,
+      icon: 'Activity',
+    },
+    {
+      label: 'Resolved Issues',
+      value: '2,654',
+      change: '+15.8%',
+      trend: 'up' as const,
+      icon: 'CheckCircle',
+    },
+  ];
+
+  const charts: Chart[] = [
+    { title: 'Cases Over Time', icon: 'BarChart3' },
+    { title: 'Trending Categories', icon: 'TrendingUp' },
+    { title: 'Category Distribution', icon: 'PieChart' },
+    { title: 'Case Status Overview', icon: 'PieChart' },
+    { title: 'Negative Trending Issues', icon: 'TrendingUp' },
+    { title: 'Business Unit Critical Cases', icon: 'Users' },
+    { title: 'Response Time Analysis', icon: 'Clock' },
+    { title: 'Cases by Channel', icon: 'Activity' },
   ];
 
   return (
     <>
       <Header title={t('title')} />
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {metrics.map((metric, index) => {
-              const Icon = metric.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-white rounded-xl border border-slate-200 p-5"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className={`flex items-center gap-1 text-sm font-medium ${
-                      metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {metric.trend === 'up' ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      )}
-                      {metric.change}
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">{metric.value}</p>
-                  <p className="text-sm text-slate-500 mt-1">{metric.label}</p>
-                </div>
-              );
-            })}
-          </div>
+      <div className="flex-1 px-1 py-4 md:px-2 md:py-6 overflow-x-hidden w-full box-border">
+        <div className="max-w-7xl mx-auto space-y-6 w-full overflow-x-hidden box-border">
+          {/* Metrics Carousel - Multiple cards at once */}
+          <MetricsCarousel metrics={metrics} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <BarChart3 className="w-5 h-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {t('casesOverTime')}
-                </h2>
-              </div>
-              <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
-                <div className="text-center text-slate-500">
-                  <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>{t('chartPlaceholder')}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="w-5 h-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {t('trendingCategories')}
-                </h2>
-              </div>
-              <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
-                <div className="text-center text-slate-500">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>{t('chartPlaceholder')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Charts Carousel - One card at a time */}
+          <ChartsCarousel charts={charts} />
 
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">
