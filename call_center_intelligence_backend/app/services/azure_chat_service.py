@@ -54,6 +54,100 @@ class AzureChatService:
         self._initialized = True
         logger.info(f"Azure Chat Service initialized with deployment: {self.deployment}")
     
+    async def classify_query(self, query: str) -> Dict[str, Any]:
+        """
+        Use LLM to classify the query type and determine retrieval strategy.
+        
+        Args:
+            query: User's query
+            
+        Returns:
+            Dict with classification results:
+            - query_type: "specific_id", "generic_list", "analytical", "specific_question"
+            - retrieval_strategy: "keyword", "diverse", "semantic"
+            - num_results: recommended number of results
+            - threshold: recommended similarity threshold
+        """
+        classification_prompt = f"""Analyze this user query and classify it:
+
+Query: "{query}"
+
+Classify into ONE of these types:
+1. "generic_list" - User wants multiple/all cases with filters (e.g., "all low priority", "show me cases", "list complaints", "show me T-10006")
+2. "analytical" - User wants insights/analysis (e.g., "what are the trends", "summarize the data", "give me insights")
+3. "specific_question" - User asks a specific question (e.g., "what's the most common complaint", "how many cases in Bangkok")
+
+Respond ONLY with valid JSON:
+{{
+  "query_type": "one of the 3 types above",
+  "reasoning": "brief explanation"
+}}"""
+
+        try:
+            response = self.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You are a query classifier. Respond only with valid JSON. No markdown, no code blocks, just raw JSON."},
+                    {"role": "user", "content": classification_prompt}
+                ],
+                max_completion_tokens=200,
+                model=self.deployment,
+                response_format={"type": "json_object"},  # Force JSON output
+            )
+            
+            import json
+            response_text = response.choices[0].message.content.strip()
+            
+            # Remove markdown code blocks if present
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+            
+            classification = json.loads(response_text)
+            query_type = classification.get("query_type", "generic_list")  # Default to generic_list
+            
+            # Map query type to retrieval strategy
+            strategy_map = {
+                "generic_list": {
+                    "retrieval_strategy": "diverse",
+                    "num_results": 20,  # Get many for filtering
+                    "threshold": 0.0,   # No threshold
+                    "force_semantic": True,
+                },
+                "analytical": {
+                    "retrieval_strategy": "diverse",
+                    "num_results": 15,
+                    "threshold": 0.0,
+                    "force_semantic": True,
+                },
+                "specific_question": {
+                    "retrieval_strategy": "semantic",
+                    "num_results": 10,
+                    "threshold": 0.0,  # Changed from 0.5 to 0.0 - let GPT filter
+                    "force_semantic": True,
+                },
+            }
+            
+            result = strategy_map.get(query_type, strategy_map["specific_question"])
+            result["query_type"] = query_type
+            result["reasoning"] = classification.get("reasoning", "")
+            
+            logger.info(f"Query classified as '{query_type}': {result['reasoning']}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Query classification failed: {e}, using default strategy")
+            # Fallback to permissive defaults - let GPT handle everything
+            return {
+                "query_type": "generic_list",
+                "retrieval_strategy": "diverse",
+                "num_results": 20,
+                "threshold": 0.0,  # No threshold - retrieve everything
+                "force_semantic": True,
+                "reasoning": "Classification failed, using permissive default"
+            }
+    
     async def get_rag_context(
         self,
         db: AsyncSession,
@@ -63,61 +157,51 @@ class AzureChatService:
     ) -> List[Dict[str, Any]]:
         """
         Retrieve relevant context from vector database.
-        
-        For generic queries (insights, summary, overview), retrieves a diverse sample
-        of documents instead of just similarity-based results.
+        Uses LLM-based query classification to determine optimal retrieval strategy.
         
         Args:
             db: Database session
             query: User query
-            limit: Maximum number of context chunks
-            similarity_threshold: Minimum similarity score
+            limit: Maximum number of context chunks (can be overridden by classifier)
+            similarity_threshold: Minimum similarity score (can be overridden by classifier)
             
         Returns:
             List of relevant context chunks
         """
         try:
-            # Check for generic queries that need diverse sampling
-            generic_queries = [
-                "insight", "summary", "overview", "tell me about", 
-                "what do you have", "show me", "give me", "analyze",
-                "สรุป", "ข้อมูล", "วิเคราะห์", "แสดง"
-            ]
+            # Use LLM to classify query and determine strategy
+            classification = await self.classify_query(query)
             
-            is_generic = any(term in query.lower() for term in generic_queries)
+            # Override parameters based on classification
+            retrieval_limit = classification["num_results"]
+            retrieval_threshold = classification["threshold"]
+            force_semantic = classification["force_semantic"]
             
-            if is_generic:
-                # For generic queries, get diverse sample of documents
-                logger.info(f"Generic query detected, retrieving diverse document sample")
-                
-                # Get more documents with lower threshold for diversity
-                results = await similarity_search(
-                    db=db,
-                    query=query,
-                    limit=limit * 3,  # Get more documents
-                    similarity_threshold=0.0,  # No threshold - get any documents
-                )
-                
-                # If we got results, take a diverse sample
-                if results:
-                    # Take every Nth document for diversity
-                    step = max(1, len(results) // limit)
-                    diverse_results = results[::step][:limit]
-                    logger.info(f"Retrieved {len(diverse_results)} diverse chunks for generic query")
-                    return diverse_results
-                else:
-                    return []
-            else:
-                # For specific queries, use similarity search
-                results = await similarity_search(
-                    db=db,
-                    query=query,
-                    limit=limit,
-                    similarity_threshold=similarity_threshold,
-                )
-                
-                logger.info(f"Retrieved {len(results)} context chunks for specific query")
-                return results
+            logger.info(
+                f"Retrieval strategy: {classification['retrieval_strategy']}, "
+                f"limit={retrieval_limit}, threshold={retrieval_threshold}, "
+                f"force_semantic={force_semantic}"
+            )
+            
+            # Retrieve documents
+            results = await similarity_search(
+                db=db,
+                query=query,
+                limit=retrieval_limit,
+                similarity_threshold=retrieval_threshold,
+                force_semantic=force_semantic,
+            )
+            
+            # For diverse strategies, sample intelligently
+            if classification["retrieval_strategy"] == "diverse" and results:
+                # Take every Nth document for diversity
+                step = max(1, len(results) // limit)
+                diverse_results = results[::step][:limit * 2]  # Return 2x for LLM to choose
+                logger.info(f"Retrieved {len(diverse_results)} diverse chunks (from {len(results)} total)")
+                return diverse_results
+            
+            logger.info(f"Retrieved {len(results)} context chunks")
+            return results
                 
         except Exception as e:
             logger.error(f"Error retrieving RAG context: {e}")
@@ -250,43 +334,40 @@ class AzureChatService:
         # Build strict system prompt that only uses provided context
         if not system_prompt:
             system_prompt = (
-                "You are a specialized AI assistant for a call center intelligence system. "
-                "You MUST ONLY answer questions based on the context provided below from uploaded documents. "
+                "You are a friendly and helpful AI assistant for a call center intelligence system. "
+                "Answer questions in a natural, conversational way like a human colleague would. "
                 "\n\n"
-                "STRICT RULES:\n"
-                "1. ONLY use information from the provided context below\n"
-                "2. For generic queries (insights, summary, overview), analyze the provided documents and generate meaningful insights\n"
-                "3. For specific queries, answer based on relevant information in the context\n"
-                "4. If the context doesn't contain relevant information, say you don't have that information\n"
-                "5. DO NOT use general knowledge or information outside the provided context\n"
-                "6. DO NOT make up or infer information not present in the context\n"
-                "7. When asked for insights or summaries, identify patterns, trends, and key findings from the documents\n"
-                "8. Support both English and Thai languages in your responses\n"
+                "IMPORTANT RULES:\n"
+                "1. ONLY use information from the provided context below - never use general knowledge\n"
+                "2. Write naturally and conversationally - avoid bullet points, formal structures, or robotic language\n"
+                "3. When summarizing cases, tell it like a story - focus on the key points that matter\n"
+                "4. Be concise but friendly - get to the point without being overly formal\n"
+                "5. For insights/summaries, highlight what's interesting or important in plain language\n"
+                "6. Support both English and Thai - use the language that feels natural for the query\n"
+                "7. If you don't have the information, just say so naturally\n"
                 "\n"
-                "คุณเป็นผู้ช่วย AI เฉพาะทางสำหรับระบบข้อมูล call center "
-                "คุณต้องตอบคำถามโดยอ้างอิงจากข้อมูลที่ให้มาเท่านั้น\n"
+                "คุณเป็นผู้ช่วย AI ที่เป็นมิตรและช่วยเหลือดีสำหรับระบบข้อมูล call center "
+                "ตอบคำถามแบบธรรมชาติและเป็นกันเองเหมือนเพื่อนร่วมงาน\n"
                 "\n"
-                "กฎที่เข้มงวด:\n"
-                "1. ใช้เฉพาะข้อมูลจาก context ที่ให้มา\n"
-                "2. สำหรับคำถามทั่วไป (insights, สรุป, ภาพรวม) ให้วิเคราะห์เอกสารและสร้าง insights ที่มีความหมาย\n"
-                "3. สำหรับคำถามเฉพาะ ให้ตอบตามข้อมูลที่เกี่ยวข้องใน context\n"
-                "4. ถ้าไม่มีข้อมูลที่เกี่ยวข้อง ให้บอกว่าไม่มีข้อมูลนั้น\n"
-                "5. ห้ามใช้ความรู้ทั่วไปหรือข้อมูลนอกเหนือจาก context\n"
-                "6. ห้ามสร้างหรือคาดเดาข้อมูลที่ไม่มีใน context\n"
-                "7. เมื่อถูกถามเกี่ยวกับ insights หรือสรุป ให้ระบุรูปแบบ แนวโน้ม และข้อค้นพบสำคัญจากเอกสาร\n"
+                "กฎสำคัญ:\n"
+                "1. ใช้เฉพาะข้อมูลจาก context ที่ให้มา - ห้ามใช้ความรู้ทั่วไป\n"
+                "2. เขียนแบบธรรมชาติและเป็นกันเอง - หลีกเลี่ยงการใช้ bullet points หรือภาษาที่เป็นทางการเกินไป\n"
+                "3. เมื่อสรุปเคส ให้เล่าเหมือนเล่าเรื่อง - เน้นประเด็นสำคัญ\n"
+                "4. กระชับแต่เป็นมิตร - ตรงประเด็นโดยไม่เป็นทางการเกินไป\n"
+                "5. สำหรับ insights/สรุป ให้เน้นสิ่งที่น่าสนใจหรือสำคัญด้วยภาษาง่ายๆ\n"
+                "6. รองรับทั้งภาษาอังกฤษและไทย - ใช้ภาษาที่เหมาะสมกับคำถาม\n"
+                "7. ถ้าไม่มีข้อมูล ก็บอกแบบธรรมชาติ\n"
             )
         
         # Add context to system prompt
-        system_prompt += f"\n\n=== CONTEXT FROM UPLOADED DOCUMENTS ===\n{context_text}\n=== END OF CONTEXT ===\n"
+        system_prompt += f"\n\n=== AVAILABLE INFORMATION ===\n{context_text}\n=== END ===\n"
         system_prompt += (
-            "\nBased on the context above:\n"
-            "- For generic queries: Analyze the documents and provide meaningful insights, patterns, or summaries\n"
-            "- For specific queries: Answer directly based on the relevant information\n"
-            "- Always cite or reference the information from the context when possible\n"
-            "\nตามข้อมูลข้างต้น:\n"
-            "- สำหรับคำถามทั่วไป: วิเคราะห์เอกสารและให้ insights, รูปแบบ, หรือสรุปที่มีความหมาย\n"
-            "- สำหรับคำถามเฉพาะ: ตอบตรงๆ ตามข้อมูลที่เกี่ยวข้อง\n"
-            "- อ้างอิงหรืออ้างถึงข้อมูลจาก context เมื่อเป็นไปได้\n"
+            "\nRemember: Write naturally like you're talking to a colleague. "
+            "No bullet points or formal structures unless specifically asked. "
+            "Just share the information in a friendly, conversational way.\n"
+            "\nจำไว้: เขียนแบบธรรมชาติเหมือนคุยกับเพื่อนร่วมงาน "
+            "ไม่ต้องใช้ bullet points หรือโครงสร้างที่เป็นทางการ เว้นแต่จะถูกขอ "
+            "แค่แชร์ข้อมูลแบบเป็นกันเองและสบายๆ\n"
         )
         
         # Build messages

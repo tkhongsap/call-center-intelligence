@@ -76,21 +76,13 @@ async def send_chat_message(
             )
         
         # Call Azure OpenAI with RAG (always enabled)
-        # Use more context for generic queries
-        is_generic_query = any(term in message.query.lower() for term in [
-            "insight", "summary", "overview", "tell me about",
-            "what do you have", "show me", "give me", "analyze",
-            "สรุป", "ข้อมูล", "วิเคราะห์"
-        ])
-        
-        rag_limit = 10 if is_generic_query else 5
-        
+        # Query classification and retrieval strategy is handled by the service
         result = await chat_service.chat_with_rag(
             db=db,
             user_message=message.query,
             use_rag=True,
-            rag_limit=rag_limit,
-            rag_threshold=0.5,  # Lower threshold for better recall
+            rag_limit=10,  # Max results to return to LLM (service may retrieve more)
+            rag_threshold=0.5,  # Default threshold (service may override)
         )
         
         # Return only the response content

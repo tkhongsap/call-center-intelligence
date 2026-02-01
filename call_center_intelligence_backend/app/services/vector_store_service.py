@@ -146,9 +146,11 @@ async def similarity_search(
     limit: int = 5,
     document_id: Optional[str] = None,
     similarity_threshold: Optional[float] = None,
+    force_semantic: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Perform similarity search using cosine distance.
+    Pure semantic search - no hardcoded patterns or keywords.
     
     Args:
         db: Database session
@@ -156,10 +158,12 @@ async def similarity_search(
         limit: Maximum number of results
         document_id: Filter by specific document (optional)
         similarity_threshold: Minimum similarity score (0-1, optional)
+        force_semantic: Kept for API compatibility (always True now)
         
     Returns:
         List of dicts with 'content', 'similarity', 'document_id', 'chunk_index', 'metadata'
     """
+    # Pure semantic similarity search - let embeddings handle everything
     # Generate query embedding
     query_embedding = embed_text(query)
     
