@@ -6,8 +6,9 @@ to ensure compatibility with the existing SQLite database.
 """
 
 import enum
+from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Integer, Boolean, Float, Text, Enum as SQLEnum
+from sqlalchemy import String, Integer, Boolean, Float, Text, Enum as SQLEnum, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -133,11 +134,24 @@ class RecomputeStatus(str, enum.Enum):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TimestampMixin:
-    """Mixin for models with timestamp fields."""
-    created_at: Mapped[str] = mapped_column(String, nullable=False)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False)
+    """Mixin for models with timestamp fields using PostgreSQL timestamp with timezone."""
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=False,
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
 
 class CreatedAtMixin:
     """Mixin for models with only created_at timestamp."""
-    created_at: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=False,
+        server_default=func.now()
+    )

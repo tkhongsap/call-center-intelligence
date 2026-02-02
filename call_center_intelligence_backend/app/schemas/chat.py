@@ -30,10 +30,9 @@ class ChatMessageBase(BaseModel):
         return v
 
 
-class ChatMessageCreate(ChatMessageBase):
-    """Schema for creating chat messages."""
-    context: Optional[Dict[str, Any]] = Field(None, description="Additional context for the message")
-    session_id: Optional[str] = Field(None, description="Chat session ID")
+class ChatMessageCreate(BaseModel):
+    """Schema for creating chat messages - simplified to only require query."""
+    query: str = Field(..., min_length=1, max_length=2000, description="User query/question")
 
 
 class ChatMessageResponse(ChatMessageBase):
@@ -97,6 +96,9 @@ class ChatResponse(BaseModel):
     message: ChatMessageResponse = Field(..., description="User message")
     response: ChatMessageResponse = Field(..., description="Assistant response")
     session_id: str = Field(..., description="Chat session ID")
+    context_used: int = Field(0, description="Number of RAG context chunks used")
+    context_chunks: List[Dict[str, Any]] = Field(default_factory=list, description="RAG context chunks")
+    usage: Optional[Dict[str, int]] = Field(None, description="Token usage statistics")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -117,7 +119,20 @@ class ChatResponse(BaseModel):
                     "user_id": None,
                     "created_at": "2024-01-15T10:30:05Z"
                 },
-                "session_id": "session-456"
+                "session_id": "session-456",
+                "context_used": 3,
+                "context_chunks": [
+                    {
+                        "content": "Alert: Case volume spike detected...",
+                        "similarity": 0.89,
+                        "filename": "alerts_data.csv"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 1250,
+                    "completion_tokens": 150,
+                    "total_tokens": 1400
+                }
             }
         }
     )
