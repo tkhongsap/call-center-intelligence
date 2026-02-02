@@ -1,54 +1,207 @@
 """
-RAG API Routes - Simple Embedding Only
+RAG API Routes - Embedding with Database Storage
 
-แค่ upload file แล้วได้ embedding vectors ออกมา
+Upload file → embed → store in PostgreSQL with pgvector
+รองรับภาษาไทยและ Unicode ทุกภาษา
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from typing import List
+import uuid
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from typing import List, Optional
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.rag_service import embed_file_rows, embed_text_list, validate_file_extension
+from app.core.database import get_db
+from app.services.rag_service import (
+    validate_file_extension,
+    validate_thai_file,
+    validate_file_encoding,
+    embed_file_with_thai_check,
+    embed_text_list,
+)
+from app.services.vector_store_service import (
+    store_embeddings_batch,
+    similarity_search,
+    list_documents,
+    delete_document_embeddings,
+    get_embedding_count,
+)
 
 router = APIRouter()
 
 
+class EmbedTextsRequest(BaseModel):
+    """Request model for embedding texts."""
+    texts: List[str]
+    document_id: Optional[str] = None
+    save_to_db: bool = True
+
+
+class SearchRequest(BaseModel):
+    """Request model for similarity search."""
+    query: str
+    limit: int = 5
+    document_id: Optional[str] = None
+    similarity_threshold: Optional[float] = None
+
+
 @router.post("/embed/file")
-async def embed_file(file: UploadFile = File(...)):
-    """
-    Upload Excel/CSV file and get embeddings for all rows.
-    
-    Returns embedding vectors (3072 dimensions for text-embedding-3-large).
-    """
+async def embed_file(
+    file: UploadFile = File(...),
+    save_to_db: bool = True,
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload Excel/CSV file, embed all rows, and save to database."""
     filename = file.filename or "unknown"
     
-    # Validate extension
     try:
         validate_file_extension(filename)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    # Read file
     file_bytes = await file.read()
     
+    # Check for corrupted Thai text
+    validation = validate_thai_file(file_bytes)
+    if not validation["is_valid"]:
+        raise HTTPException(status_code=400, detail=validation["error_detail"])
+    
     try:
-        return embed_file_rows(file_bytes, filename)
+        result, thai_chars = embed_file_with_thai_check(file_bytes, filename)
+        
+        if save_to_db and result.get("results"):
+            document_id = str(uuid.uuid4())
+            chunks = [
+                {
+                    "content": r["text"],
+                    "embedding": r["embedding"],
+                    "metadata": r.get("metadata"),
+                }
+                for r in result["results"]
+            ]
+            
+            await store_embeddings_batch(db, document_id, chunks, filename)
+            
+            result["document_id"] = document_id
+            result["saved_to_db"] = True
+            result["message"] = f"Saved {len(chunks)} embeddings to database"
+            if thai_chars > 0:
+                result["message"] += f" - พบภาษาไทย {thai_chars} ตัวอักษร"
+        else:
+            result["saved_to_db"] = False
+        
+        return result
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/embed/texts")
-async def embed_texts_endpoint(texts: List[str]):
-    """
-    Embed a list of texts.
-    
-    Example: ["text1", "text2", "text3"]
-    """
+async def embed_texts_endpoint(
+    request: EmbedTextsRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Embed a list of texts and optionally save to database."""
     try:
-        return embed_text_list(texts)
+        if not request.texts:
+            raise HTTPException(status_code=400, detail="texts list cannot be empty")
+        
+        result = embed_text_list(request.texts)
+        
+        if request.save_to_db:
+            document_id = request.document_id or str(uuid.uuid4())
+            chunks = [
+                {
+                    "content": r["text"],
+                    "embedding": r["embedding"],
+                    "metadata": None,
+                }
+                for r in result["results"]
+            ]
+            
+            await store_embeddings_batch(db, document_id, chunks)
+            
+            result["document_id"] = document_id
+            result["saved_to_db"] = True
+        else:
+            result["saved_to_db"] = False
+        
+        return result
+        
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/search")
+async def search_similar(
+    request: SearchRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Search for similar content using cosine similarity."""
+    try:
+        results = await similarity_search(
+            db=db,
+            query=request.query,
+            limit=request.limit,
+            document_id=request.document_id,
+            similarity_threshold=request.similarity_threshold,
+        )
+        
+        return {
+            "success": True,
+            "query": request.query,
+            "count": len(results),
+            "results": results,
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/documents")
+async def get_documents(db: AsyncSession = Depends(get_db)):
+    """List all documents with their embedding counts."""
+    try:
+        documents = await list_documents(db)
+        total_embeddings = await get_embedding_count(db)
+        
+        return {
+            "success": True,
+            "total_documents": len(documents),
+            "total_embeddings": total_embeddings,
+            "documents": documents,
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/documents/{document_id}")
+async def delete_document(
+    document_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete all embeddings for a document."""
+    try:
+        deleted_count = await delete_document_embeddings(db, document_id)
+        
+        return {
+            "success": True,
+            "document_id": document_id,
+            "deleted_count": deleted_count,
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/validate/file")
+async def validate_file(file: UploadFile = File(...)):
+    """Validate CSV/Excel file encoding without saving to database."""
+    filename = file.filename or "unknown"
+    file_bytes = await file.read()
+    
+    return validate_file_encoding(file_bytes, filename)
+
