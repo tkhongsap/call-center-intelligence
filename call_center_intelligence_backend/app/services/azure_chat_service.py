@@ -12,6 +12,12 @@ from openai import AzureOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.vector_store_service import similarity_search
+from app.services.retrieval_service import (
+    retrieve,
+    RetrievalConfig,
+    classify_query_intent,
+    QueryIntent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -152,56 +158,89 @@ Respond ONLY with valid JSON:
         self,
         db: AsyncSession,
         query: str,
-        limit: int = 5,
-        similarity_threshold: float = 0.7,
+        limit: int = 10,
+        alpha: float = 0.7,
+        use_mmr: bool = False,
+        use_reranker: bool = False,
     ) -> List[Dict[str, Any]]:
         """
-        Retrieve relevant context from vector database.
-        Uses LLM-based query classification to determine optimal retrieval strategy.
+        Retrieve relevant context from vector database using advanced retrieval.
+        Uses query intent classification to determine optimal retrieval strategy.
         
         Args:
             db: Database session
             query: User query
-            limit: Maximum number of context chunks (can be overridden by classifier)
-            similarity_threshold: Minimum similarity score (can be overridden by classifier)
+            limit: Maximum number of context chunks
+            alpha: Balance between semantic (1.0) and keyword (0.0) search
+            use_mmr: Whether to use MMR for diversity
+            use_reranker: Whether to use LLM re-ranking
             
         Returns:
-            List of relevant context chunks
+            List of relevant context chunks with hybrid scores
         """
         try:
-            # Use LLM to classify query and determine strategy
-            classification = await self.classify_query(query)
+            # 1. Classify query intent
+            intent = classify_query_intent(query)
+            logger.info(f"Query intent classified as: {intent.value}")
             
-            # Override parameters based on classification
-            retrieval_limit = classification["num_results"]
-            retrieval_threshold = classification["threshold"]
-            force_semantic = classification["force_semantic"]
+            # 2. Map intent to optimal retrieval config
+            config_map = {
+                QueryIntent.FACT: RetrievalConfig(
+                    top_k=limit,
+                    alpha=0.7,  # Balanced for precise answers
+                    use_mmr=False,
+                ),
+                QueryIntent.SUMMARY: RetrievalConfig(
+                    top_k=limit * 2,  # Get more for diversity
+                    alpha=0.8,  # Focus on meaning
+                    use_mmr=True,
+                    lambda_mult=0.3,  # High diversity
+                ),
+                QueryIntent.COMPARISON: RetrievalConfig(
+                    top_k=limit * 2,
+                    alpha=0.6,  # Balance keyword + semantic
+                    use_mmr=True,
+                    lambda_mult=0.5,
+                ),
+                QueryIntent.LIST: RetrievalConfig(
+                    top_k=limit * 2,
+                    alpha=0.5,  # More keyword focus
+                    use_mmr=True,
+                    lambda_mult=0.4,
+                ),
+            }
+            
+            # Get config for intent or use defaults
+            config = config_map.get(intent, RetrievalConfig(top_k=limit, alpha=alpha))
+            
+            # Allow user overrides
+            if use_mmr:
+                config.use_mmr = True
+            if use_reranker:
+                config.use_reranker = True
             
             logger.info(
-                f"Retrieval strategy: {classification['retrieval_strategy']}, "
-                f"limit={retrieval_limit}, threshold={retrieval_threshold}, "
-                f"force_semantic={force_semantic}"
+                f"Retrieval config: alpha={config.alpha}, "
+                f"use_mmr={config.use_mmr}, top_k={config.top_k}"
             )
             
-            # Retrieve documents
-            results = await similarity_search(
-                db=db,
-                query=query,
-                limit=retrieval_limit,
-                similarity_threshold=retrieval_threshold,
-                force_semantic=force_semantic,
-            )
+            # 3. Retrieve with advanced hybrid search
+            results = await retrieve(db, query, config)
             
-            # For diverse strategies, sample intelligently
-            if classification["retrieval_strategy"] == "diverse" and results:
-                # Take every Nth document for diversity
-                step = max(1, len(results) // limit)
-                diverse_results = results[::step][:limit * 2]  # Return 2x for LLM to choose
-                logger.info(f"Retrieved {len(diverse_results)} diverse chunks (from {len(results)} total)")
-                return diverse_results
+            # 4. Convert RetrievalResult to dict format for chat
+            context_chunks = []
+            for r in results[:limit]:
+                context_chunks.append({
+                    "id": r.id,
+                    "content": r.content,
+                    "similarity": r.hybrid_score,  # Use hybrid score
+                    "normalized_score": r.normalized_score,
+                    "filename": r.filename,
+                    "metadata": r.metadata,
+                })
             
-            logger.info(f"Retrieved {len(results)} context chunks")
-            return results
+            logger.info(f"Retrieved {len(context_chunks)} context chunks with hybrid search")
+            return context_chunks
                 
         except Exception as e:
             logger.error(f"Error retrieving RAG context: {e}")
@@ -222,12 +261,13 @@ Respond ONLY with valid JSON:
         
         context_parts = []
         for i, chunk in enumerate(context_chunks, 1):
-            similarity = chunk.get("similarity", 0)
+            # Use normalized score (0-100) if available, fallback to similarity
+            score = chunk.get("normalized_score", chunk.get("similarity", 0) * 100)
             content = chunk.get("content", "")
             filename = chunk.get("filename", "Unknown")
             
             context_parts.append(
-                f"[Context {i}] (Similarity: {similarity:.2f}, Source: {filename})\n{content}"
+                f"[Context {i}] (Relevance: {score:.0f}/100, Source: {filename})\n{content}"
             )
         
         return "\n\n".join(context_parts)
@@ -269,7 +309,7 @@ Respond ONLY with valid JSON:
                 db=db,
                 query=user_message,
                 limit=rag_limit,
-                similarity_threshold=rag_threshold,
+                alpha=0.7,  # Use default hybrid search balance
             )
         
         # Check if we have relevant context
