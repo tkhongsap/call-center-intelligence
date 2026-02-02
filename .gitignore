@@ -103,7 +103,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - commented out to allow frontend lib directory
 lib64/
 parts/
 sdist/
@@ -113,6 +113,10 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Python lib directories (backend only)
+call_center_intelligence_backend/lib/
+call_center_intelligence_backend/lib64/
 
 # PyInstaller
 *.manifest
