@@ -38,6 +38,7 @@ from app.models.share import Share
 from app.models.search_analytic import SearchAnalytic
 from app.models.upload import Upload
 from app.models.embedding import Embedding
+from app.models.incident import Incident
 
 # Export all models for easy importing
 __all__ = [
@@ -72,4 +73,5 @@ __all__ = [
     "SearchAnalytic",
     "Upload",
     "Embedding",
+    "Incident",
 ]

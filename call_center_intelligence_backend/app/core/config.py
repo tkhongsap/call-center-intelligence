@@ -22,11 +22,11 @@ class Settings(BaseSettings):
     )
 
     # Database Configuration - Individual components
-    DB_HOST: str = Field(default="localhost", description="Database host")
-    DB_USER: str = Field(default="postgres", description="Database username")
-    DB_PASSWORD: str = Field(default="password", description="Database password")
-    DB_PORT: int = Field(default=5432, description="Database port")
-    DB_NAME: str = Field(default="call_center", description="Database name")
+    DB_HOST: str = Field( description="Database host")
+    DB_USER: str = Field(description="Database username")
+    DB_PASSWORD: str = Field(description="Database password")
+    DB_PORT: int = Field(description="Database port")
+    DB_NAME: str = Field(description="Database name")
 
     # Database Pool Configuration
     DATABASE_POOL_SIZE: int = Field(
@@ -76,19 +76,15 @@ class Settings(BaseSettings):
 
     # Azure OpenAI Configuration
     AZURE_OPENAI_ENDPOINT: str = Field(
-        default="https://ai-totrakoolk6076ai346198185670.openai.azure.com/",
         description="Azure OpenAI endpoint URL",
     )
     AZURE_OPENAI_API_KEY: str = Field(
-        default="",
         description="Azure OpenAI API key",
     )
     AZURE_OPENAI_API_VERSION: str = Field(
-        default="2024-12-01-preview",
         description="Azure OpenAI API version",
     )
     AZURE_EMBEDDING_DEPLOYMENT: str = Field(
-        default="text-embedding-3-large",
         description="Azure OpenAI embedding model deployment name",
     )
 

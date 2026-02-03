@@ -26,6 +26,18 @@ from app.services.vector_store_service import (
     delete_document_embeddings,
     get_embedding_count,
 )
+from app.services.retrieval_service import (
+    retrieve,
+    rerank_with_llm,
+    classify_query_intent,
+    RetrievalConfig,
+)
+from app.schemas.retrieval import (
+    AdvancedSearchRequest,
+    AdvancedSearchResponse,
+    RetrievalResultItem,
+    QueryIntent,
+)
 
 router = APIRouter()
 
@@ -155,6 +167,78 @@ async def search_similar(
             "count": len(results),
             "results": results,
         }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/search/advanced")
+async def search_advanced(
+    request: AdvancedSearchRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Advanced search with hybrid scoring, MMR diversity, and optional re-ranking.
+    
+    Features:
+    - Hybrid search: combines semantic + keyword scoring
+    - MMR: Maximal Marginal Relevance for diverse results
+    - LLM re-ranking: optional re-ranking using Azure OpenAI
+    - Score normalization: all scores in 0-100 range
+    """
+    try:
+        # Build retrieval config
+        config = RetrievalConfig(
+            top_k=request.limit,
+            alpha=request.alpha,
+            use_mmr=request.use_mmr,
+            lambda_mult=request.lambda_mult,
+            use_reranker=request.use_reranker,
+            similarity_threshold=request.similarity_threshold,
+            metadata_filter=request.metadata_filter.model_dump() if request.metadata_filter else None,
+        )
+        
+        # Classify intent
+        intent = classify_query_intent(request.query)
+        
+        # Perform retrieval
+        results = await retrieve(db, request.query, config)
+        
+        # Optional: Apply LLM re-ranking
+        if request.use_reranker and results:
+            results = await rerank_with_llm(request.query, results, request.limit)
+        
+        # Convert to response format
+        result_items = [
+            RetrievalResultItem(
+                id=r.id,
+                document_id=r.document_id,
+                chunk_index=r.chunk_index,
+                content=r.content,
+                filename=r.filename,
+                metadata=r.metadata,
+                raw_similarity=r.raw_similarity,
+                keyword_score=r.keyword_score,
+                hybrid_score=r.hybrid_score,
+                normalized_score=r.normalized_score,
+                mmr_score=r.mmr_score,
+            )
+            for r in results
+        ]
+        
+        return AdvancedSearchResponse(
+            success=True,
+            query=request.query,
+            intent=intent,
+            count=len(result_items),
+            config={
+                "alpha": request.alpha,
+                "use_mmr": request.use_mmr,
+                "lambda_mult": request.lambda_mult,
+                "use_reranker": request.use_reranker,
+            },
+            results=result_items,
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
