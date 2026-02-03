@@ -54,3 +54,6 @@ openai>=1.0.0
 
 # pgvector for vector similarity search
 pgvector>=0.3.0
+
+# Thai NLP
+pythainlp>=5.0.0
