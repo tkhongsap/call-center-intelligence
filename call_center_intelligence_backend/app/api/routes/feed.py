@@ -19,6 +19,7 @@ from app.core.auth import (
 )
 from app.core.exceptions import NotFoundError, ValidationError, DatabaseError
 from app.models.feed_item import FeedItem
+from app.models.incident import Incident
 from app.models.base import FeedItemType
 from app.schemas.feed import (
     FeedListParams,
@@ -28,6 +29,7 @@ from app.schemas.feed import (
     FeedStatsResponse,
 )
 from app.schemas.serializers import EnhancedPaginationInfo
+from app.services.incident_feed_transformer import transform_incident_to_feed_item
 import logging
 
 logger = logging.getLogger(__name__)
@@ -40,19 +42,19 @@ def get_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def get_date_range_filter(date_range: str) -> Optional[str]:
-    """Convert date range string to timestamp filter."""
+def get_date_range_filter(date_range: str) -> Optional[datetime]:
+    """Convert date range string to datetime filter."""
     now = datetime.now(timezone.utc)
 
     if date_range == "today":
         start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        return start_of_day.isoformat().replace("+00:00", "Z")
+        return start_of_day
     elif date_range == "7d":
         seven_days_ago = now - timedelta(days=7)
-        return seven_days_ago.isoformat().replace("+00:00", "Z")
+        return seven_days_ago
     elif date_range == "30d":
         thirty_days_ago = now - timedelta(days=30)
-        return thirty_days_ago.isoformat().replace("+00:00", "Z")
+        return thirty_days_ago
 
     return None
 
@@ -60,31 +62,43 @@ def get_date_range_filter(date_range: str) -> Optional[str]:
 async def apply_feed_filters(
     query, params: FeedListParams, user_business_units: List[str]
 ) -> Any:
-    """Apply filtering to feed query based on parameters and user permissions."""
-
-    # Filter out expired items
-    current_time = get_timestamp()
-    query = query.where(
-        or_(FeedItem.expires_at.is_(None), FeedItem.expires_at > current_time)
-    )
+    """Apply filtering to incident query based on parameters and user permissions."""
 
     # Apply feed item type filter
+    # For incidents, we filter by the determined type based on status
     if params.type:
-        query = query.where(FeedItem.type == params.type)
+        if params.type == FeedItemType.alert:
+            # Filter for urgent/critical incidents
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('urgent'),
+                    func.lower(Incident.status).contains('critical')
+                )
+            )
+        # For other types, we don't filter at query level since type is determined
+        # during transformation. We'll filter after transformation if needed.
+
+    # Apply status filter
+    if params.status:
+        query = query.where(
+            func.lower(Incident.status).contains(params.status.lower())
+        )
 
     # Apply date range filtering
     date_filter = get_date_range_filter(params.date_range)
     if date_filter:
-        query = query.where(FeedItem.created_at >= date_filter)
-
-    # Business unit filtering (if metadata contains businessUnit)
-    if params.bu and params.bu != "all":
-        # For feed items, business unit filtering is done via metadata
-        # This is a simplified approach - in a real system you might have
-        # a more sophisticated JSON query
         query = query.where(
-            FeedItem.item_metadata.op("->>")("businessUnit") == params.bu
+            or_(
+                Incident.received_date >= date_filter,
+                and_(
+                    Incident.received_date.is_(None),
+                    Incident.created_at >= date_filter
+                )
+            )
         )
+
+    # Business unit filtering could be added here if incidents have BU metadata
+    # For now, we skip this as incidents don't have a direct BU field
 
     return query
 
@@ -96,15 +110,15 @@ async def get_feed(
     current_user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ):
     """
-    Get feed items with filtering and pagination.
+    Get feed items from incidents with filtering and pagination.
 
     Supports filtering by:
     - Feed item type (alert, trending, highlight, upload)
     - Date range (today, 7d, 30d)
     - Business unit (via metadata)
 
-    Returns paginated results ordered by priority (descending) and creation time (descending).
-    Automatically filters out expired items.
+    Returns paginated results ordered by received_date (descending) and incident_number.
+    Transforms incidents into feed items for display.
     """
     try:
         # Get user business units for filtering (if needed)
@@ -112,17 +126,21 @@ async def get_feed(
         if current_user:
             user_business_units = await get_user_business_units(current_user)
 
-        # Build base query
-        query = select(FeedItem)
+        # Build base query for incidents
+        query = select(Incident)
 
         # Apply filters
         query = await apply_feed_filters(query, params, user_business_units)
 
-        # Apply sorting - priority descending, then created_at descending
-        query = query.order_by(desc(FeedItem.priority), desc(FeedItem.created_at))
+        # Apply sorting - received_date descending, then incident_number as secondary sort
+        # Use created_at as fallback if received_date is null
+        query = query.order_by(
+            desc(func.coalesce(Incident.received_date, Incident.created_at)),
+            desc(Incident.incident_number)
+        )
 
         # Get total count for pagination
-        count_query = select(func.count(FeedItem.id))
+        count_query = select(func.count(Incident.id))
         count_query = await apply_feed_filters(count_query, params, user_business_units)
         total_result = await db.execute(count_query)
         total = total_result.scalar()
@@ -133,7 +151,10 @@ async def get_feed(
 
         # Execute query
         result = await db.execute(query)
-        feed_items = result.scalars().all()
+        incidents = result.scalars().all()
+
+        # Transform incidents to feed items
+        feed_items = [transform_incident_to_feed_item(incident) for incident in incidents]
 
         # Calculate pagination info
         total_pages = (total + params.limit - 1) // params.limit
@@ -142,15 +163,15 @@ async def get_feed(
             page=params.page, limit=params.limit, total=total, total_pages=total_pages
         )
 
-        logger.info(f"Retrieved feed items Count: {len(feed_items)} Total: {total} Page: {params.page} Type_Filter: {params.type.value if params.type else None} Date_Range: {params.date_range} User_Id: {current_user.get('id') if current_user else None}")
+        logger.info(f"Retrieved feed items from incidents Count: {len(feed_items)} Total: {total} Page: {params.page} Type_Filter: {params.type.value if params.type else None} Date_Range: {params.date_range} User_Id: {current_user.get('id') if current_user else None}")
 
         return FeedListResponse(
-            items=[FeedItemResponse.model_validate(item) for item in feed_items],
+            items=feed_items,
             pagination=pagination,
         )
 
     except Exception as e:
-        logger.error(f"Error retrieving feed items Error: {str(e)}")
+        logger.error(f"Error retrieving feed items from incidents Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve feed items: {str(e)}")
 
 

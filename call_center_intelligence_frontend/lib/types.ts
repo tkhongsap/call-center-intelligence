@@ -23,19 +23,59 @@ export interface Alert {
 export interface Case {
   id: string;
   case_number: string;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   status: Status;
-  priority: Priority;
+  priority?: Priority;
   severity?: Severity;
   created_at: string;
   updated_at: string;
+  resolved_at?: string;
   customer_name?: string;
   customer_id?: string;
   assigned_to?: string;
+  agent_id?: string;
   category?: string;
+  subcategory?: string;
   tags?: string[];
   metadata?: Record<string, any>;
+  // Additional fields from backend
+  channel?: string;
+  sentiment?: string;
+  risk_flag?: boolean;
+  needs_review_flag?: boolean;
+  business_unit?: string;
+  summary?: string;
+  upload_id?: string;
+  // Complete incident data
+  incident_data?: {
+    incident_number?: string;
+    reference_number?: string;
+    received_date?: string;
+    closed_date?: string;
+    contact_channel?: string;
+    customer_name?: string;
+    phone?: string;
+    issue_type?: string;
+    issue_subtype_1?: string;
+    issue_subtype_2?: string;
+    product?: string;
+    product_group?: string;
+    factory?: string;
+    production_code?: string;
+    details?: string;
+    solution?: string;
+    solution_from_thaibev?: string;
+    subject?: string;
+    district?: string;
+    province?: string;
+    order_channel?: string;
+    status?: string;
+    receiver?: string;
+    closer?: string;
+    sla?: string;
+    upload_id?: string;
+  };
 }
 
 export interface Upload {

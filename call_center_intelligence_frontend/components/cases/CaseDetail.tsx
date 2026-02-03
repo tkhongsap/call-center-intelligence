@@ -12,6 +12,12 @@ import {
   Phone,
   Tag,
   Building2,
+  Package,
+  MapPin,
+  FileText,
+  Clock,
+  CheckCircle,
+  Factory,
 } from "lucide-react";
 import { Badge, SeverityBadge, StatusBadge } from "@/components/ui/Badge";
 import { ShareModal } from "@/components/ui/ShareModal";
@@ -34,10 +40,40 @@ interface AISummaryData {
   suggestedAction: string;
 }
 
+interface IncidentData {
+  incident_number?: string;
+  reference_number?: string;
+  received_date?: string;
+  closed_date?: string;
+  contact_channel?: string;
+  customer_name?: string;
+  phone?: string;
+  issue_type?: string;
+  issue_subtype_1?: string;
+  issue_subtype_2?: string;
+  product?: string;
+  product_group?: string;
+  factory?: string;
+  production_code?: string;
+  details?: string;
+  solution?: string;
+  solution_from_thaibev?: string;
+  subject?: string;
+  district?: string;
+  province?: string;
+  order_channel?: string;
+  status?: string;
+  receiver?: string;
+  closer?: string;
+  sla?: string;
+  upload_id?: string;
+}
+
 interface CaseDetailProps {
   caseData: Case & {
     timeline: TimelineEvent[];
     aiSummary: AISummaryData;
+    incident_data?: IncidentData;
   };
 }
 
@@ -47,6 +83,7 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
   const locale = useLocale();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
+  const incident = caseData.incident_data;
 
   const handleShare = async (recipientId: string, message: string) => {
     const response = await fetch("/api/shares", {
@@ -192,6 +229,169 @@ export function CaseDetail({ caseData }: CaseDetailProps) {
         </div>
       </div>
 
+      {/* Incident Details - All Fields */}
+      {incident && (
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            Complete Incident Details
+          </h2>
+
+          {/* Contact Information */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Contact Information
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {incident.customer_name && (
+                <DetailField label="Customer Name" value={incident.customer_name} />
+              )}
+              {incident.phone && (
+                <DetailField label="Phone" value={incident.phone} />
+              )}
+              {incident.contact_channel && (
+                <DetailField label="Contact Channel" value={incident.contact_channel} />
+              )}
+            </div>
+          </div>
+
+          {/* Issue Details */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Issue Details
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {incident.incident_number && (
+                <DetailField label="Incident Number" value={incident.incident_number} />
+              )}
+              {incident.reference_number && (
+                <DetailField label="Reference Number" value={incident.reference_number} />
+              )}
+              {incident.issue_type && (
+                <DetailField label="Issue Type" value={incident.issue_type} />
+              )}
+              {incident.issue_subtype_1 && (
+                <DetailField label="Issue Subtype 1" value={incident.issue_subtype_1} />
+              )}
+              {incident.issue_subtype_2 && (
+                <DetailField label="Issue Subtype 2" value={incident.issue_subtype_2} />
+              )}
+              {incident.status && (
+                <DetailField label="Status" value={incident.status} />
+              )}
+            </div>
+            {incident.subject && (
+              <div className="mt-4">
+                <DetailField label="Subject" value={incident.subject} fullWidth />
+              </div>
+            )}
+            {incident.details && (
+              <div className="mt-4">
+                <DetailField label="Details" value={incident.details} fullWidth multiline />
+              </div>
+            )}
+          </div>
+
+          {/* Product Information */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Product Information
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {incident.product && (
+                <DetailField label="Product" value={incident.product} />
+              )}
+              {incident.product_group && (
+                <DetailField label="Product Group" value={incident.product_group} />
+              )}
+              {incident.factory && (
+                <DetailField label="Factory" value={incident.factory} />
+              )}
+              {incident.production_code && (
+                <DetailField label="Production Code" value={incident.production_code} />
+              )}
+              {incident.order_channel && (
+                <DetailField label="Order Channel" value={incident.order_channel} />
+              )}
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Location
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {incident.district && (
+                <DetailField label="District" value={incident.district} />
+              )}
+              {incident.province && (
+                <DetailField label="Province" value={incident.province} />
+              )}
+            </div>
+          </div>
+
+          {/* Resolution */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Resolution
+            </h3>
+            {incident.solution && (
+              <div className="mb-4">
+                <DetailField label="Solution" value={incident.solution} fullWidth multiline />
+              </div>
+            )}
+            {incident.solution_from_thaibev && (
+              <div>
+                <DetailField label="Solution from ThaiBev" value={incident.solution_from_thaibev} fullWidth multiline />
+              </div>
+            )}
+          </div>
+
+          {/* Personnel & Dates */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Personnel & Timeline
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {incident.receiver && (
+                <DetailField label="Receiver" value={incident.receiver} />
+              )}
+              {incident.closer && (
+                <DetailField label="Closer" value={incident.closer} />
+              )}
+              {incident.received_date && (
+                <DetailField label="Received Date" value={formatDateTime(incident.received_date, locale)} />
+              )}
+              {incident.closed_date && (
+                <DetailField label="Closed Date" value={formatDateTime(incident.closed_date, locale)} />
+              )}
+              {incident.sla && (
+                <DetailField label="SLA" value={incident.sla} />
+              )}
+            </div>
+          </div>
+
+          {/* Additional Info */}
+          {incident.upload_id && (
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Additional Information
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <DetailField label="Upload ID" value={incident.upload_id} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Two column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* AI Summary */}
@@ -238,6 +438,27 @@ function InfoItem({
         <p className="text-xs text-slate-500">{label}</p>
         <p className="text-sm font-medium text-slate-900">{value}</p>
       </div>
+    </div>
+  );
+}
+
+function DetailField({
+  label,
+  value,
+  fullWidth = false,
+  multiline = false,
+}: {
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+  multiline?: boolean;
+}) {
+  return (
+    <div className={fullWidth ? "col-span-full" : ""}>
+      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <p className={`text-sm text-slate-900 ${multiline ? "whitespace-pre-wrap" : ""}`}>
+        {value}
+      </p>
     </div>
   );
 }

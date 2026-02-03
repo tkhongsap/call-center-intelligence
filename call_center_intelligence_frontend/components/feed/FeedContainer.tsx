@@ -8,6 +8,7 @@ import { AlertFeedCard } from './AlertFeedCard';
 import { TrendingCard } from './TrendingCard';
 import { HighlightCard } from './HighlightCard';
 import { UploadCard } from './UploadCard';
+import { IncidentCard } from './IncidentCard';
 import { usePolling, POLLING_INTERVALS } from '@/hooks/usePolling';
 import { RelativeTime } from '@/components/realtime/RelativeTime';
 import { NewItemWrapper } from '@/components/realtime/NewItemIndicator';
@@ -26,7 +27,8 @@ interface FeedResponse {
     page: number;
     limit: number;
     total: number;
-    totalPages: number;
+    total_pages: number; // API returns snake_case
+    totalPages?: number; // Support camelCase for backwards compatibility
   };
 }
 
@@ -35,11 +37,12 @@ interface FeedContainerProps {
   channel?: string;
   dateRange?: 'today' | '7d' | '30d';
   type?: 'alert' | 'trending' | 'highlight' | 'upload';
+  status?: string;
   className?: string;
   enablePolling?: boolean;
 }
 
-export function FeedContainer({ bu, channel, dateRange, type, className, enablePolling = true }: FeedContainerProps) {
+export function FeedContainer({ bu, channel, dateRange, type, status, className, enablePolling = true }: FeedContainerProps) {
   const t = useTranslations('feed');
   const tCommon = useTranslations('common');
   const [items, setItems] = useState<FeedItemWithMeta[]>([]);
@@ -83,6 +86,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
       if (channel) params.set('channel', channel);
       if (dateRange) params.set('dateRange', dateRange);
       if (type) params.set('type', type);
+      if (status) params.set('status', status);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/api/feed?${params.toString()}`);
@@ -109,7 +113,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
         initialLoadDone.current = true;
       }
 
-      setHasMore(pageNum < data.pagination.totalPages);
+      setHasMore(pageNum < (data.pagination.total_pages || data.pagination.totalPages || 1));
       setPage(pageNum);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -117,7 +121,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [bu, channel, dateRange, type]);
+  }, [bu, channel, dateRange, type, status]);
 
   // Poll for new items (only first page to check for new content)
   const pollForNewItems = useCallback(async () => {
@@ -131,6 +135,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
       if (channel) params.set('channel', channel);
       if (dateRange) params.set('dateRange', dateRange);
       if (type) params.set('type', type);
+      if (status) params.set('status', status);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/api/feed?${params.toString()}`);
@@ -177,7 +182,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
     } catch {
       // Silently fail on polling errors - not critical
     }
-  }, [bu, channel, dateRange, type, debouncedAddNotification]);
+  }, [bu, channel, dateRange, type, status, debouncedAddNotification]);
 
   // Setup polling
   const { isPolling, lastUpdated } = usePolling(pollForNewItems, {
@@ -222,7 +227,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
     knownItemIds.current.clear();
     initialLoadDone.current = false;
     fetchFeed(1, false);
-  }, [bu, channel, dateRange, type, fetchFeed]);
+  }, [bu, channel, dateRange, type, status, fetchFeed]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -232,7 +237,17 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
 
     observerRef.current = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+        const entry = entries[0];
+        console.log('IntersectionObserver triggered:', {
+          isIntersecting: entry.isIntersecting,
+          hasMore,
+          loading,
+          loadingMore,
+          currentPage: page
+        });
+        
+        if (entry.isIntersecting && hasMore && !loading && !loadingMore) {
+          console.log('Loading next page:', page + 1);
           fetchFeed(page + 1, true);
         }
       },
@@ -241,6 +256,7 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
 
     if (loadMoreRef.current) {
       observerRef.current.observe(loadMoreRef.current);
+      console.log('Observer attached to loadMoreRef');
     }
 
     return () => {
@@ -343,12 +359,18 @@ export function FeedContainer({ bu, channel, dateRange, type, className, enableP
       ))}
 
       {/* Load more trigger */}
-      <div ref={loadMoreRef} className="h-10 flex items-center justify-center">
+      <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
         {loadingMore && (
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+            <p className="text-xs text-slate-400">Loading more...</p>
+          </div>
         )}
         {!hasMore && items.length > 0 && (
           <p className="text-sm text-slate-500">{t('endOfFeed')}</p>
+        )}
+        {hasMore && !loadingMore && items.length > 0 && (
+          <p className="text-xs text-slate-400">Scroll for more</p>
         )}
       </div>
     </div>
@@ -382,6 +404,13 @@ const typeIcons: Record<string, string> = {
 // Memoized feed card router - prevents re-renders when parent re-renders
 // Only re-renders when item.id or item.isNew changes
 const FeedCard = memo(function FeedCard({ item }: { item: FeedItemWithMeta }) {
+  // Check if this is an incident item (has incident_number in metadata)
+  const isIncident = item.parsedMetadata?.incident_number;
+  
+  if (isIncident) {
+    return <IncidentCard item={item} />;
+  }
+  
   // Use specialized card component for alerts
   if (item.type === 'alert') {
     return <AlertFeedCard item={item} />;
