@@ -1,8 +1,8 @@
 """
 Cases API Routes
 
-Handles customer service case management including CRUD operations,
-filtering, assignment, and status updates.
+Handles customer service case management using incident data.
+Maps incidents to case format for frontend compatibility.
 """
 
 import uuid
@@ -19,7 +19,7 @@ from app.core.auth import (
     get_user_business_units,
 )
 from app.core.exceptions import NotFoundError, ValidationError, DatabaseError
-from app.models.case import Case
+from app.models.incident import Incident
 from app.models.base import Channel, CaseStatus, Sentiment, Severity
 from app.schemas.case import (
     CaseListParams,
@@ -47,60 +47,192 @@ def get_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def map_incident_status_to_case_status(status: Optional[str]) -> str:
+    """Map incident status to case status enum."""
+    if not status:
+        return "open"
+    
+    status_lower = status.lower()
+    
+    # Map to case status
+    if 'closed' in status_lower or 'ปิด' in status_lower:
+        return "closed"
+    elif 'resolved' in status_lower or 'เสร็จสิ้น' in status_lower:
+        return "resolved"
+    elif 'progress' in status_lower or 'กำลังดำเนินการ' in status_lower:
+        return "in_progress"
+    else:
+        return "open"
+
+
+def map_incident_to_severity(status: Optional[str]) -> str:
+    """Map incident status to severity level."""
+    if not status:
+        return "medium"
+    
+    status_lower = status.lower()
+    
+    if 'urgent' in status_lower or 'critical' in status_lower or 'ด่วน' in status_lower:
+        return "critical"
+    elif 'high' in status_lower or 'สูง' in status_lower:
+        return "high"
+    elif 'low' in status_lower or 'ต่ำ' in status_lower:
+        return "low"
+    else:
+        return "medium"
+
+
+def map_incident_to_channel(contact_channel: Optional[str]) -> str:
+    """Map incident contact channel to case channel."""
+    if not contact_channel:
+        return "phone"
+    
+    channel_lower = contact_channel.lower()
+    
+    if 'email' in channel_lower:
+        return "email"
+    elif 'line' in channel_lower:
+        return "line"
+    elif 'web' in channel_lower or 'online' in channel_lower:
+        return "web"
+    else:
+        return "phone"
+
+
+def incident_to_case_response(incident: Incident) -> Dict[str, Any]:
+    """Convert incident to case response format."""
+    timestamp = incident.received_date or incident.created_at
+    if timestamp and timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    
+    created_at = timestamp.isoformat().replace("+00:00", "Z") if timestamp else get_timestamp()
+    
+    # Map closed_date to resolved_at
+    resolved_at = None
+    if incident.closed_date:
+        if incident.closed_date.tzinfo is None:
+            resolved_at = incident.closed_date.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+        else:
+            resolved_at = incident.closed_date.isoformat().replace("+00:00", "Z")
+    
+    return {
+        "id": str(incident.id),
+        "case_number": incident.incident_number,
+        "channel": map_incident_to_channel(incident.contact_channel),
+        "status": map_incident_status_to_case_status(incident.status),
+        "category": incident.issue_type or "General",
+        "subcategory": incident.issue_subtype_1,
+        "sentiment": "neutral",  # Default sentiment
+        "severity": map_incident_to_severity(incident.status),
+        "risk_flag": False,  # Default
+        "needs_review_flag": False,  # Default
+        "business_unit": incident.product_group or "General",
+        "summary": incident.subject or incident.details or "No summary",
+        "customer_name": incident.customer_name,
+        "agent_id": incident.receiver,
+        "assigned_to": incident.receiver,
+        "created_at": created_at,
+        "updated_at": created_at,
+        "resolved_at": resolved_at,
+        "upload_id": incident.upload_id,
+    }
+
+
 async def apply_case_filters(
     query, params: CaseListParams, user_business_units: List[str]
 ) -> Any:
-    """Apply filtering to case query based on parameters and user permissions."""
+    """Apply filtering to incident query based on case parameters."""
 
-    # Business unit filtering based on user permissions
-    if "all" not in user_business_units:
-        query = query.where(Case.business_unit.in_(user_business_units))
-
-    # Apply additional filters
-    if params.bu:
-        query = query.where(Case.business_unit == params.bu)
-
-    if params.channel:
-        query = query.where(Case.channel == params.channel)
-
+    # Apply status filter (map case status to incident status)
     if params.status:
-        query = query.where(Case.status == params.status)
+        if params.status == "closed":
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('closed'),
+                    func.lower(Incident.status).contains('ปิด')
+                )
+            )
+        elif params.status == "resolved":
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('resolved'),
+                    func.lower(Incident.status).contains('เสร็จสิ้น')
+                )
+            )
+        elif params.status == "in_progress":
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('progress'),
+                    func.lower(Incident.status).contains('กำลังดำเนินการ')
+                )
+            )
+        elif params.status == "open":
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('open'),
+                    func.lower(Incident.status).contains('pending'),
+                    func.lower(Incident.status).contains('เปิด'),
+                    func.lower(Incident.status).contains('รอ')
+                )
+            )
 
+    # Apply severity filter (map to incident status)
     if params.severity:
-        query = query.where(Case.severity == params.severity)
+        if params.severity == "critical":
+            query = query.where(
+                or_(
+                    func.lower(Incident.status).contains('urgent'),
+                    func.lower(Incident.status).contains('critical'),
+                    func.lower(Incident.status).contains('ด่วน')
+                )
+            )
 
+    # Apply category filter (map to issue_type)
     if params.category:
-        query = query.where(Case.category == params.category)
+        query = query.where(
+            func.lower(Incident.issue_type).contains(params.category.lower())
+        )
 
-    if params.assigned_to:
-        query = query.where(Case.assigned_to == params.assigned_to)
+    # Apply business unit filter (map to product_group)
+    if params.bu:
+        query = query.where(
+            func.lower(Incident.product_group).contains(params.bu.lower())
+        )
 
-    if params.upload_batch:
-        query = query.where(Case.upload_id == params.upload_batch)
-
-    if params.risk_flag is not None:
-        query = query.where(Case.risk_flag == params.risk_flag)
-
-    if params.needs_review_flag is not None:
-        query = query.where(Case.needs_review_flag == params.needs_review_flag)
-
-    # Search in case summary
+    # Search in incident fields
     if params.search:
         search_term = f"%{params.search}%"
         query = query.where(
             or_(
-                Case.summary.ilike(search_term),
-                Case.case_number.ilike(search_term),
-                Case.customer_name.ilike(search_term),
+                Incident.subject.ilike(search_term),
+                Incident.details.ilike(search_term),
+                Incident.incident_number.ilike(search_term),
+                Incident.customer_name.ilike(search_term),
             )
         )
 
     # Date range filtering
     if params.start_date:
-        query = query.where(Case.created_at >= params.start_date)
+        query = query.where(
+            or_(
+                Incident.received_date >= params.start_date,
+                and_(
+                    Incident.received_date.is_(None),
+                    Incident.created_at >= params.start_date
+                )
+            )
+        )
 
     if params.end_date:
-        query = query.where(Case.created_at <= params.end_date)
+        query = query.where(
+            or_(
+                Incident.received_date <= params.end_date,
+                and_(
+                    Incident.received_date.is_(None),
+                    Incident.created_at <= params.end_date
+                )
+            )
+        )
 
     return query
 

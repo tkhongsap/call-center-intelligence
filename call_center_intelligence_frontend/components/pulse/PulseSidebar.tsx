@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { SparklineData } from './Sparkline';
-import { SparklineMini } from './Sparkline';
+import { TodayMetrics } from './TodayMetrics';
 import { WordCloudWord } from './WordCloud';
 import { QuickFilters, FilterValues } from './QuickFilters';
 import {
@@ -260,126 +259,8 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
         )}
       </div>
 
-      {/* Compact KPIs Section */}
-      <div className="bg-[#F5F8FA] rounded-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#E1E8ED]">
-          <h2 className="text-xl font-extrabold text-[#14171A]">Today&apos;s metrics</h2>
-        </div>
-
-        <div className="divide-y divide-[#E1E8ED]">
-          {/* Cases Today */}
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-[13px] text-[#657786]">Cases Today</p>
-                <p className="font-bold text-xl text-[#14171A]">{kpis?.totalCasesToday.value ?? 0}</p>
-              </div>
-            </div>
-            {sparklineData?.sparklines?.totalCases && (
-              <div className="flex items-center gap-2">
-                <SparklineMini
-                  data={sparklineData.sparklines.totalCases.data.map(d => d.value)}
-                  color="blue"
-                  width={50}
-                  height={24}
-                />
-                {kpis?.totalCasesToday.change !== undefined && (
-                  <span className={`text-xs font-medium ${kpis.totalCasesToday.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                    {kpis.totalCasesToday.change > 0 ? '+' : ''}{kpis.totalCasesToday.change}%
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Open Cases */}
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <FolderOpen className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-[13px] text-[#657786]">Open Cases</p>
-                <p className="font-bold text-xl text-[#14171A]">{kpis?.openCases.value ?? 0}</p>
-              </div>
-            </div>
-            {sparklineData?.sparklines?.openCases && (
-              <div className="flex items-center gap-2">
-                <SparklineMini
-                  data={sparklineData.sparklines.openCases.data.map(d => d.value)}
-                  color="amber"
-                  width={50}
-                  height={24}
-                />
-                {kpis?.openCases.change !== undefined && (
-                  <span className={`text-xs font-medium ${kpis.openCases.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                    {kpis.openCases.change > 0 ? '+' : ''}{kpis.openCases.change}%
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Critical/Urgent */}
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-[13px] text-[#657786]">Critical/Urgent</p>
-                <p className="font-bold text-xl text-[#14171A]">{kpis?.criticalUrgent.value ?? 0}</p>
-              </div>
-            </div>
-            {sparklineData?.sparklines?.criticalCases && (
-              <div className="flex items-center gap-2">
-                <SparklineMini
-                  data={sparklineData.sparklines.criticalCases.data.map(d => d.value)}
-                  color="red"
-                  width={50}
-                  height={24}
-                />
-                {kpis?.criticalUrgent.change !== undefined && (
-                  <span className={`text-xs font-medium ${kpis.criticalUrgent.change > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                    {kpis.criticalUrgent.change > 0 ? '+' : ''}{kpis.criticalUrgent.change}%
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Resolution Rate */}
-          <div className="px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Activity className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-[13px] text-[#657786]">Resolution Rate</p>
-                <p className="font-bold text-xl text-[#14171A]">{kpis?.resolutionRate.value ?? '0%'}</p>
-              </div>
-            </div>
-            {sparklineData?.sparklines?.resolvedCases && (
-              <div className="flex items-center gap-2">
-                <SparklineMini
-                  data={sparklineData.sparklines.resolvedCases.data.map(d => d.value)}
-                  color="green"
-                  width={50}
-                  height={24}
-                />
-                {kpis?.resolutionRate.change !== undefined && (
-                  <span className={`text-xs font-medium ${kpis.resolutionRate.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {kpis.resolutionRate.change > 0 ? '+' : ''}{kpis.resolutionRate.change}%
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Compact KPIs Section with Real-time Updates */}
+      <TodayMetrics />
 
       {/* Quick Filters (optional - only shown if props provided) */}
       {filters && onFilterChange && (

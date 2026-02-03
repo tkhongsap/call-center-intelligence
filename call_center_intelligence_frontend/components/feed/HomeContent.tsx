@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FeedContainer } from './FeedContainer';
 import { PulseSidebar } from '@/components/pulse/PulseSidebar';
+import { StatusFilter } from './StatusFilter';
 import { FilterValues } from '@/components/pulse/QuickFilters';
 
 export function HomeContent() {
@@ -18,18 +19,41 @@ export function HomeContent() {
     type: searchParams.get('type') || '',
   }), [searchParams]);
 
+  const selectedStatus = searchParams.get('status') || null;
+
   // Update URL when filters change
   const handleFilterChange = useCallback((newFilters: FilterValues) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
 
     if (newFilters.bu) params.set('bu', newFilters.bu);
+    else params.delete('bu');
+    
     if (newFilters.channel) params.set('channel', newFilters.channel);
+    else params.delete('channel');
+    
     if (newFilters.dateRange) params.set('dateRange', newFilters.dateRange);
+    else params.delete('dateRange');
+    
     if (newFilters.type) params.set('type', newFilters.type);
+    else params.delete('type');
 
     const queryString = params.toString();
     router.push(queryString ? `/home?${queryString}` : '/home', { scroll: false });
-  }, [router]);
+  }, [router, searchParams]);
+
+  // Handle status filter change
+  const handleStatusChange = useCallback((status: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    
+    if (status) {
+      params.set('status', status);
+    } else {
+      params.delete('status');
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/home?${queryString}` : '/home', { scroll: false });
+  }, [router, searchParams]);
 
   // Determine the date range to use (default to 30d if not set)
   const effectiveDateRange = filters.dateRange || '30d';
@@ -39,12 +63,21 @@ export function HomeContent() {
       <div className="flex flex-col lg:flex-row gap-6 w-full max-w-[1000px]">
         {/* Main Feed Area - Twitter-style max-width 600px */}
         <div className="w-full lg:w-[600px] lg:flex-shrink-0">
+          {/* Status Filter */}
+          <div className="mb-4 p-4 bg-white border border-[#E1E8ED] rounded-2xl">
+            <StatusFilter 
+              selectedStatus={selectedStatus}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+
           {/* Feed cards render as individual units - no wrapper card */}
           <FeedContainer
             bu={filters.bu || undefined}
             channel={filters.channel || undefined}
             dateRange={effectiveDateRange as 'today' | '7d' | '30d'}
             type={filters.type as 'alert' | 'trending' | 'highlight' | 'upload' | undefined}
+            status={selectedStatus || undefined}
           />
         </div>
 
