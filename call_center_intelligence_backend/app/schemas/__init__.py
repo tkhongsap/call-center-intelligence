@@ -183,6 +183,15 @@ from app.schemas.debug import (
     SystemHealthResponse,
 )
 
+# Incident schemas
+from app.schemas.incident import (
+    IncidentBase,
+    IncidentCreate,
+    IncidentUpdate,
+    IncidentResponse,
+    IncidentListResponse,
+)
+
 # Export all schemas for easy importing
 __all__ = [
     # Base schemas
@@ -337,4 +346,11 @@ __all__ = [
     "DemoModeToggleResponse",
     "HealthCheck",
     "SystemHealthResponse",
+    
+    # Incident schemas
+    "IncidentBase",
+    "IncidentCreate",
+    "IncidentUpdate",
+    "IncidentResponse",
+    "IncidentListResponse",
 ]
