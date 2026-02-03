@@ -21,6 +21,7 @@ from app.schemas.incident import (
     IncidentListResponse,
     IncidentCreate,
     IncidentUpdate,
+    WordRankingResponse,
 )
 
 router = APIRouter()
@@ -403,3 +404,56 @@ async def get_incident_stats(
         "by_status": {status: count for status, count in status_counts if status},
         "top_issue_types": {issue_type: count for issue_type, count in issue_type_counts},
     }
+
+
+@router.get("/words/ranking", response_model=WordRankingResponse)
+async def get_word_ranking(
+    top_n: int = Query(20, ge=1, le=100, description="Number of top words to return"),
+    upload_id: Optional[str] = Query(None, description="Filter by upload batch ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get top N most frequently used Thai words from incident details.
+    
+    Uses pythainlp for Thai word tokenization and filters out stopwords.
+    Returns words ranked by frequency with count and percentage.
+    """
+    from app.services.thai_text_service import get_thai_text_service
+    
+    # Build query to get all details
+    query = select(Incident.details).where(Incident.details.isnot(None))
+    
+    if upload_id:
+        query = query.where(Incident.upload_id == upload_id)
+    
+    result = await db.execute(query)
+    details_list = [row[0] for row in result.all() if row[0]]
+    
+    if not details_list:
+        return WordRankingResponse(
+            total_words=0,
+            unique_words=0,
+            top_words=[]
+        )
+    
+    # Analyze texts using Thai text service
+    try:
+        service = get_thai_text_service(force_reload=True)
+        analysis_result = service.get_top_words(details_list, top_n=top_n)
+        
+        return WordRankingResponse(
+            total_words=analysis_result["total_words"],
+            unique_words=analysis_result["unique_words"],
+            top_words=analysis_result["top_words"]
+        )
+    except ImportError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Thai text analysis not available: {str(e)}. Please install pythainlp."
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error analyzing text: {str(e)}"
+        )
+

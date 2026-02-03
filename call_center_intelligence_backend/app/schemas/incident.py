@@ -1,3 +1,4 @@
+
 """
 Incident schemas for API validation and serialization.
 """
@@ -88,3 +89,18 @@ class IncidentListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class WordRankingItem(BaseModel):
+    """Schema for a single word in the ranking."""
+    rank: int = Field(..., description="Rank position (1 = most frequent)")
+    word: str = Field(..., description="The Thai word")
+    count: int = Field(..., description="Number of occurrences")
+    percentage: float = Field(..., description="Percentage of total words")
+
+
+class WordRankingResponse(BaseModel):
+    """Schema for word ranking analysis response."""
+    total_words: int = Field(..., description="Total number of words analyzed")
+    unique_words: int = Field(..., description="Number of unique words")
+    top_words: list[WordRankingItem] = Field(..., description="Top ranked words")
