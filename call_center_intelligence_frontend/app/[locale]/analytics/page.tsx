@@ -490,6 +490,53 @@ function useRotatingData() {
   return { currentData, currentOffset, isLoading, error };
 }
 
+// Hook to fetch word cloud data from API
+function useWordCloudData() {
+  const [wordCloudData, setWordCloudData] = useState<Array<{ text: string; count: number }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWordCloud = async () => {
+      try {
+        setIsLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/incidents/words/ranking?top_n=100`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch word cloud data: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Transform API response to match component format
+        const transformedWords = data.top_words.map((item: any) => ({
+          text: item.word,
+          count: item.count
+        }));
+        
+        setWordCloudData(transformedWords);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching word cloud data:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setWordCloudData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWordCloud();
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchWordCloud, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  return { wordCloudData, isLoading, error };
+}
+
 // Page Components
 const Page1_Overview = ({ data }: { data: SegmentData | null }) => {
   if (!data) return <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-white">Loading...</div>;
@@ -664,174 +711,105 @@ const Page4_IncidentMix = ({ data }: { data: SegmentData | null }) => {
 };
 
 const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
-  if (!data || !data.wordCloud || data.wordCloud.length === 0) {
+  const { wordCloudData, isLoading, error } = useWordCloudData();
+  
+  if (isLoading) {
+    return (
+      <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <div className="text-4xl mb-4">Loading Word Cloud...</div>
+          <div className="text-slate-400">Fetching top 100 words from incidents</div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <div className="text-4xl mb-4 text-rose-500">Error Loading Data</div>
+          <div className="text-slate-400">{error}</div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!wordCloudData || wordCloudData.length === 0) {
     return (
       <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-white">
         <div className="text-center">
           <div className="text-4xl mb-4">No Word Cloud Data</div>
-          <div className="text-slate-400">Loading data...</div>
+          <div className="text-slate-400">No incident data available</div>
         </div>
       </div>
     );
   }
 
-  // Sort words by count (most frequent first)
-  const sortedWords = [...data.wordCloud].sort((a, b) => b.count - a.count);
+  // Sort words by count (most frequent first) - display all 100 words
+  const sortedWords = [...wordCloudData].sort((a, b) => b.count - a.count);
   
-  // Define size classes based on frequency ranking
+  // Define size classes based on frequency ranking (adjusted for 100 words)
   const getSizeClass = (index: number) => {
-    if (index === 0) return 'text-8xl'; // Largest - most frequent
-    if (index === 1) return 'text-6xl';
-    if (index === 2) return 'text-5xl';
-    if (index < 5) return 'text-4xl';
-    if (index < 8) return 'text-3xl';
-    if (index < 12) return 'text-2xl';
-    if (index < 16) return 'text-xl';
-    return 'text-lg';
+    if (index === 0) return 'text-6xl'; // Largest - most frequent
+    if (index === 1) return 'text-5xl';
+    if (index === 2) return 'text-4xl';
+    if (index < 5) return 'text-3xl';
+    if (index < 10) return 'text-2xl';
+    if (index < 20) return 'text-xl';
+    if (index < 40) return 'text-lg';
+    if (index < 60) return 'text-base';
+    return 'text-sm';
   };
 
   const getWeightClass = (index: number) => {
     if (index === 0) return 'font-extrabold';
-    if (index < 3) return 'font-bold';
-    if (index < 6) return 'font-semibold';
-    return 'font-medium';
+    if (index < 5) return 'font-bold';
+    if (index < 20) return 'font-semibold';
+    if (index < 50) return 'font-medium';
+    return 'font-normal';
   };
 
-  // Vibrant colors like the example
+  // Vibrant colors - expanded for 100 words
   const colors = [
     'text-violet-500', 'text-pink-500', 'text-yellow-400', 'text-sky-500', 
     'text-orange-500', 'text-blue-600', 'text-amber-400', 'text-rose-500',
     'text-emerald-500', 'text-purple-600', 'text-cyan-500', 'text-lime-500',
-    'text-fuchsia-500', 'text-indigo-500', 'text-teal-500'
+    'text-fuchsia-500', 'text-indigo-500', 'text-teal-500', 'text-red-500',
+    'text-green-500', 'text-blue-500', 'text-yellow-500', 'text-purple-500'
   ];
-
-  // Slight rotation angles for natural look (in degrees) - more subtle
-  const rotations = [
-    0, -3, 5, 0, -6, 4, 0, -4, 3, 0, -5, 6, 0, -3, 4, 0, -5, 3, 0, -4, 5, 0, -3
-  ];
-
-  // Center word and surrounding words
-  const centerWord = sortedWords[0];
-  const surroundingWords = sortedWords.slice(1);
 
   return (
-    <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-white p-8">
-      <div className="text-slate-400 text-sm font-medium tracking-wide mb-3">
-        AFTERNOON REVIEW
+    <div className="absolute inset-0 bg-slate-900 flex flex-col text-white p-6 overflow-hidden">
+      <div className="text-center mb-4">
+        <div className="text-slate-400 text-xs font-medium tracking-wide mb-2">
+          AFTERNOON REVIEW
+        </div>
+        <h1 className="text-3xl font-semibold text-white mb-1">Common Topics</h1>
+        <div className="text-slate-500 text-sm">Top 100 frequently mentioned terms in incident reports</div>
       </div>
-      <h1 className="text-4xl font-semibold text-white mb-3">Common Topics</h1>
-      <div className="text-slate-500 mb-8">Frequently mentioned terms in incident reports</div>
       
-      {/* Word Cloud Container - Organized Flex Layout */}
-      <div className="flex-1 flex items-center justify-center w-full max-w-7xl px-8">
-        <div className="relative w-full">
-          {/* Top Row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 mb-6">
-            {surroundingWords.slice(0, 4).map((word, i) => (
-              <span 
-                key={i}
-                className={`${getSizeClass(i + 1)} ${getWeightClass(i + 1)} ${colors[(i + 1) % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block`}
-                title={`${word.text} (${word.count})`}
-                style={{
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                  transform: `rotate(${rotations[i + 1]}deg)`,
-                  margin: '0 8px'
-                }}
-              >
-                {word.text}
-              </span>
-            ))}
-          </div>
-
-          {/* Middle Row with Center Word */}
-          <div className="flex items-center justify-center gap-x-8 mb-6">
-            {/* Left words */}
-            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-3 flex-1">
-              {surroundingWords.slice(4, 7).map((word, i) => (
-                <span 
-                  key={i}
-                  className={`${getSizeClass(i + 5)} ${getWeightClass(i + 5)} ${colors[(i + 5) % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block`}
-                  title={`${word.text} (${word.count})`}
-                  style={{
-                    textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    transform: `rotate(${rotations[i + 5]}deg)`
-                  }}
-                >
-                  {word.text}
-                </span>
-              ))}
-            </div>
-
-            {/* Center Word - Largest */}
-            <div className="flex-shrink-0 mx-8">
-              <span 
-                className={`${getSizeClass(0)} ${getWeightClass(0)} ${colors[0]} opacity-95 hover:opacity-100 transition-all cursor-default select-none inline-block`}
-                title={`${centerWord.text} (${centerWord.count})`}
-                style={{
-                  textShadow: '0 2px 4px rgba(0,0,0,0.15)',
-                  transform: 'rotate(0deg)'
-                }}
-              >
-                {centerWord.text}
-              </span>
-            </div>
-
-            {/* Right words */}
-            <div className="flex flex-wrap items-center justify-start gap-x-5 gap-y-3 flex-1">
-              {surroundingWords.slice(7, 10).map((word, i) => (
-                <span 
-                  key={i}
-                  className={`${getSizeClass(i + 8)} ${getWeightClass(i + 8)} ${colors[(i + 8) % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block`}
-                  title={`${word.text} (${word.count})`}
-                  style={{
-                    textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    transform: `rotate(${rotations[i + 8]}deg)`
-                  }}
-                >
-                  {word.text}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom Row */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-            {surroundingWords.slice(10, 15).map((word, i) => (
-              <span 
-                key={i}
-                className={`${getSizeClass(i + 11)} ${getWeightClass(i + 11)} ${colors[(i + 11) % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block`}
-                title={`${word.text} (${word.count})`}
-                style={{
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                  transform: `rotate(${rotations[i + 11]}deg)`,
-                  margin: '0 8px'
-                }}
-              >
-                {word.text}
-              </span>
-            ))}
-          </div>
+      {/* Word Cloud Container - Scrollable flex wrap layout for 100 words */}
+      <div className="flex-1 overflow-y-auto px-4">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 py-4">
+          {sortedWords.map((word, index) => (
+            <span 
+              key={index}
+              className={`${getSizeClass(index)} ${getWeightClass(index)} ${colors[index % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block px-2 py-1 rounded hover:bg-slate-800`}
+              title={`${word.text}: ${word.count} occurrences`}
+              style={{
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+              }}
+            >
+              {word.text}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-8 flex gap-8 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-violet-500 rounded" />
-          <span className="text-slate-400">Equipment</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-pink-500 rounded" />
-          <span className="text-slate-400">Products</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-yellow-400 rounded" />
-          <span className="text-slate-400">Service</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-sky-500 rounded" />
-          <span className="text-slate-400">Operations</span>
-        </div>
+      {/* Stats Footer */}
+      <div className="mt-2 text-center text-xs text-slate-500">
+        Displaying all 100 words • Sized by frequency • Hover for details
       </div>
     </div>
   );
@@ -1171,6 +1149,9 @@ export default function AnalyticsPage() {
   
   // Load rotating data
   const { currentData, currentOffset, isLoading, error } = useRotatingData();
+  
+  // Load word cloud data from API
+  const { wordCloudData } = useWordCloudData();
   
   const pages = [
     Page1_Overview,
