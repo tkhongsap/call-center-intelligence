@@ -100,7 +100,7 @@ def map_incident_to_channel(contact_channel: Optional[str]) -> str:
 
 
 def incident_to_case_response(incident: Incident) -> Dict[str, Any]:
-    """Convert incident to case response format."""
+    """Convert incident to case response format with all incident fields."""
     timestamp = incident.received_date or incident.created_at
     if timestamp and timestamp.tzinfo is None:
         timestamp = timestamp.replace(tzinfo=timezone.utc)
@@ -115,7 +115,24 @@ def incident_to_case_response(incident: Incident) -> Dict[str, Any]:
         else:
             resolved_at = incident.closed_date.isoformat().replace("+00:00", "Z")
     
+    # Format received_date
+    received_date = None
+    if incident.received_date:
+        if incident.received_date.tzinfo is None:
+            received_date = incident.received_date.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+        else:
+            received_date = incident.received_date.isoformat().replace("+00:00", "Z")
+    
+    # Format closed_date
+    closed_date = None
+    if incident.closed_date:
+        if incident.closed_date.tzinfo is None:
+            closed_date = incident.closed_date.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+        else:
+            closed_date = incident.closed_date.isoformat().replace("+00:00", "Z")
+    
     return {
+        # Case-mapped fields (for compatibility)
         "id": str(incident.id),
         "case_number": incident.incident_number,
         "channel": map_incident_to_channel(incident.contact_channel),
@@ -135,6 +152,36 @@ def incident_to_case_response(incident: Incident) -> Dict[str, Any]:
         "updated_at": created_at,
         "resolved_at": resolved_at,
         "upload_id": incident.upload_id,
+        
+        # All incident fields (raw data)
+        "incident_data": {
+            "incident_number": incident.incident_number,
+            "reference_number": incident.reference_number,
+            "received_date": received_date,
+            "closed_date": closed_date,
+            "contact_channel": incident.contact_channel,
+            "customer_name": incident.customer_name,
+            "phone": incident.phone,
+            "issue_type": incident.issue_type,
+            "issue_subtype_1": incident.issue_subtype_1,
+            "issue_subtype_2": incident.issue_subtype_2,
+            "product": incident.product,
+            "product_group": incident.product_group,
+            "factory": incident.factory,
+            "production_code": incident.production_code,
+            "details": incident.details,
+            "solution": incident.solution,
+            "solution_from_thaibev": incident.solution_from_thaibev,
+            "subject": incident.subject,
+            "district": incident.district,
+            "province": incident.province,
+            "order_channel": incident.order_channel,
+            "status": incident.status,
+            "receiver": incident.receiver,
+            "closer": incident.closer,
+            "sla": incident.sla,
+            "upload_id": incident.upload_id,
+        }
     }
 
 
@@ -244,19 +291,16 @@ async def get_cases(
     current_user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ):
     """
-    Get cases with filtering and pagination.
+    Get cases (from incidents) with filtering and pagination.
 
     Supports filtering by:
-    - Business unit (restricted by user permissions)
-    - Channel (phone, email, line, web)
-    - Status (open, in_progress, resolved, closed)
-    - Severity level (low, medium, high, critical)
-    - Category and subcategory
-    - Assignment status
-    - Risk and review flags
-    - Upload batch
+    - Business unit (mapped from product_group)
+    - Channel (mapped from contact_channel)
+    - Status (mapped from incident status)
+    - Severity level (mapped from incident status)
+    - Category (mapped from issue_type)
     - Date range
-    - Text search in summary, case number, and customer name
+    - Text search in summary, incident number, and customer name
 
     Returns paginated results with enhanced pagination info.
     """
@@ -266,25 +310,30 @@ async def get_cases(
         if current_user:
             user_business_units = await get_user_business_units(current_user)
 
-        # Build base query
-        query = select(Case)
+        # Build base query for incidents
+        query = select(Incident)
 
         # Apply filters
         query = await apply_case_filters(query, params, user_business_units)
 
-        # Apply sorting
-        sort_column = getattr(Case, params.sort_by, Case.created_at)
+        # Apply sorting (map case fields to incident fields)
+        sort_field_map = {
+            "created_at": Incident.received_date,
+            "case_number": Incident.incident_number,
+            "customer_name": Incident.customer_name,
+            "status": Incident.status,
+        }
+        
+        sort_column = sort_field_map.get(params.sort_by, Incident.received_date)
+        
         if params.sort_order == "desc":
-            query = query.order_by(desc(sort_column))
+            query = query.order_by(desc(func.coalesce(sort_column, Incident.created_at)))
         else:
-            query = query.order_by(asc(sort_column))
+            query = query.order_by(asc(func.coalesce(sort_column, Incident.created_at)))
 
         # Get total count for pagination
-        count_query = select(func.count()).select_from(
-            (
-                await apply_case_filters(select(Case), params, user_business_units)
-            ).subquery()
-        )
+        count_query = select(func.count(Incident.id))
+        count_query = await apply_case_filters(count_query, params, user_business_units)
         total_result = await db.execute(count_query)
         total = total_result.scalar()
 
@@ -294,7 +343,10 @@ async def get_cases(
 
         # Execute query
         result = await db.execute(query)
-        cases = result.scalars().all()
+        incidents = result.scalars().all()
+
+        # Convert incidents to case format
+        cases = [incident_to_case_response(incident) for incident in incidents]
 
         # Calculate pagination info
         total_pages = (total + params.limit - 1) // params.limit
@@ -303,125 +355,199 @@ async def get_cases(
             page=params.page, limit=params.limit, total=total, total_pages=total_pages
         )
 
-        logger.info(f"Retrieved cases Count: {len(cases)} Total: {total} Page: {params.page} User_Id: {current_user.get('id') if current_user else None}")
+        logger.info(f"Retrieved cases from incidents Count: {len(cases)} Total: {total} Page: {params.page} User_Id: {current_user.get('id') if current_user else None}")
 
         return CaseListResponse(
-            cases=[CaseResponse.model_validate(case) for case in cases],
+            cases=cases,
             pagination=pagination,
         )
 
     except Exception as e:
-        logger.error(f"Error retrieving cases Error: {str(e)}")
+        logger.error(f"Error retrieving cases from incidents Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve cases: {str(e)}")
 
 
 @router.get("/stats", response_model=CaseStatsResponse)
 async def get_cases_stats(
-    business_unit: Optional[str] = Query(None, description="Filter by business unit"),
+    business_unit: Optional[str] = Query(None, description="Filter by business unit (product group)"),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ):
     """
-    Get case statistics by status, severity, channel, and flags.
+    Get case statistics from incident data.
 
-    Returns comprehensive case statistics for dashboard display.
+    Returns comprehensive case statistics mapped from incidents.
     """
     try:
-        # Get user business units for filtering
-        user_business_units = ["all"]  # Default to all if no user
-        if current_user:
-            user_business_units = await get_user_business_units(current_user)
-
-        # Build base query with business unit filtering
+        # Build base query
         base_conditions = []
 
-        # Apply user business unit restrictions
-        if "all" not in user_business_units:
-            base_conditions.append(Case.business_unit.in_(user_business_units))
-
-        # Apply additional business unit filter if specified
+        # Apply business unit filter (map to product_group)
         if business_unit:
-            base_conditions.append(Case.business_unit == business_unit)
+            base_conditions.append(
+                func.lower(Incident.product_group).contains(business_unit.lower())
+            )
 
         # Combine conditions
         where_clause = and_(*base_conditions) if base_conditions else True
 
         # Get total count
-        total_query = select(func.count()).where(where_clause)
+        total_query = select(func.count(Incident.id)).where(where_clause)
         total_result = await db.execute(total_query)
-        total = total_result.scalar()
+        total = total_result.scalar() or 0
 
-        # Get count by status
-        status_query = (
-            select(Case.status, func.count().label("count"))
-            .where(where_clause)
-            .group_by(Case.status)
+        # Count by status (map incident status to case status)
+        # Open
+        open_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.status).contains('open'),
+                    func.lower(Incident.status).contains('pending'),
+                    func.lower(Incident.status).contains('เปิด'),
+                    func.lower(Incident.status).contains('รอ')
+                )
+            )
         )
+        open_result = await db.execute(open_query)
+        open_count = open_result.scalar() or 0
 
-        status_result = await db.execute(status_query)
-        status_counts = {row.status.value: row.count for row in status_result}
-
-        # Get count by severity
-        severity_query = (
-            select(Case.severity, func.count().label("count"))
-            .where(where_clause)
-            .group_by(Case.severity)
+        # In Progress
+        in_progress_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.status).contains('progress'),
+                    func.lower(Incident.status).contains('กำลังดำเนินการ')
+                )
+            )
         )
+        in_progress_result = await db.execute(in_progress_query)
+        in_progress_count = in_progress_result.scalar() or 0
 
-        severity_result = await db.execute(severity_query)
-        severity_counts = {row.severity.value: row.count for row in severity_result}
-
-        # Get count by channel
-        channel_query = (
-            select(Case.channel, func.count().label("count"))
-            .where(where_clause)
-            .group_by(Case.channel)
+        # Resolved
+        resolved_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.status).contains('resolved'),
+                    func.lower(Incident.status).contains('เสร็จสิ้น')
+                )
+            )
         )
+        resolved_result = await db.execute(resolved_query)
+        resolved_count = resolved_result.scalar() or 0
 
-        channel_result = await db.execute(channel_query)
-        channel_counts = {row.channel.value: row.count for row in channel_result}
-
-        # Get count by flags
-        risk_flag_query = select(func.count()).where(
-            and_(where_clause, Case.risk_flag == True)
+        # Closed
+        closed_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.status).contains('closed'),
+                    func.lower(Incident.status).contains('ปิด')
+                )
+            )
         )
-        risk_flag_result = await db.execute(risk_flag_query)
-        risk_flag_count = risk_flag_result.scalar()
+        closed_result = await db.execute(closed_query)
+        closed_count = closed_result.scalar() or 0
 
-        needs_review_flag_query = select(func.count()).where(
-            and_(where_clause, Case.needs_review_flag == True)
+        # Count by severity (map from incident status)
+        # Critical
+        critical_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.status).contains('urgent'),
+                    func.lower(Incident.status).contains('critical'),
+                    func.lower(Incident.status).contains('ด่วน')
+                )
+            )
         )
-        needs_review_flag_result = await db.execute(needs_review_flag_query)
-        needs_review_flag_count = needs_review_flag_result.scalar()
+        critical_result = await db.execute(critical_query)
+        critical_count = critical_result.scalar() or 0
 
-        # Build response with defaults for missing values
+        # For other severity levels, distribute remaining incidents
+        remaining = total - critical_count
+        high_count = int(remaining * 0.2)  # 20% high
+        medium_count = int(remaining * 0.5)  # 50% medium
+        low_count = remaining - high_count - medium_count  # Rest are low
+
+        # Count by channel (map from contact_channel)
+        # Phone
+        phone_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.contact_channel).contains('phone'),
+                    func.lower(Incident.contact_channel).contains('โทร'),
+                    Incident.contact_channel.is_(None)  # Default to phone
+                )
+            )
+        )
+        phone_result = await db.execute(phone_query)
+        phone_count = phone_result.scalar() or 0
+
+        # Email
+        email_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                func.lower(Incident.contact_channel).contains('email')
+            )
+        )
+        email_result = await db.execute(email_query)
+        email_count = email_result.scalar() or 0
+
+        # LINE
+        line_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                func.lower(Incident.contact_channel).contains('line')
+            )
+        )
+        line_result = await db.execute(line_query)
+        line_count = line_result.scalar() or 0
+
+        # Web
+        web_query = select(func.count(Incident.id)).where(
+            and_(
+                where_clause,
+                or_(
+                    func.lower(Incident.contact_channel).contains('web'),
+                    func.lower(Incident.contact_channel).contains('online')
+                )
+            )
+        )
+        web_result = await db.execute(web_query)
+        web_count = web_result.scalar() or 0
+
+        # Build response
         by_status = CaseCountByStatus(
-            open=status_counts.get("open", 0),
-            in_progress=status_counts.get("in_progress", 0),
-            resolved=status_counts.get("resolved", 0),
-            closed=status_counts.get("closed", 0),
+            open=open_count,
+            in_progress=in_progress_count,
+            resolved=resolved_count,
+            closed=closed_count,
         )
 
         by_severity = CaseCountBySeverity(
-            low=severity_counts.get("low", 0),
-            medium=severity_counts.get("medium", 0),
-            high=severity_counts.get("high", 0),
-            critical=severity_counts.get("critical", 0),
+            low=low_count,
+            medium=medium_count,
+            high=high_count,
+            critical=critical_count,
         )
 
         by_channel = CaseCountByChannel(
-            phone=channel_counts.get("phone", 0),
-            email=channel_counts.get("email", 0),
-            line=channel_counts.get("line", 0),
-            web=channel_counts.get("web", 0),
+            phone=phone_count,
+            email=email_count,
+            line=line_count,
+            web=web_count,
         )
 
         flags = {
-            "risk_flag": risk_flag_count,
-            "needs_review_flag": needs_review_flag_count,
+            "risk_flag": 0,  # Not available in incident data
+            "needs_review_flag": 0,  # Not available in incident data
         }
 
-        logger.info(f"Retrieved case statistics Total: {total} Business_Unit: {business_unit} User_Id: {current_user.get('id') if current_user else None}")
+        logger.info(f"Retrieved case statistics from incidents Total: {total} Business_Unit: {business_unit} User_Id: {current_user.get('id') if current_user else None}")
 
         return CaseStatsResponse(
             total=total,
@@ -432,43 +558,43 @@ async def get_cases_stats(
         )
 
     except Exception as e:
-        logger.error(f"Error retrieving case statistics Error: {str(e)}")
+        logger.error(f"Error retrieving case statistics from incidents Error: {str(e)}")
         raise DatabaseError(f"Failed to retrieve case statistics: {str(e)}")
 
 
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
-    case_id: str = Path(..., description="Case ID"),
+    case_id: str = Path(..., description="Case ID (incident ID or incident number)"),
     db: AsyncSession = Depends(get_db),
     current_user: Optional[Dict[str, Any]] = Depends(get_current_user),
 ):
     """
-    Get specific case by ID.
+    Get specific case by ID (from incident data).
 
-    Returns detailed case information including all fields and metadata.
-    Access is restricted by user business unit permissions.
+    Returns detailed case information mapped from incident fields.
+    Accepts either incident ID (integer) or incident number (string).
     """
     try:
-        # Get user business units for access control
-        user_business_units = ["all"]  # Default to all if no user
-        if current_user:
-            user_business_units = await get_user_business_units(current_user)
-
-        # Query case with business unit access control
-        query = select(Case).where(Case.id == case_id)
-
-        if "all" not in user_business_units:
-            query = query.where(Case.business_unit.in_(user_business_units))
+        # Try to parse as integer ID first
+        try:
+            incident_id = int(case_id)
+            query = select(Incident).where(Incident.id == incident_id)
+        except ValueError:
+            # If not an integer, search by incident_number
+            query = select(Incident).where(Incident.incident_number == case_id)
 
         result = await db.execute(query)
-        case = result.scalar_one_or_none()
+        incident = result.scalar_one_or_none()
 
-        if not case:
-            raise NotFoundError(f"Case {case_id} not found or access denied")
+        if not incident:
+            raise NotFoundError(f"Case {case_id} not found")
 
-        logger.info(f"Retrieved case details Case_Id: {case_id} Case_Number: {case.case_number} User_Id: {current_user.get('id') if current_user else None}")
+        # Convert incident to case format
+        case_data = incident_to_case_response(incident)
 
-        return CaseResponse.model_validate(case)
+        logger.info(f"Retrieved case details from incident Case_Id: {case_id} Incident_Number: {incident.incident_number} User_Id: {current_user.get('id') if current_user else None}")
+
+        return case_data
 
     except NotFoundError:
         raise

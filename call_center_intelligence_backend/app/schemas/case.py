@@ -108,6 +108,7 @@ class CaseResponse(CaseBase, TimestampSerializerMixin, NumberSerializerMixin,
     updated_at: str = Field(..., description="Last update timestamp")
     resolved_at: Optional[str] = Field(None, description="Resolution timestamp")
     upload_id: Optional[str] = Field(None, description="Upload batch ID")
+    incident_data: Optional[dict] = Field(None, description="Complete incident data with all fields")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -131,7 +132,8 @@ class CaseResponse(CaseBase, TimestampSerializerMixin, NumberSerializerMixin,
                 "created_at": "2024-01-15T10:30:00Z",
                 "updated_at": "2024-01-15T10:30:00Z",
                 "resolved_at": None,
-                "upload_id": None
+                "upload_id": None,
+                "incident_data": None
             }
         }
     )
