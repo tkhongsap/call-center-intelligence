@@ -40,7 +40,7 @@ async def seed_database():
             # Clear existing data
             await session.execute(
                 text(
-                    "TRUNCATE TABLE shares, cases, alerts, trending_topics, feed_items, users RESTART IDENTITY CASCADE"
+                    "TRUNCATE TABLE shares, cases, trending_topics, feed_items, users RESTART IDENTITY CASCADE"
                 )
             )
 

@@ -54,17 +54,20 @@ interface WordCloudApiData {
   words: WordCloudWord[];
 }
 
+interface BusinessUnit {
+  name: string;
+  case_count: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface BusinessUnitsApiData {
+  business_units: BusinessUnit[];
+}
+
 interface PulseSidebarProps {
   filters?: FilterValues;
   onFilterChange?: (filters: FilterValues) => void;
 }
-
-// Mock data for Teams to Watch - in production this would come from an API
-const teamsToWatch = [
-  { name: 'Credit Cards', caseCount: 156, trend: 'up' as const },
-  { name: 'Mobile Banking', caseCount: 89, trend: 'up' as const },
-  { name: 'Online Banking', caseCount: 67, trend: 'down' as const },
-];
 
 export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
   const router = useRouter();
@@ -73,6 +76,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
   const [data, setData] = useState<PulseData | null>(null);
   const [sparklineData, setSparklineData] = useState<SparklineApiData | null>(null);
   const [wordCloudData, setWordCloudData] = useState<WordCloudApiData | null>(null);
+  const [businessUnitsData, setBusinessUnitsData] = useState<BusinessUnitsApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMoreTrending, setShowMoreTrending] = useState(false);
@@ -81,10 +85,11 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
   useEffect(() => {
     async function fetchPulseData() {
       try {
-        const [pulseResponse, sparklineResponse, wordCloudResponse] = await Promise.all([
+        const [pulseResponse, sparklineResponse, wordCloudResponse, businessUnitsResponse] = await Promise.all([
           fetch('/api/pulse'),
           fetch('/api/pulse/sparklines'),
           fetch('/api/pulse/wordcloud'),
+          fetch('/api/pulse/business-units?limit=10'),
         ]);
 
         if (pulseResponse.ok) {
@@ -100,6 +105,11 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
         if (wordCloudResponse.ok) {
           const wordCloud = await wordCloudResponse.json();
           setWordCloudData(wordCloud);
+        }
+
+        if (businessUnitsResponse.ok) {
+          const businessUnits = await businessUnitsResponse.json();
+          setBusinessUnitsData(businessUnits);
         }
       } catch (error) {
         console.error('Failed to fetch pulse data:', error);
@@ -123,7 +133,7 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
   };
 
   const handleTeamClick = (team: string) => {
-    router.push(`/cases?bu=${encodeURIComponent(team)}`);
+    router.push(`/${locale}/cases?bu=${encodeURIComponent(team)}`);
   };
 
   // Get trending topics from word cloud data
@@ -135,7 +145,9 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
       count: word.count,
     })) || [];
 
-  const displayedTeams = showMoreTeams ? teamsToWatch : teamsToWatch.slice(0, 2);
+  // Get business units from API data
+  const businessUnits = businessUnitsData?.business_units || [];
+  const displayedTeams = showMoreTeams ? businessUnits : businessUnits.slice(0, 2);
 
   if (loading) {
     return (
@@ -221,41 +233,49 @@ export function PulseSidebar({ filters, onFilterChange }: PulseSidebarProps) {
         )}
       </div>
 
-      {/* Teams to Watch Section */}
+      {/* Business Units Section */}
       <div className="bg-[#F5F8FA] rounded-2xl overflow-hidden">
         <div className="px-4 py-3 border-b border-[#E1E8ED]">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-[#657786]" />
-            <h2 className="text-xl font-extrabold text-[#14171A]">Teams to watch</h2>
+            <h2 className="text-xl font-extrabold text-[#14171A]">Business Units</h2>
           </div>
         </div>
 
-        <div>
-          {displayedTeams.map((team) => (
-            <button
-              key={team.name}
-              onClick={() => handleTeamClick(team.name)}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group twitter-focus-ring min-h-[48px]"
-            >
-              <div>
-                <p className="font-bold text-[15px] text-[#14171A]">{team.name}</p>
-                <div className="flex items-center gap-1 text-[13px] text-[#657786]">
-                  <TrendIcon trend={team.trend} />
-                  <span>{team.caseCount} cases today</span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-[#AAB8C2] group-hover:text-[#657786] transition-colors" />
-            </button>
-          ))}
-        </div>
+        {businessUnits.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[13px] text-[#657786]">
+            No business units found
+          </div>
+        ) : (
+          <>
+            <div>
+              {displayedTeams.map((team) => (
+                <button
+                  key={team.name}
+                  onClick={() => handleTeamClick(team.name)}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-black/[0.03] transition-colors group twitter-focus-ring min-h-[48px]"
+                >
+                  <div>
+                    <p className="font-bold text-[15px] text-[#14171A]">{team.name}</p>
+                    <div className="flex items-center gap-1 text-[13px] text-[#657786]">
+                      <TrendIcon trend={team.trend} />
+                      <span>{team.case_count} cases</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-[#AAB8C2] group-hover:text-[#657786] transition-colors" />
+                </button>
+              ))}
+            </div>
 
-        {teamsToWatch.length > 2 && (
-          <button
-            onClick={() => setShowMoreTeams(!showMoreTeams)}
-            className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors twitter-focus-ring"
-          >
-            {showMoreTeams ? 'Show less' : 'Show more'}
-          </button>
+            {businessUnits.length > 2 && (
+              <button
+                onClick={() => setShowMoreTeams(!showMoreTeams)}
+                className="w-full px-4 py-3 text-left text-[15px] text-[#1DA1F2] hover:bg-black/[0.03] transition-colors twitter-focus-ring"
+              >
+                {showMoreTeams ? 'Show less' : 'Show more'}
+              </button>
+            )}
+          </>
         )}
       </div>
 
