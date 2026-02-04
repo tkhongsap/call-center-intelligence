@@ -77,14 +77,14 @@ def transform_incident_to_feed_item(incident: Incident) -> FeedItemResponse:
     Maps incident fields to feed item fields:
     - incident_number → id
     - subject/issue_type → title
-    - details → content
+    - summary/details → content (prioritizes summary)
     - received_date → createdAt
     - Determines type based on status/issue_type
     - Sets priority based on status
     
     Handles null/missing fields with appropriate fallbacks:
     - Title: Use subject if available, otherwise issue_type, then "Untitled Incident"
-    - Content: Use details if available, otherwise "No details available"
+    - Content: Use summary if available, otherwise details, then "No summary available"
     - Timestamp: Use received_date if available, otherwise created_at
     - Customer name: Display "Unknown" if null
     
@@ -97,8 +97,8 @@ def transform_incident_to_feed_item(incident: Incident) -> FeedItemResponse:
     # Determine title with fallbacks
     title = incident.subject or incident.issue_type or "Untitled Incident"
     
-    # Determine content with fallback (must have at least 1 character)
-    content = incident.details or "No details available"
+    # Determine content with fallback - use summary instead of details
+    content = incident.summary or incident.details or "No summary available"
     
     # Determine timestamp with fallback
     timestamp = incident.received_date or incident.created_at
@@ -125,6 +125,7 @@ def transform_incident_to_feed_item(incident: Incident) -> FeedItemResponse:
         "receiver": incident.receiver or "Unknown",
         "incident_number": incident.incident_number,
         "subject": incident.subject or "No subject",
+        "priority": incident.priority.value if incident.priority else None,
     }
     
     # Add optional fields if available
