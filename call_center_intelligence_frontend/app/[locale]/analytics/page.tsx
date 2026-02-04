@@ -718,7 +718,7 @@ const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
       <div className="absolute inset-0 bg-slate-900 flex items-center justify-center text-white">
         <div className="text-center">
           <div className="text-4xl mb-4">Loading Word Cloud...</div>
-          <div className="text-slate-400">Fetching top 100 words from incidents</div>
+          <div className="text-slate-400">Fetching top 40 words from incidents</div>
         </div>
       </div>
     );
@@ -746,31 +746,34 @@ const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
     );
   }
 
-  // Sort words by count (most frequent first) - display all 100 words
-  const sortedWords = [...wordCloudData].sort((a, b) => b.count - a.count);
+  // Sort words by count (most frequent first) - display top 50 words
+  const sortedWords = [...wordCloudData].sort((a, b) => b.count - a.count).slice(0, 50);
   
-  // Define size classes based on frequency ranking (adjusted for 100 words)
-  const getSizeClass = (index: number) => {
-    if (index === 0) return 'text-6xl'; // Largest - most frequent
-    if (index === 1) return 'text-5xl';
-    if (index === 2) return 'text-4xl';
-    if (index < 5) return 'text-3xl';
-    if (index < 10) return 'text-2xl';
-    if (index < 20) return 'text-xl';
-    if (index < 40) return 'text-lg';
-    if (index < 60) return 'text-base';
-    return 'text-sm';
+  // Calculate font size based on frequency (logarithmic scale for better visual balance)
+  const maxCount = sortedWords[0]?.count || 1;
+  const minCount = sortedWords[sortedWords.length - 1]?.count || 1;
+  
+  const getFontSize = (count: number) => {
+    // Logarithmic scale for better size distribution
+    const logMax = Math.log(maxCount);
+    const logMin = Math.log(Math.max(minCount, 1));
+    const logCount = Math.log(Math.max(count, 1));
+    
+    // Map to font size range - increased max size for larger center word
+    const minSize = 14;
+    const maxSize = 80; // Increased from 56 to 80
+    const size = minSize + ((logCount - logMin) / (logMax - logMin)) * (maxSize - minSize);
+    return Math.round(size);
   };
 
   const getWeightClass = (index: number) => {
     if (index === 0) return 'font-extrabold';
     if (index < 5) return 'font-bold';
     if (index < 20) return 'font-semibold';
-    if (index < 50) return 'font-medium';
-    return 'font-normal';
+    return 'font-medium';
   };
 
-  // Vibrant colors - expanded for 100 words
+  // Vibrant colors
   const colors = [
     'text-violet-500', 'text-pink-500', 'text-yellow-400', 'text-sky-500', 
     'text-orange-500', 'text-blue-600', 'text-amber-400', 'text-rose-500',
@@ -779,6 +782,81 @@ const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
     'text-green-500', 'text-blue-500', 'text-yellow-500', 'text-purple-500'
   ];
 
+  // Calculate positions using spiral algorithm with collision detection
+  interface WordPosition {
+    word: { text: string; count: number };
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    fontSize: number;
+    index: number;
+  }
+
+  const positions: WordPosition[] = [];
+  const padding = 10; // Space between words
+  
+  // Check if two rectangles overlap
+  const overlaps = (pos1: WordPosition, pos2: WordPosition) => {
+    return !(
+      pos1.x + pos1.width + padding < pos2.x ||
+      pos2.x + pos2.width + padding < pos1.x ||
+      pos1.y + pos1.height + padding < pos2.y ||
+      pos2.y + pos2.height + padding < pos1.y
+    );
+  };
+
+  // Try to place a word at a position
+  const tryPlaceWord = (word: { text: string; count: number }, index: number) => {
+    const fontSize = getFontSize(word.count);
+    // Estimate word dimensions (rough approximation)
+    const avgCharWidth = fontSize * 0.6;
+    const width = word.text.length * avgCharWidth;
+    const height = fontSize * 1.3;
+
+    // Start from center and spiral outward
+    let angle = 0;
+    let radius = 0;
+    const angleStep = 0.4; // Slightly smaller angle for denser packing
+    const radiusStep = 6; // Reduced from 8 to 6 for tighter spiral
+    const maxAttempts = 1500; // Increased attempts for better placement
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius * 0.5; // Compress vertically more (0.5 instead of 0.85) - spread horizontally
+
+      const newPos: WordPosition = {
+        word,
+        x: x - width / 2,
+        y: y - height / 2,
+        width,
+        height,
+        fontSize,
+        index
+      };
+
+      // Check for collisions
+      const hasCollision = positions.some(pos => overlaps(newPos, pos));
+      
+      if (!hasCollision) {
+        // Check if within bounds - wider horizontally (700px), less tall vertically (200px)
+        if (Math.abs(newPos.x) + width / 2 < 700 && Math.abs(newPos.y) + height / 2 < 200) {
+          positions.push(newPos);
+          return;
+        }
+      }
+
+      // Continue spiral
+      angle += angleStep;
+      radius += radiusStep * angleStep / (2 * Math.PI);
+    }
+  };
+
+  // Place all words
+  sortedWords.forEach((word, index) => {
+    tryPlaceWord(word, index);
+  });
+
   return (
     <div className="absolute inset-0 bg-slate-900 flex flex-col text-white p-6 overflow-hidden">
       <div className="text-center mb-4">
@@ -786,22 +864,27 @@ const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
           AFTERNOON REVIEW
         </div>
         <h1 className="text-3xl font-semibold text-white mb-1">Common Topics</h1>
-        <div className="text-slate-500 text-sm">Top 100 frequently mentioned terms in incident reports</div>
+        <div className="text-slate-500 text-sm">Top 50 frequently mentioned terms in incident reports</div>
       </div>
       
-      {/* Word Cloud Container - Scrollable flex wrap layout for 100 words */}
-      <div className="flex-1 overflow-y-auto px-4">
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 py-4">
-          {sortedWords.map((word, index) => (
-            <span 
-              key={index}
-              className={`${getSizeClass(index)} ${getWeightClass(index)} ${colors[index % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none inline-block px-2 py-1 rounded hover:bg-slate-800`}
-              title={`${word.text}: ${word.count} occurrences`}
+      {/* Word Cloud Container - Scattered layout (no overlapping) */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-6">
+        <div className="relative w-full h-full max-w-7xl max-h-[450px]">
+          {positions.map((pos) => (
+            <span
+              key={pos.index}
+              className={`${getWeightClass(pos.index)} ${colors[pos.index % colors.length]} opacity-90 hover:opacity-100 transition-all cursor-default select-none px-2 py-1 rounded hover:bg-slate-800 absolute`}
+              title={`${pos.word.text}: ${pos.word.count} occurrences (Rank #${pos.index + 1})`}
               style={{
-                textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                left: '50%',
+                top: '50%',
+                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
+                fontSize: `${pos.fontSize}px`,
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                whiteSpace: 'nowrap'
               }}
             >
-              {word.text}
+              {pos.word.text}
             </span>
           ))}
         </div>
@@ -809,7 +892,7 @@ const Page5_WordCloud = ({ data }: { data: SegmentData | null }) => {
 
       {/* Stats Footer */}
       <div className="mt-2 text-center text-xs text-slate-500">
-        Displaying all 100 words • Sized by frequency • Hover for details
+        Displaying top 50 words • Classic word cloud • Hover for details
       </div>
     </div>
   );
