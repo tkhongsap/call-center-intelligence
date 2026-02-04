@@ -9,8 +9,9 @@ This module defines request and response schemas for alert endpoints:
 - POST /api/alerts/{id}/escalate (escalate alert)
 """
 
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from typing import Optional, List, Dict, Any, Union
+from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict, field_validator, field_serializer
 
 from app.models.base import AlertType, AlertStatus, Severity
 from app.schemas.base import (
@@ -68,9 +69,20 @@ class AlertResponse(AlertBase, TimestampSerializerMixin, NumberSerializerMixin,
     current_value: Optional[float] = Field(None, description="Current metric value")
     percentage_change: Optional[float] = Field(None, description="Percentage change")
     acknowledged_by: Optional[str] = Field(None, description="User who acknowledged")
-    acknowledged_at: Optional[str] = Field(None, description="Acknowledgment timestamp")
-    created_at: str = Field(..., description="Creation timestamp")
-    updated_at: str = Field(..., description="Last update timestamp")
+    acknowledged_at: Optional[Union[str, datetime]] = Field(None, description="Acknowledgment timestamp")
+    created_at: Union[str, datetime] = Field(..., description="Creation timestamp")
+    updated_at: Union[str, datetime] = Field(..., description="Last update timestamp")
+
+    @field_serializer('created_at', 'updated_at', 'acknowledged_at')
+    def serialize_datetime(self, value: Optional[Union[str, datetime]]) -> Optional[str]:
+        """Serialize datetime fields to ISO format strings."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if isinstance(value, str):
+            return value
+        return str(value)
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -231,7 +243,20 @@ class AlertSampleCase(BaseModel):
     status: str = Field(..., description="Case status")
     business_unit: str = Field(..., description="Business unit")
     category: str = Field(..., description="Case category")
-    created_at: str = Field(..., description="Case creation timestamp")
+    created_at: Union[str, datetime] = Field(..., description="Case creation timestamp")
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, value: Optional[Union[str, datetime]]) -> Optional[str]:
+        """Serialize datetime fields to ISO format strings."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if isinstance(value, str):
+            return value
+        return str(value)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AlertDetailResponse(BaseModel):

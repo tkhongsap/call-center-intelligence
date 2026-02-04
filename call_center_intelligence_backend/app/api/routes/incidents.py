@@ -98,6 +98,7 @@ def parse_excel_row(row_data: dict, upload_id: str) -> dict:
 @router.post("/upload", response_model=dict)
 async def upload_incidents(
     file: UploadFile = File(...),
+    analyze: bool = Query(True, description="Analyze incidents with LLM to generate summary and priority"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -105,7 +106,10 @@ async def upload_incidents(
     
     Supports Excel files (.xlsx) with Thai language headers.
     Creates a batch upload with unique upload_id for tracking.
+    Optionally analyzes incidents with LLM to generate summaries and priorities.
     """
+    from app.services.incident_analysis_service import get_incident_analysis_service
+    
     # Validate file type
     if not file.filename.endswith(('.xlsx', '.xls')):
         raise HTTPException(
@@ -192,6 +196,121 @@ async def upload_incidents(
         if incidents_to_create:
             db.add_all(incidents_to_create)
             await db.commit()
+            
+            # Analyze incidents with LLM if requested
+            if analyze:
+                analysis_service = get_incident_analysis_service()
+                
+                # Prepare list of incident dicts with id and details for batch processing
+                incidents_for_analysis = [
+                    {
+                        "id": incident.incident_number,
+                        "details": incident.details
+                    }
+                    for incident in incidents_to_create
+                    if incident.details  # Only include incidents with details
+                ]
+                
+                # Call analyze_incidents_batch() once for all incidents
+                if incidents_for_analysis:
+                    try:
+                        results = await analysis_service.analyze_incidents_batch(incidents_for_analysis)
+                        
+                        # Map results back to incident objects using incident_number
+                        results_map = {r["id"]: r for r in results}
+                        
+                        analyzed_count = 0
+                        high_medium_incidents = []  # Track HIGH and MEDIUM priority incidents for alerts
+                        
+                        for incident in incidents_to_create:
+                            if incident.incident_number in results_map:
+                                result = results_map[incident.incident_number]
+                                
+                                # Update incidents with summary and priority from results
+                                if result["summary"]:
+                                    incident.summary = result["summary"]
+                                if result["priority"]:
+                                    incident.priority = result["priority"]
+                                    
+                                    # Track HIGH and MEDIUM priority incidents for alert creation
+                                    from app.models.incident import PriorityLevel
+                                    if result["priority"] in [PriorityLevel.HIGH, PriorityLevel.MEDIUM]:
+                                        high_medium_incidents.append(incident)
+                                
+                                # Count successfully analyzed incidents (those with non-None results)
+                                if result["summary"] or result["priority"]:
+                                    analyzed_count += 1
+                        
+                        # Commit analysis results
+                        if analyzed_count > 0:
+                            await db.commit()
+                        
+                        # Create alerts for HIGH and MEDIUM priority incidents
+                        alerts_created = 0
+                        if high_medium_incidents:
+                            from app.models.alert import Alert
+                            from app.models.base import AlertType, Severity, AlertStatus
+                            import uuid
+                            from datetime import datetime, timezone
+                            
+                            now = datetime.now(timezone.utc)
+                            
+                            for incident in high_medium_incidents:
+                                try:
+                                    # Map priority to severity
+                                    from app.models.incident import PriorityLevel
+                                    severity = Severity.high if incident.priority == PriorityLevel.HIGH else Severity.medium
+                                    
+                                    # Create alert
+                                    alert = Alert(
+                                        id=str(uuid.uuid4()),
+                                        type=AlertType.threshold,
+                                        severity=severity,
+                                        title=f"Incident {incident.incident_number} - {incident.priority.value.upper()} Priority",
+                                        description=incident.summary or incident.details[:200] if incident.details else "No description available",
+                                        status=AlertStatus.active,
+                                        business_unit=incident.product_group,
+                                        category=incident.issue_type,
+                                        channel=incident.contact_channel,
+                                        created_at=now,
+                                        updated_at=now
+                                    )
+                                    
+                                    db.add(alert)
+                                    alerts_created += 1
+                                except Exception as e:
+                                    print(f"Error creating alert for incident {incident.incident_number}: {str(e)}")
+                            
+                            # Commit alerts
+                            if alerts_created > 0:
+                                await db.commit()
+                        
+                        return {
+                            "success": True,
+                            "upload_id": upload_id,
+                            "filename": file.filename,
+                            "total_rows": sheet.max_row - 1,
+                            "success_count": success_count,
+                            "analyzed_count": analyzed_count,
+                            "alerts_created": alerts_created,
+                            "error_count": len(errors),
+                            "errors": errors[:10] if errors else [],
+                            "message": f"Successfully imported {success_count} incidents, analyzed {analyzed_count} with LLM using batch processing, created {alerts_created} alerts"
+                        }
+                    except Exception as e:
+                        print(f"Error in batch analysis: {str(e)}")
+                        # Continue without analysis if batch processing fails
+                        return {
+                            "success": True,
+                            "upload_id": upload_id,
+                            "filename": file.filename,
+                            "total_rows": sheet.max_row - 1,
+                            "success_count": success_count,
+                            "analyzed_count": 0,
+                            "error_count": len(errors),
+                            "errors": errors[:10] if errors else [],
+                            "message": f"Successfully imported {success_count} incidents (batch analysis failed)"
+                        }
         
         return {
             "success": True,

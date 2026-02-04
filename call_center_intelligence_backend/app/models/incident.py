@@ -4,13 +4,21 @@ Incident model definition.
 Stores incident data imported from Excel files with Thai language support.
 """
 
+import enum
 from typing import Optional
 from datetime import datetime
-from sqlalchemy import String, Text, DateTime
+from sqlalchemy import String, Text, DateTime, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 from app.models.base import TimestampMixin
+
+
+class PriorityLevel(str, enum.Enum):
+    """Incident priority levels."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 
 class Incident(Base, TimestampMixin):
@@ -70,8 +78,16 @@ class Incident(Base, TimestampMixin):
     # SLA
     sla: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
+    # Priority and Summary (AI-generated fields)
+    priority: Mapped[Optional[PriorityLevel]] = mapped_column(
+        Enum(PriorityLevel, name="priority_level", native_enum=False),
+        nullable=True,
+        index=True
+    )
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
     # Upload tracking
     upload_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     def __repr__(self) -> str:
-        return f"<Incident(id={self.id}, incident_number='{self.incident_number}', status='{self.status}')>"
+        return f"<Incident(id={self.id}, incident_number='{self.incident_number}', status='{self.status}', priority='{self.priority}')>"

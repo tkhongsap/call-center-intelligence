@@ -4,8 +4,12 @@ Incident schemas for API validation and serialization.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
+
+
+# Priority level type
+PriorityLevel = Literal["low", "medium", "high"]
 
 
 class IncidentBase(BaseModel):
@@ -35,6 +39,8 @@ class IncidentBase(BaseModel):
     receiver: Optional[str] = Field(None, description="Person who received the incident")
     closer: Optional[str] = Field(None, description="Person who closed the incident")
     sla: Optional[str] = Field(None, description="SLA information")
+    priority: Optional[PriorityLevel] = Field(None, description="Incident priority: low, medium, or high")
+    summary: Optional[str] = Field(None, description="AI-generated summary of the incident")
     upload_id: Optional[str] = Field(None, description="Upload batch ID")
 
 
@@ -70,6 +76,8 @@ class IncidentUpdate(BaseModel):
     receiver: Optional[str] = None
     closer: Optional[str] = None
     sla: Optional[str] = None
+    priority: Optional[PriorityLevel] = None
+    summary: Optional[str] = None
     upload_id: Optional[str] = None
 
 

@@ -94,7 +94,7 @@ async def seed_database():
                         "password_hash": password_hash,
                         "role": role,
                         "business_unit": business_unit,
-                        "created_at": datetime.now().isoformat(),
+                        "created_at": datetime.now(),
                     },
                 )
 
@@ -133,8 +133,8 @@ async def seed_database():
                     "summary": f"Sample case {i} - Customer inquiry about product/service",
                     "customer_name": f"Customer {i}",
                     "agent_id": users_data[i % len(users_data)][0],
-                    "created_at": created_date.isoformat(),
-                    "updated_at": created_date.isoformat(),
+                    "created_at": created_date,
+                    "updated_at": created_date,
                     "resolved_at": (
                         (created_date + timedelta(hours=24)).isoformat()
                         if i % 2 == 0
@@ -162,49 +162,6 @@ async def seed_database():
 
             print(f"✓ Inserted {len(cases_data)} cases")
 
-            # Sample alerts
-            alert_types = ["spike", "threshold", "urgency", "misclassification"]
-            alert_statuses = ["active", "acknowledged", "resolved"]
-
-            for i in range(1, 21):  # 20 alerts
-                created_date = (
-                    datetime.now() - timedelta(days=7) + timedelta(hours=i * 8)
-                )
-                alert_data = {
-                    "id": f"alert-{i:03d}",
-                    "type": alert_types[i % len(alert_types)],
-                    "severity": severities[i % len(severities)],
-                    "status": alert_statuses[i % len(alert_statuses)],
-                    "title": f"Alert {i}: High volume detected in {categories[i % len(categories)]}",
-                    "description": f"Sample alert {i} - Detected unusual pattern in customer interactions",
-                    "business_unit": business_units[i % len(business_units)],
-                    "category": categories[i % len(categories)],
-                    "baseline_value": 10.0 + (i * 2),
-                    "current_value": 15.0 + (i * 3),
-                    "percentage_change": 25.0 + (i * 1.5),
-                    "created_at": created_date.isoformat(),
-                    "updated_at": created_date.isoformat(),
-                }
-
-                await session.execute(
-                    text(
-                        """
-                    INSERT INTO alerts (
-                        id, type, severity, status, title, description, business_unit,
-                        category, baseline_value, current_value, percentage_change,
-                        created_at, updated_at
-                    ) VALUES (
-                        :id, :type, :severity, :status, :title, :description, :business_unit,
-                        :category, :baseline_value, :current_value, :percentage_change,
-                        :created_at, :updated_at
-                    )
-                """
-                    ),
-                    alert_data,
-                )
-
-            print("✓ Inserted 20 alerts")
-
             # Sample trending topics
             topics = [
                 "Product Quality",
@@ -226,8 +183,8 @@ async def seed_database():
                     "business_unit": business_units[i % len(business_units)],
                     "category": categories[i % len(categories)],
                     "percentage_change": 15.0 + (i * 5),
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat(),
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
                 }
 
                 await session.execute(
@@ -248,7 +205,7 @@ async def seed_database():
             print(f"✓ Inserted {len(topics)} trending topics")
 
             # Sample feed items
-            feed_types = ["alert", "trending", "highlight", "upload"]
+            feed_types = ["trending", "highlight", "upload"]
 
             for i in range(1, 16):  # 15 feed items
                 created_date = datetime.now() - timedelta(hours=i * 2)
@@ -258,9 +215,9 @@ async def seed_database():
                     "title": f"Feed Item {i}: Important Update",
                     "content": f"Sample feed content {i} - This is an important update for the team",
                     "priority": i % 5,
-                    "reference_id": f"alert-{(i % 20) + 1:03d}" if i % 4 == 0 else None,
-                    "reference_type": "alert" if i % 4 == 0 else None,
-                    "created_at": created_date.isoformat(),
+                    "reference_id": None,
+                    "reference_type": None,
+                    "created_at": created_date,
                 }
 
                 await session.execute(
