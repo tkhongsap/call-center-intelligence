@@ -125,7 +125,7 @@ class FeedListParams(PaginationParams, BusinessUnitFilter, ChannelFilter):
     """Query parameters for listing feed items."""
 
     type: Optional[FeedItemType] = Field(None, description="Filter by feed item type")
-    date_range: str = Field("today", description="Date range filter")
+    date_range: str = Field("7d", description="Date range filter")
     status: Optional[str] = Field(None, description="Filter by incident status")
 
     @field_validator("date_range")
