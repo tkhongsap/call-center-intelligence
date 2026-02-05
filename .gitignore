@@ -1,60 +1,86 @@
-# Dependencies
-node_modules/
-.pnp/
-.pnp.js
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# Next.js build outputs
-.next/
-out/
-build/
-dist/
-
-# Production
-.vercel
-
 # Environment files
 .env
-.env.*
-!.env.example
+.env.local
+.env.production
+.env.prod
 
-# Debug logs
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Testing
+# Coverage directory used by tools like istanbul
 coverage/
-.nyc_output/
+*.lcov
 
-# Database (SQLite)
-*.sqlite
-*.sqlite3
-*.db
-/data/
+# nyc test coverage
+.nyc_output
 
-# Drizzle ORM
-/drizzle/
+# Dependency directories
+node_modules/
+jspm_packages/
 
-# IDE / Editors
-.idea/
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
 .vscode/
-*.swp
-*.swo
-*.vim
-.project
-.classpath
-.settings/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS generated files
 .DS_Store
@@ -65,18 +91,92 @@ coverage/
 ehthumbs.db
 Thumbs.db
 
-# Secrets / Keys
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# lib/ - commented out to allow frontend lib directory
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python lib directories (backend only)
+call_center_intelligence_backend/lib/
+call_center_intelligence_backend/lib64/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Docker
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# SSL certificates
+nginx/ssl/
 *.pem
 *.key
 *.crt
-credentials.json
-secrets.json
 
-# Misc
-*.log
-*.tmp
-*.temp
-.cache/
-
-# Claude Code local config
-.claude-user/
+# Local development
+.local/

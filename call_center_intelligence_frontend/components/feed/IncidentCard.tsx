@@ -1,0 +1,132 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
+import { FileText } from 'lucide-react';
+import { TwitterCard } from './TwitterCard';
+import { highlightCardActions, EngagementActionType } from './EngagementBar';
+import type { FeedItem } from '@/lib/types';
+
+interface IncidentMetadata {
+  incident_number?: string;
+  issue_type?: string;
+  product_group?: string;
+  subject?: string;
+  status?: string;
+  receiver?: string;
+  customer_name?: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+interface IncidentCardProps {
+  item: FeedItem;
+  className?: string;
+}
+
+const MAX_CONTENT_LENGTH = 280; // Twitter-style character limit
+
+// Priority color mapping
+const priorityConfig = {
+  high: {
+    bg: 'bg-red-100',
+    text: 'text-red-700',
+    border: 'border-red-200',
+    label: 'High',
+  },
+  medium: {
+    bg: 'bg-yellow-100',
+    text: 'text-yellow-700',
+    border: 'border-yellow-200',
+    label: 'Medium',
+  },
+  low: {
+    bg: 'bg-green-100',
+    text: 'text-green-700',
+    border: 'border-green-200',
+    label: 'Low',
+  },
+} as const;
+
+export function IncidentCard({ item, className }: IncidentCardProps) {
+  const router = useRouter();
+  const locale = useLocale();
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const metadata: IncidentMetadata = item.metadata
+    ? (typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata)
+    : {};
+
+  const handleAction = (type: EngagementActionType) => {
+    switch (type) {
+      case 'learnMore':
+        // Navigate to incident detail page if available
+        router.push(`/${locale}/cases`);
+        break;
+      case 'bookmark':
+        // Bookmark functionality
+        break;
+      case 'share':
+        // Share functionality
+        break;
+    }
+  };
+
+  // Check if content needs truncation
+  const content = item.content || '';
+  const needsTruncation = content.length > MAX_CONTENT_LENGTH;
+  const displayContent = needsTruncation && !isExpanded 
+    ? content.substring(0, MAX_CONTENT_LENGTH) + '...'
+    : content;
+
+  // Get priority configuration
+  const priority = metadata.priority || 'low';
+  const priorityStyle = priorityConfig[priority];
+
+  return (
+    <TwitterCard
+      authorName={metadata.customer_name || 'Unknown Customer'}
+      authorSubtitle={`Incident #${metadata.incident_number || item.id}`}
+      timestamp={item.created_at}
+      avatarIcon={FileText}
+      avatarIconClassName="text-blue-600"
+      avatarBgColor="bg-blue-100"
+      actions={highlightCardActions}
+      onAction={handleAction}
+      className={className}
+    >
+      {/* Subject/Title with Priority Pill */}
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <h3 className="text-base font-semibold text-primary flex-1">
+          {metadata.subject || item.title}
+        </h3>
+        {/* Priority Pill */}
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border} whitespace-nowrap`}>
+          {priorityStyle.label}
+        </span>
+      </div>
+
+      {/* Details from API */}
+      {content && content !== 'No details available' && content !== 'No summary available' && (
+        <div>
+          <div className="text-sm text-primary leading-relaxed">
+            {displayContent}
+          </div>
+          
+          {/* Show More/Less Button */}
+          {needsTruncation && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="mt-2 text-[#1DA1F2] hover:underline text-sm font-medium transition-colors"
+            >
+              {isExpanded ? 'แสดงน้อยลง' : 'แสดงเพิ่มเติม'}
+            </button>
+          )}
+        </div>
+      )}
+    </TwitterCard>
+  );
+}
